@@ -100,9 +100,11 @@ int main(void)
   MX_USART1_UART_Init();
   MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
-	const uint8_t msg1[] = "Booting JASPER_Main_Firmware_SX1276\n";
+	const uint8_t msg1[] = "INFO: Booting JASPER_Main_Firmware_SX1276\n";
 	HAL_UART_Transmit(&huart1, msg1, strlen(msg1), 120);
 	HAL_Delay(250);
+
+	run_once_on_boot();
 
   /* USER CODE END 2 */
 
@@ -113,10 +115,12 @@ int main(void)
   {
 
 	  const uint8_t msg1[255];
-	  sprintf(msg1, "Starting superloop from JASPER_Main_Firmware_SX1276 #%ld\n", superloop_count++);
+	  sprintf(msg1, "INFO: Starting superloop from JASPER_Main_Firmware_SX1276 #%ld\n", superloop_count++);
 	  HAL_UART_Transmit(&huart1, msg1, strlen(msg1), 120);
 	  	HAL_Delay(250);
 
+
+	  	main_loop();
 	  	// TODO: LED blink
     /* USER CODE END WHILE */
 
