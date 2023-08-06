@@ -137,4 +137,14 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle)
 
 /* USER CODE BEGIN 1 */
 
+void debug_print(const uint8_t * string) {
+    uint16_t size = strlen((char*)string);
+    HAL_UART_Transmit(&DebugUART, (uint8_t*)string, size, HAL_MAX_DELAY);
+}
+
+void debug_println(const uint8_t * string) {
+	debug_print(string);
+	debug_print("\n");
+}
+
 /* USER CODE END 1 */

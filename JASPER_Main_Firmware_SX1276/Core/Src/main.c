@@ -25,7 +25,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "all_includes.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -103,12 +103,12 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-	long long unsigned int superloop_count = 0;
+	long unsigned int superloop_count = 0;
   while (1)
   {
 
 	  const uint8_t msg1[255];
-	  sprintf(msg1, "INFO: Starting superloop from JASPER_Main_Firmware_SX1276 #%ld\n", superloop_count++);
+	  sprintf(msg1, "INFO: Starting superloop from JASPER_Main_Firmware_SX1276 #%lu\n", superloop_count++);
 	  HAL_UART_Transmit(&huart1, msg1, strlen(msg1), 120);
 	  	HAL_Delay(250);
 

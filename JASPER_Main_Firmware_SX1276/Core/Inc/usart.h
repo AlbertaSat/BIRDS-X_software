@@ -29,18 +29,23 @@ extern "C" {
 #include "main.h"
 
 /* USER CODE BEGIN Includes */
+#include "string.h"
 
 /* USER CODE END Includes */
 
 extern UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN Private defines */
+#define DebugUART (huart1)
+#define BossUART (huart1)
 
 /* USER CODE END Private defines */
 
 void MX_USART1_UART_Init(void);
 
 /* USER CODE BEGIN Prototypes */
+void debug_println(const uint8_t * string);
+void debug_print(const uint8_t * string);
 
 /* USER CODE END Prototypes */
 
