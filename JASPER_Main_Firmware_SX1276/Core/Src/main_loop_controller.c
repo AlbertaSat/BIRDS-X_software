@@ -6,17 +6,17 @@
 #include <stdio.h>
 
 void run_once_on_boot() {
-	//DebugSerial.printf("Starting run_once_on_boot()\n");
+	debug_println("Starting run_once_on_boot()");
 
 	init_sx1276();
 
 
 
-	//DebugSerial.printf("Done run_once_on_boot()\n");
+	debug_println("Done run_once_on_boot()");
 }
 
 void main_loop() {
-	//DebugSerial.printf("Starting main_loop()\n"); // FIXME: get this print working
+	debug_println("Starting main_loop()");
 	
 	read_and_execute_next_incoming_command();
 

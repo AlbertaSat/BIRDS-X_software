@@ -45,11 +45,8 @@ void check_sx1276_and_log_status() {
 void test_sx_spi() {
 	// just do it here I guess
 
-	// FIXME: implement this
-	const uint8_t msg1[255];
-	sprintf(msg1, "Starting test_sx_spi()\n");
-	HAL_UART_Transmit(&huart1, msg1, strlen((char*)msg1), 100);
-	printf("HERE");
+	debug_println("INFO: Starting test_sx_spi()");
+
 
 	//SX1278_init(module, frequency, power, LoRa_SF, LoRa_BW, LoRa_CR, LoRa_CRC_sum, packetLength)
 }
