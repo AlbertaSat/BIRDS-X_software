@@ -57,7 +57,7 @@ void init_sx1276() {
 }
 
 void check_sx1276_and_log_status() {
-
+	// HAL_GPIO_ReadPin(RF_DIO2_GPIO_Port, RF_DIO2_Pin); // TODO: enable this and log it very constantly
 }
 
 

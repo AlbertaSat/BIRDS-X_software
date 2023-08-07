@@ -59,6 +59,8 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define T_NRST_Pin GPIO_PIN_2
 #define T_NRST_GPIO_Port GPIOF
+#define RF_DIO2_Pin GPIO_PIN_15
+#define RF_DIO2_GPIO_Port GPIOA
 
 /* USER CODE BEGIN Private defines */
 
