@@ -35,8 +35,18 @@ __weak void SX1278_hw_Reset(SX1278_hw_t *hw) {
 __weak void SX1278_hw_SPICommand(SX1278_hw_t *hw, uint8_t cmd) {
 	SX1278_hw_SetNSS(hw, 0);
 	HAL_SPI_Transmit(hw->spi, &cmd, 1, 1000);
-	while (HAL_SPI_GetState(hw->spi) != HAL_SPI_STATE_READY)
-		;
+	SX1278_hw_WaitForSPIReady(hw);
+}
+
+__weak void SX1278_hw_WaitForSPIReady(SX1278_hw_t *hw) {
+	uint16_t wait_counter = 2000; // ms to wait for SPI to be ready
+	while ((HAL_SPI_GetState(hw->spi) != HAL_SPI_STATE_READY) && (wait_counter > 0)) {
+		SX1278_hw_DelayMs(1);
+		wait_counter--;
+	}
+	if (wait_counter == 0) { // TODO: remove this
+		debug_println("WARNING: timeout waiting for SPI to be ready again");
+	}
 }
 
 __weak uint8_t SX1278_hw_SPIReadByte(SX1278_hw_t *hw) {
@@ -45,8 +55,8 @@ __weak uint8_t SX1278_hw_SPIReadByte(SX1278_hw_t *hw) {
 
 	SX1278_hw_SetNSS(hw, 0);
 	HAL_SPI_TransmitReceive(hw->spi, &txByte, &rxByte, 1, 1000);
-	while (HAL_SPI_GetState(hw->spi) != HAL_SPI_STATE_READY)
-		;
+	SX1278_hw_WaitForSPIReady(hw);
+
 	return rxByte;
 }
 

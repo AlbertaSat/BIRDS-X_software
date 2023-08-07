@@ -297,6 +297,12 @@ void SX1278_config(SX1278_t *module);
  */
 void SX1278_entryLoRa(SX1278_t *module);
 
+// TODO: docs
+void SX1278_entryFSK(SX1278_t *module, bool ook);
+
+// TODO: docs (should be 0x12 or 0x22 return most likely)
+uint8_t SK1278_getChipVersion(SX1278_t *module);
+
 /**
  * \brief Clear IRQ
  *

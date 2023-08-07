@@ -119,12 +119,39 @@ void SX1278_standby(SX1278_t *module) {
 }
 
 void SX1278_sleep(SX1278_t *module) {
+	// 0x08 = 0b00001000
 	SX1278_SPIWrite(module, LR_RegOpMode, 0x08);
 	module->status = SLEEP;
 }
 
 void SX1278_entryLoRa(SX1278_t *module) {
+	// 0x88 = 0b10001000
+	// Bit 7 = 1: LoRa
+	// Bit 6,5 = 00: FSK (but unused presumably)
+	// Bit 4 = 0: Reserved
+	// Bit 3: 1 = LowFrequencyModeOn
+	// Bit 2-0: 000 = Sleep Mode
 	SX1278_SPIWrite(module, LR_RegOpMode, 0x88);
+}
+
+void SX1278_entryFSK(SX1278_t *module, bool ook) {
+	// Bit 7: 0 = FSK/OOK
+	// Bit 6-5: 00 = FSK (00) or OOK (01)
+	// Bit 4: 0 = Reserved
+	// Bit 3: LowFrequencyModeOn = ON (1)
+	// Bit 2-0: 000 = Sleep Mode
+
+	uint8_t value = 0b00001000; // = 0x08
+
+	// if ook is true, set bit 5 to 1; else no change
+	value |= (ook << 5);
+
+	SX1278_SPIWrite(module, RegOpMode, value);
+	// TODO: set status, if it matters
+}
+
+uint8_t SK1278_getChipVersion(SX1278_t *module) {
+	return SX1278_SPIRead(module, RegVersion);
 }
 
 void SX1278_clearLoRaIrq(SX1278_t *module) {

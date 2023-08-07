@@ -15,4 +15,7 @@ void init_sx1276();
 void check_sx1276_and_log_status();
 
 
+void sx_debug_print_a_register(uint8_t register_address, uint8_t register_name_cstr[]);
+
+
 #endif /* INC_RF_CONTROLLER_H_ */

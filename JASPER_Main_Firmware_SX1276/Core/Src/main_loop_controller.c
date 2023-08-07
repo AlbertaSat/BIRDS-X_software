@@ -12,11 +12,11 @@ void run_once_on_boot() {
 
 
 
-	debug_println("Done run_once_on_boot()");
+	debug_println("INFO: Done run_once_on_boot()");
 }
 
 void main_loop() {
-	debug_println("Starting main_loop()");
+	debug_println("INFO: Starting main_loop()");
 	
 	read_and_execute_next_incoming_command();
 

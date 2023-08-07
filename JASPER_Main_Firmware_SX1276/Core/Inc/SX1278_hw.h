@@ -60,6 +60,9 @@ void SX1278_hw_Reset(SX1278_hw_t *hw);
  */
 void SX1278_hw_SPICommand(SX1278_hw_t *hw, uint8_t cmd);
 
+// TODO: docs
+void SX1278_hw_WaitForSPIReady(SX1278_hw_t *hw);
+
 /**
  * \brief Reads data via SPI
  *
@@ -89,7 +92,7 @@ void SX1278_hw_DelayMs(uint32_t msec);
  *
  * \return				0 if DIO0 low, 1 if DIO high
  */
-int SX1278_hw_GetDIO0(SX1278_hw_t *hw);
+int SX1278_hw_GetDIO0(SX1278_hw_t *hw); // only used in rx/tx of LoRa packets currently
 
 #endif
 
