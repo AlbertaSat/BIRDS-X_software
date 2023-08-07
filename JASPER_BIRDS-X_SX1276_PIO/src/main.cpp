@@ -13,7 +13,7 @@ void setup() {
 }
 
 void loop() {
-  Serial.println("INFO: Starting loop() XXX;");
+  Serial.println("INFO: Starting loop() XXXX;");
 
   // write PC6 and PA11 to blink
   digitalWrite(PC6, HIGH);
