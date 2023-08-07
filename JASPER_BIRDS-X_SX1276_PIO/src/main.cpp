@@ -1,18 +1,28 @@
 #include <Arduino.h>
 
-// put function declarations here:
-int myFunction(int, int);
+#define DebugPort Serial1
 
 void setup() {
-  // put your setup code here, to run once:
-  int result = myFunction(2, 3);
+  Serial.begin(115200);
+  Serial.println("INFO: Booting JASPER SX1276 Board (Rev2) with PIO Firmware");
+
+  // LEDs in output mode
+  pinMode(PC6, OUTPUT);
+  pinMode(PA11, OUTPUT);
+
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-}
+  Serial.println("INFO: Starting loop() XXX;");
 
-// put function definitions here:
-int myFunction(int x, int y) {
-  return x + y;
+  // write PC6 and PA11 to blink
+  digitalWrite(PC6, HIGH);
+  digitalWrite(PA11, HIGH);
+
+  delay(500);
+
+  digitalWrite(PC6, LOW);
+  digitalWrite(PA11, LOW);
+  delay(1000);
+
 }
