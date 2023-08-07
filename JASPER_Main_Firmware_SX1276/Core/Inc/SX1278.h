@@ -17,6 +17,14 @@
 #define SX1278_MAX_PACKET	256
 #define SX1278_DEFAULT_TIMEOUT		3000
 
+
+// SX127x physical layer properties (from RadioLib)
+#define RADIOLIB_SX127X_FREQUENCY_STEP_SIZE                     61.03515625
+#define RADIOLIB_SX127X_MAX_PACKET_LENGTH                       255
+#define RADIOLIB_SX127X_MAX_PACKET_LENGTH_FSK                   64
+#define RADIOLIB_SX127X_CRYSTAL_FREQ_MHZ                        32.0
+#define RADIOLIB_SX127X_DIV_EXPONENT                            19
+
 //RFM98 Internal registers Address
 /********************LoRa mode***************************/
 #define LR_RegFifo                                  0x00
@@ -209,8 +217,14 @@ typedef enum _SX1278_STATUS {
 	SLEEP, STANDBY, TX, RX
 } SX1278_Status_t;
 
+typedef enum _SX1278_OP_MODE {
+	OP_MODE_LORA, OP_MODE_FSK, OP_MODE_OOK
+} SX1278_Op_Mode_t;
+
 typedef struct {
 	SX1278_hw_t *hw;
+
+	SX1278_Op_Mode_t op_mode;
 
 	uint64_t frequency;
 	uint8_t power;
@@ -285,6 +299,12 @@ void SX1278_SPIBurstWrite(SX1278_t *module, uint8_t addr, uint8_t *txBuf,
  */
 void SX1278_config(SX1278_t *module);
 
+// TODO: docs
+void SX1278_setFreq(SX1278_t *module);
+
+// TODO: docs
+void SX1278_FSKSetBitRate(SX1278_t *module, float bitrate_khz);
+
 /**
  * \brief Entry LoRa mode
  *
@@ -298,7 +318,7 @@ void SX1278_config(SX1278_t *module);
 void SX1278_entryLoRa(SX1278_t *module);
 
 // TODO: docs
-void SX1278_entryFSK(SX1278_t *module, bool ook);
+void SX1278_entryFSK(SX1278_t *module);
 
 // TODO: docs (should be 0x12 or 0x22 return most likely)
 uint8_t SK1278_getChipVersion(SX1278_t *module);
@@ -486,5 +506,11 @@ void SX1278_standby(SX1278_t *module);
  * \param[in]  module	Pointer to LoRa structure
  */
 void SX1278_sleep(SX1278_t *module);
+
+// TODO: docs
+uint8_t SX127x_calculateBWManExp(float bandwidth_khz);
+
+// TODO: docs
+void SX127x_setFSKRxBandwidth(SX1278_t *module, float bandwidth_khz);
 
 #endif

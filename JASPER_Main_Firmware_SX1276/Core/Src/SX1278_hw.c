@@ -44,9 +44,9 @@ __weak void SX1278_hw_WaitForSPIReady(SX1278_hw_t *hw) {
 		SX1278_hw_DelayMs(1);
 		wait_counter--;
 	}
-	if (wait_counter == 0) { // TODO: remove this
-		debug_println("WARNING: timeout waiting for SPI to be ready again");
-	}
+	//if (wait_counter == 0) { // TODO: remove this
+	//	debug_println("WARNING: timeout waiting for SPI to be ready again");
+	//}
 }
 
 __weak uint8_t SX1278_hw_SPIReadByte(SX1278_hw_t *hw) {

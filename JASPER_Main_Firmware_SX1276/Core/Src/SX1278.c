@@ -61,12 +61,7 @@ void SX1278_config(SX1278_t *module) {
 	SX1278_entryLoRa(module);
 	//SX1278_SPIWrite(module, 0x5904); //?? Change digital regulator form 1.6V to 1.47V: see errata note
 
-	uint64_t freq = ((uint64_t) module->frequency << 19) / 32000000;
-	uint8_t freq_reg[3];
-	freq_reg[0] = (uint8_t) (freq >> 16);
-	freq_reg[1] = (uint8_t) (freq >> 8);
-	freq_reg[2] = (uint8_t) (freq >> 0);
-	SX1278_SPIBurstWrite(module, LR_RegFrMsb, (uint8_t*) freq_reg, 3); //setting  frequency parameter
+	SX1278_setFreq(module);
 
 	SX1278_SPIWrite(module, RegSyncWord, 0x34);
 
@@ -113,6 +108,52 @@ void SX1278_config(SX1278_t *module) {
 	SX1278_standby(module); //Entry standby mode
 }
 
+void SX1278_setFreq(SX1278_t *module) {
+	uint64_t freq = ((uint64_t) module->frequency << 19) / (RADIOLIB_SX127X_CRYSTAL_FREQ_MHZ * 1e6);
+	uint8_t freq_reg[3];
+	freq_reg[0] = (uint8_t) (freq >> 16);
+	freq_reg[1] = (uint8_t) (freq >> 8);
+	freq_reg[2] = (uint8_t) (freq >> 0);
+	SX1278_SPIBurstWrite(module, LR_RegFrMsb, (uint8_t*) freq_reg, 3); // setting  frequency parameter
+}
+
+
+void SX1278_FSKSetBitRate(SX1278_t *module, float bitrate_khz) {
+  // check active modem
+//  if(getActiveModem() != RADIOLIB_SX127X_FSK_OOK) {
+//    return(RADIOLIB_ERR_WRONG_MODEM);
+//  }
+
+  // check allowed bit rate
+  // datasheet says 1.2 kbps should be the smallest possible, but 0.512 works fine
+//  if(ookEnabled) {
+//    RADIOLIB_CHECK_RANGE(br, 0.5, 32.768002, RADIOLIB_ERR_INVALID_BIT_RATE);      // Found that 32.768 is 32.768002
+//  } else {
+//    RADIOLIB_CHECK_RANGE(br, 0.5, 300.0, RADIOLIB_ERR_INVALID_BIT_RATE);
+//  }
+
+  // set mode to STANDBY
+  //int16_t state = setMode(RADIOLIB_SX127X_STANDBY);
+  //RADIOLIB_ASSERT(state);
+
+  // set bit rate
+  uint16_t bitRate = (RADIOLIB_SX127X_CRYSTAL_FREQ_MHZ * 1000.0) / bitrate_khz;
+  SX1278_SPIWrite(module, RegBitRateMsb, (bitRate & 0xFF00) >> 8);
+  SX1278_SPIWrite(module, RegBitRateLsb, bitRate & 0x00FF);
+
+  // set fractional part of bit rate
+  if(module->op_mode != OP_MODE_OOK) {
+    float bitRateRem = ((RADIOLIB_SX127X_CRYSTAL_FREQ_MHZ * 1000.0) / (float)bitrate_khz) - (float)bitRate;
+    uint8_t bitRateFrac = bitRateRem * 16;
+    SX1278_SPIWrite(module, RegBitRateFrac, bitRateFrac);
+  }
+
+//  if(state == RADIOLIB_ERR_NONE) {
+//    this->bitRate = br;
+//  }
+//  return(state);
+}
+
 void SX1278_standby(SX1278_t *module) {
 	SX1278_SPIWrite(module, LR_RegOpMode, 0x09);
 	module->status = STANDBY;
@@ -134,19 +175,21 @@ void SX1278_entryLoRa(SX1278_t *module) {
 	SX1278_SPIWrite(module, LR_RegOpMode, 0x88);
 }
 
-void SX1278_entryFSK(SX1278_t *module, bool ook) {
+void SX1278_entryFSK(SX1278_t *module) {
 	// Bit 7: 0 = FSK/OOK
 	// Bit 6-5: 00 = FSK (00) or OOK (01)
 	// Bit 4: 0 = Reserved
 	// Bit 3: LowFrequencyModeOn = ON (1)
 	// Bit 2-0: 000 = Sleep Mode
 
-	uint8_t value = 0b00001000; // = 0x08
+	bool ook = (module->op_mode == OP_MODE_OOK);
+
+	uint8_t reg_value = 0b00001000; // = 0x08
 
 	// if ook is true, set bit 5 to 1; else no change
-	value |= (ook << 5);
+	reg_value |= (ook << 5);
 
-	SX1278_SPIWrite(module, RegOpMode, value);
+	SX1278_SPIWrite(module, RegOpMode, reg_value);
 	// TODO: set status, if it matters
 }
 
@@ -316,4 +359,25 @@ uint8_t SX1278_RSSI(SX1278_t *module) {
 	temp = SX1278_SPIRead(module, RegRssiValue);
 	temp = 127 - (temp >> 1);	//127:Max RSSI
 	return temp;
+}
+
+uint8_t SX127x_calculateBWManExp(float bandwidth_khz) {
+  for(uint8_t e = 7; e >= 1; e--) {
+    for(int8_t m = 2; m >= 0; m--) {
+      float point = (RADIOLIB_SX127X_CRYSTAL_FREQ_MHZ * 1000000.0)/(((4 * m) + 16) * ((uint32_t)1 << (e + 2)));
+      if(fabs(bandwidth_khz - ((point / 1000.0) + 0.05)) <= 0.5) {
+        return((m << 3) | e);
+      }
+    }
+  }
+  return 0;
+}
+
+void SX127x_setFSKRxBandwidth(SX1278_t *module, float bandwidth_khz) {
+	uint8_t reg_val = SX127x_calculateBWManExp(bandwidth_khz);
+
+	// safety: keep only bits 4-0
+	reg_val &= 0x1F; // 0b0001_1111;
+
+	SX1278_SPIWrite(module, RegRxBw, reg_val);
 }

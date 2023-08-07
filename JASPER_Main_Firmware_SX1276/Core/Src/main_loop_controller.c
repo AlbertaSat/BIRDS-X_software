@@ -6,7 +6,7 @@
 #include <stdio.h>
 
 void run_once_on_boot() {
-	debug_println("Starting run_once_on_boot()");
+	debug_println("\n\nINFO: Starting run_once_on_boot()");
 
 	init_sx1276();
 

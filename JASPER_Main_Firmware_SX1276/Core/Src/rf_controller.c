@@ -25,6 +25,7 @@ void init_sx1276() {
 	//SX1278_hw.reset.pin = RESET_Pin;
 	SX1278_hw.spi = &hspi1;
 	SX1278.hw = &SX1278_hw;
+	SX1278.op_mode = OP_MODE_OOK; // use either OP_MODE_OOK or OP_MODE_FSK
 
 	debug_println("INFO: Past the assignment init section.");
 
@@ -36,17 +37,34 @@ void init_sx1276() {
 	//	);
 
 	// set FSK/OOK mode
-	debug_println("INFO: running SX1278_sleep(&SX1278);");
 	SX1278_sleep(&SX1278);
-	debug_println("INFO: done SX1278_sleep(&SX1278);");
 	SX1278_hw_DelayMs(100);
-	sx_debug_print_a_register(RegVersion, "RegVersion (should be 0x12 or 0x22)");
+	sx_debug_print_a_register(RegVersion, "RegVersion (should be 0x12)");
 
-	sx_debug_print_a_register(RegOpMode, "RegOpMode_after");
 	SX1278_hw_DelayMs(15);
-	SX1278_entryFSK(&SX1278, 1); // for now, set OOK=True (as that's what's suggested in the guide)
+	SX1278_entryFSK(&SX1278); // for now, set OOK=True (as that's what's suggested in the guide)
 
-	sx_debug_print_a_register(RegOpMode, "RegOpMode_after");
+	sx_debug_print_a_register(RegOpMode, "RegOpMode (after entryFSK)");
+
+	// set carrier freq
+	SX1278.frequency = 145825000;
+	SX1278_setFreq(&SX1278);
+
+	// set rx bitrate
+	float bitrate_khz = 26.4; // 26.4 kHz = (2200 Hz * 1200 Hz / 100) // TODO: should be able so make this work at 13.2 kHz (LCM of the 2 numbers)
+	SX1278_FSKSetBitRate(&SX1278, bitrate_khz);
+
+	// set RX bandwidth
+	// TODO: optionally set freqDev, rxBw, power (all left as defaults) in the test code
+	// RadioLib Debugs: int16_t beginFSK(
+		// float freq = 434.0
+		// float br = 4.8 // bitrate
+		// float freqDev = 5.0
+		// float rxBw = 125.0
+		// int8_t power = 10
+		// uint16_t preambleLength = 16
+		// bool enableOOK = false
+
 
 	//
 
@@ -73,6 +91,9 @@ void test_sx_spi() {
 	//SX1278_init(module, frequency, power, LoRa_SF, LoRa_BW, LoRa_CR, LoRa_CRC_sum, packetLength)
 }
 
+void sx_activate_rx_mode() {
+
+}
 
 void sx_debug_print_a_register(uint8_t register_address, uint8_t register_name_cstr[]) {
 	// register_address can be something like RegOpMode (0x01) or RegVersion (0x42)
@@ -80,7 +101,7 @@ void sx_debug_print_a_register(uint8_t register_address, uint8_t register_name_c
 	// do a check: read back the hex value (should be 0x28 with OOK and 0x08 without OOK)
 	SX1278_hw_DelayMs(15); // safety
 	uint8_t register_value = SX1278_SPIRead(&SX1278, register_address);
-	uint8_t msg1[255];
+	const uint8_t msg1[255];
 	sprintf(msg1, "INFO: %s register_value = 0x%02X (hex)", register_name_cstr, register_value);
 	debug_println(msg1);
 	SX1278_hw_DelayMs(15); // safety

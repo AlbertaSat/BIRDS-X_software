@@ -93,8 +93,8 @@ int main(void)
   MX_USART1_UART_Init();
   MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
-	const uint8_t msg1[] = "INFO: Booting JASPER_Main_Firmware_SX1276\n";
-	HAL_UART_Transmit(&huart1, msg1, strlen(msg1), 120);
+
+	debug_println("INFO: Booting JASPER_Main_Firmware_SX1276");
 	HAL_Delay(250);
 
 	run_once_on_boot();
