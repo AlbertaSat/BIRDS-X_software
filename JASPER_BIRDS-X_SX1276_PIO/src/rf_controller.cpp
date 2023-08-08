@@ -6,7 +6,7 @@
 #include <SPI.h>
 
 SPIClass spi(PB5, PB4, PB3, PB0); // mosi, miso, sclk, CS (used from here)
-SPISettings spiSettings(8000000, MSBFIRST, SPI_MODE0);
+SPISettings spiSettings(1000000, MSBFIRST, SPI_MODE0); // TODO: increase back to 8 MHz
 SX1276 radio = new Module(PB0, RADIOLIB_NC, RADIOLIB_NC, RADIOLIB_NC, spi, spiSettings); // cs, irq, rst, gpio (maybee DIO2 or DIO1)
 
 void init_sx1276() {
@@ -23,6 +23,10 @@ void init_sx1276() {
 		delay(200);
 	}
 	BossSerial.printf("INFO: SPI version register: 0x%02X (should be 0x12 on SX1276, or 0x22 on others)\n", version);
+
+	BossSerial.println("DEBUG: running radio.standby();");
+	radio.standby();
+	BossSerial.println("DEBUG: done radio.standby();");
 
 	// do the actual init/begin of the radio
 	int state = radio.beginFSK(145.825, 26.4); // 26.4 kHz = 2200 Hz * 1200 Hz (from Bell 202 modulation)

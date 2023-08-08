@@ -1,3 +1,4 @@
+
 #include <Arduino.h>
 
 #include "rf_controller.h"
@@ -8,7 +9,6 @@
 void setup() {
 
 	run_once_at_boot();
-
 
 	uint64_t superloop_counter = 0;
 	while (1) {
