@@ -27,7 +27,8 @@
     "cmsis",
     "stm32cube"
   ],
-  "name": "ST NUCLEO-G031K8",
+  "platforms": ["ststm32"],
+  "name": "ST NUCLEO-G031K8 JASPER Rev2",
   "upload": {
     "maximum_ram_size": 8192,
     "maximum_size": 65536,
