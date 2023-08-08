@@ -1,32 +1,21 @@
 #include <Arduino.h>
 
-HardwareSerial BossSerial(USART1);
+#include "rf_controller.h"
+#include "command_uart_controller.h"
+#include "main_loop_controller.h"
+
 
 void setup() {
 
-	BossSerial.setRx(PB7);
-	BossSerial.setTx(PB6);
-	BossSerial.begin(115200);
-	BossSerial.println("INFO: Booting JASPER SX1276 Board (Rev2) with PIO Firmware");
-
-	// Debug LEDs in output mode
-	pinMode(PC6, OUTPUT);
-	pinMode(PA11, OUTPUT);
+	run_once_at_boot();
 
 
 	uint64_t superloop_counter = 0;
 	while (1) {
 		BossSerial.printf("INFO: Starting loop() (superloop_counter=%lu)\n", superloop_counter++);
 
-		// write PC6 and PA11 to blink
-		digitalWrite(LED_BUILTIN, HIGH);
-		digitalWrite(PA11, HIGH);
-
-		delay(500);
-
-		digitalWrite(LED_BUILTIN, LOW);
-		digitalWrite(PA11, LOW);
-		delay(1000);
+		main_loop_single_iteration();
+		
 	}
 
 }
