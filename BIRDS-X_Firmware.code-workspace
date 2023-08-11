@@ -2,6 +2,14 @@
 	"folders": [
 		{
 			"path": "."
+		},
+		{
+			"name": "JASPER_BIRDS-X_DRA818V_PIO",
+			"path": "JASPER_BIRDS-X_DRA818V_PIO"
+		},
+		{
+			"name": "TestNucTNC",
+			"path": "../../Documents/PlatformIO/Projects/TestNucTNC"
 		}
 	],
 	"settings": {}
