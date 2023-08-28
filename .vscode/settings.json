@@ -1,0 +1,8 @@
+{
+        "files.eol": "\n",
+        "editor.insertSpaces": false,
+        "editor.tabSize": 4,
+        "files.insertFinalNewline": true,
+        "cmake.configureOnOpen": false
+}
+
