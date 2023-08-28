@@ -21,6 +21,7 @@ along with VP-Digi.  If not, see <http://www.gnu.org/licenses/>.
 #include "ax25.h"
 #include "common.h"
 #include <string.h>
+#include <stdlib.h>
 
 #include "digipeater.h"
 
