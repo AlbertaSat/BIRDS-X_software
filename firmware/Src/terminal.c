@@ -215,6 +215,7 @@ void term_sendNumber(int32_t n)
  */
 static uint8_t checkcmd(uint8_t *data, uint8_t dlen, uint8_t *cmd)
 {
+	// TODO: provide compile-time error if dlen != strlen(cmd), when cmd is const*const (nearly always)
 	for(uint8_t a = 0; a < dlen; a++)
 	{
 		if(*(data + a) != *(cmd + a))
@@ -238,7 +239,7 @@ void term_parse(uint8_t *cmd, uint16_t len, Terminal_stream src, Uart_data_type 
 
 	if(
 		checkcmd(cmd, 4, (uint8_t*)"kiss") || checkcmd(cmd, 6, (uint8_t*)"config") || checkcmd(cmd, 7, (uint8_t*)"monitor") ||
-		checkcmd(cmd, 3, (uint8_t*)"dra") || checkcmd(cmd, 3, (uint8_t*)"boss")
+		checkcmd(cmd, 3, (uint8_t*)"dra") || checkcmd(cmd, 4, (uint8_t*)"boss")
 	) {
 		term_setPortMode(cmd, len, src, type, mode);
 		return;
@@ -322,7 +323,7 @@ void term_setPortMode(uint8_t *cmd, uint16_t len, Terminal_stream src, Uart_data
 		return;
 	}
 
-	if(checkcmd(cmd, 7, (uint8_t*)"dra"))
+	if(checkcmd(cmd, 3, (uint8_t*)"dra"))
 	{
 		if(src == TERM_UART1)
 		{
@@ -339,7 +340,7 @@ void term_setPortMode(uint8_t *cmd, uint16_t len, Terminal_stream src, Uart_data
 		return;
 	}
 
-	if(checkcmd(cmd, 7, (uint8_t*)"boss"))
+	if(checkcmd(cmd, 4, (uint8_t*)"boss"))
 	{
 		if(src == TERM_UART1)
 		{
