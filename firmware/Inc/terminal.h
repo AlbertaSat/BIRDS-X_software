@@ -26,7 +26,9 @@ typedef enum
 {
 	TERM_ANY,
 	TERM_UART1,
-	TERM_UART2
+	TERM_UART2,
+	TERM_NONE, // no terminal to write to
+	TERM_INTERNAL_BUFFER, // FIXME: make this do something
 } Terminal_stream;
 
 #define TERMBUFLEN 300
@@ -46,11 +48,15 @@ void term_handleSpecial(Terminal_stream src);
  */
 void term_sendMonitor(uint8_t *data, uint16_t len);
 
+void term_sendToMode(uint8_t *data, uint16_t len, Uart_mode mode);
+
 /**
  * \brief Send number to all available monitor outputs
  * \param[in] data Number to send
  */
 void term_sendMonitorNumber(int32_t data);
+
+void term_sendNumberToMode(int32_t data, Uart_mode mode);
 
 /**
 * \brief Send terminal buffer using specified stream
@@ -82,9 +88,17 @@ void term_sendNumber(int32_t n);
  * \param[in] *cmd Data
  * \param[in] len Data length
  * \param[in] src Source: TERM_USB, TERM_UART1, TERM_UART2
- * \param[in] type Data type: DATA_KISS, DATA_TERM
- * \param[in] mode Input mode: MODE_KISS, MODE_TERM, MODE_MONITOR
+ * \param[in] type Data type: DATA_KISS, DATA_TERM, etc.
+ * \param[in] mode Input mode: MODE_KISS, MODE_TERM, MODE_MONITOR, etc.
  */
 void term_parse(uint8_t *cmd, uint16_t len, Terminal_stream src, Uart_data_type type, Uart_mode mode);
+
+void term_setPortMode(uint8_t *cmd, uint16_t len, Terminal_stream src, Uart_data_type type, Uart_mode mode);
+
+void term_doIncomingMonitorCommand(uint8_t *cmd, uint16_t len, Terminal_stream src);
+
+void term_doIncomingTerminalCommand(uint8_t *cmd, uint16_t len, Terminal_stream src);
+
+void term_printHelpMessage(Terminal_stream src);
 
 #endif /* DEBUG_H_ */

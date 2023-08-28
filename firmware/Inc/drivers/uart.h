@@ -28,12 +28,16 @@ typedef enum
 	MODE_KISS,
 	MODE_TERM,
 	MODE_MONITOR,
+	MODE_DRA,
+	MODE_BOSS,
 } Uart_mode;
 
 typedef enum
 {
 	DATA_KISS,
 	DATA_TERM,
+	DATA_DRA,
+	DATA_BOSS,
 	DATA_NOTHING,
 } Uart_data_type;
 
@@ -56,7 +60,8 @@ extern Uart uart1, uart2;
 
 
 /**
- * \brief Copy KISS frame(s) from input buffer to APRS TX buffer
+ * \brief Copies KISS frame(s) from input buffer to APRS TX buffer.
+ * Has nothing to do with UART, as far as I can tell.
  * \param[in] *buf Input buffer
  * \param[in] len Input buffer size
  */

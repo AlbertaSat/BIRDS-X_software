@@ -37,48 +37,51 @@ uint16_t spLastIdx[3] = {0, 0, 0}; //index buffer was "special" terminal cases
  */
 void term_handleSpecial(Terminal_stream src)
 {
-	if((src == TERM_UART1) || (src == TERM_UART2))
+	if( ! ((src == TERM_UART1) || (src == TERM_UART2)))
+		return;
+
+	Uart *u = &uart1;
+	uint8_t nr = 1;
+	if(src == TERM_UART2)
 	{
-		Uart *u = &uart1;
-		uint8_t nr = 1;
-		if(src == TERM_UART2)
-		{
-			u = &uart2;
-			nr = 2;
-		}
-
-
-		if(u->mode == MODE_KISS) //don't do anything in KISS mode
-		{
-			spLastIdx[nr] = 0;
-			return;
-		}
-		if(spLastIdx[nr] >= u->bufrxidx) //UART RX buffer index was probably cleared
-			spLastIdx[nr] = 0;
-
-		if(u->bufrx[u->bufrxidx - 1] == '\b') //user entered backspace
-		{
-			if(u->bufrxidx > 1) //there was some data in buffer
-			{
-				u->bufrxidx -= 2; //remove backspace and preceding character
-				uart_sendString(u, (uint8_t*)"\b \b", 3); //backspace (one character left), remove backspaced character (send space) and backspace again
-				if(spLastIdx[nr] > 0)
-					spLastIdx[nr]--; //1 character was removed
-			}
-			else //there was only a backspace
-				u->bufrxidx = 0;
-		}
-		uint16_t t = u->bufrxidx; //store last index
-		if(spLastIdx[nr] < t) //local echo handling
-		{
-			uart_sendString(u, &u->bufrx[spLastIdx[nr]], t - spLastIdx[nr]); //echo characters entered by user
-			if((u->bufrx[t - 1] == '\r') || (u->bufrx[t - 1] == '\n'))
-				uart_sendString(u, (uint8_t*)"\r\n", 2);
-			spLastIdx[nr] = t;
-		}
-		uart_transmitStart(u);
+		u = &uart2;
+		nr = 2;
 	}
 
+	if((u->mode != MODE_TERM) && (u->mode != MODE_MONITOR)) //don't do anything in KISS/DRA/BOSS mode
+	{
+		spLastIdx[nr] = 0;
+		return;
+	}
+	if(spLastIdx[nr] >= u->bufrxidx) //UART RX buffer index was probably cleared
+		spLastIdx[nr] = 0;
+
+	if(u->bufrx[u->bufrxidx - 1] == '\b') //user entered backspace
+	{
+		if(u->bufrxidx > 1) //there was some data in buffer
+		{
+			u->bufrxidx -= 2; //remove backspace and preceding character
+			uart_sendString(u, (uint8_t*)"\b \b", 3); //backspace (one character left), remove backspaced character (send space) and backspace again
+			if(spLastIdx[nr] > 0)
+				spLastIdx[nr]--; //1 character was removed
+		}
+		else //there was only a backspace
+			u->bufrxidx = 0;
+	}
+	uint16_t t = u->bufrxidx; //store last index
+	if(spLastIdx[nr] < t) //local echo handling
+	{
+		uart_sendString(u, &u->bufrx[spLastIdx[nr]], t - spLastIdx[nr]); //echo characters entered by user
+		if((u->bufrx[t - 1] == '\r') || (u->bufrx[t - 1] == '\n'))
+			uart_sendString(u, (uint8_t*)"\r\n", 2);
+		spLastIdx[nr] = t;
+	}
+	uart_transmitStart(u);
+	
+}
+
+void term_sendMonitor(uint8_t *data, uint16_t len) {
+	term_sendToMode(data, len, MODE_MONITOR);
 }
 
 /**
@@ -86,32 +89,36 @@ void term_handleSpecial(Terminal_stream src)
  * \param[in] *data Data to send
  * \param[in] len Data length or 0 for NULL-terminated data
  */
-void term_sendMonitor(uint8_t *data, uint16_t len)
+void term_sendToMode(uint8_t *data, uint16_t len, Uart_mode mode)
 {
-	if((uart1.enabled) && (uart1.mode == MODE_MONITOR))
+	if((uart1.enabled) && (uart1.mode == mode))
 	{
 		uart_sendString(&uart1, data, len);
 		uart_transmitStart(&uart1);
 	}
-	if((uart2.enabled) && (uart2.mode == MODE_MONITOR))
+	if((uart2.enabled) && (uart2.mode == mode))
 	{
 		uart_sendString(&uart2, data, len);
 		uart_transmitStart(&uart2);
 	}
 }
 
+void term_sendMonitorNumber(int32_t data) {
+	term_sendNumberToMode(data, MODE_MONITOR);
+}
+
 /**
  * \brief Send number to all available monitor outputs
  * \param[in] data Number to send
  */
-void term_sendMonitorNumber(int32_t data)
+void term_sendNumberToMode(int32_t data, Uart_mode mode)
 {
-	if((uart1.enabled) && (uart1.mode == MODE_MONITOR))
+	if((uart1.enabled) && (uart1.mode == mode))
 	{
 		uart_sendNumber(&uart1, data);
 		uart_transmitStart(&uart1);
 	}
-	if((uart2.enabled) && (uart2.mode == MODE_MONITOR))
+	if((uart2.enabled) && (uart2.mode == mode))
 	{
 		uart_sendNumber(&uart2, data);
 		uart_transmitStart(&uart2);
@@ -221,14 +228,48 @@ static uint8_t checkcmd(uint8_t *data, uint8_t dlen, uint8_t *cmd)
  * \param[in] *cmd Data
  * \param[in] len Data length
  * \param[in] src Source: TERM_USB, TERM_UART1, TERM_UART2
- * \param[in] type Data type: DATA_KISS, DATA_TERM
- * \param[in] mode Input mode: MODE_KISS, MODE_TERM, MODE_MONITOR
+ * \param[in] type Data type: DATA_KISS, DATA_TERM, etc.
+ * \param[in] mode Input mode: MODE_KISS, MODE_TERM, MODE_MONITOR, etc.
  */
 void term_parse(uint8_t *cmd, uint16_t len, Terminal_stream src, Uart_data_type type, Uart_mode mode)
 {
 	if(src == TERM_ANY) //incorrect source
 		return;
 
+	if(
+		checkcmd(cmd, 4, (uint8_t*)"kiss") || checkcmd(cmd, 6, (uint8_t*)"config") || checkcmd(cmd, 7, (uint8_t*)"monitor") ||
+		checkcmd(cmd, 3, (uint8_t*)"dra") || checkcmd(cmd, 3, (uint8_t*)"boss")
+	) {
+		term_setPortMode(cmd, len, src, type, mode);
+		return;
+	}
+
+
+	if((mode == MODE_KISS) && (type == DATA_KISS))
+	{
+		Uart_txKiss(cmd, len); //if received KISS data, transmit KISS frame
+		return;
+	}
+
+	if((mode == MODE_MONITOR) && (type == DATA_TERM)) // monitor mode
+	{
+		term_doIncomingMonitorCommand(cmd, len, src);
+		return;
+	}
+
+	// FIXME: add MODE_DRA and MODE_BOSS handlers here
+
+	if((mode != MODE_TERM)) return;
+
+	if(mode == MODE_TERM) {
+		term_doIncomingTerminalCommand(cmd, len, src);
+	}
+
+
+}
+
+void term_setPortMode(uint8_t *cmd, uint16_t len, Terminal_stream src, Uart_data_type type, Uart_mode mode) {
+	
 	if(checkcmd(cmd, 4, (uint8_t*)"kiss"))
 	{
 		if(src == TERM_UART1)
@@ -281,183 +322,142 @@ void term_parse(uint8_t *cmd, uint16_t len, Terminal_stream src, Uart_data_type 
 		return;
 	}
 
-	if((mode == MODE_KISS) && (type == DATA_KISS))
+	if(checkcmd(cmd, 7, (uint8_t*)"dra"))
 	{
-		Uart_txKiss(cmd, len); //if received KISS data, transmit KISS frame
+		if(src == TERM_UART1)
+		{
+			term_sendString((uint8_t*)"UART1 switched to DRA mode\r\n", 0);
+			term_sendBuf(TERM_UART1);
+			uart1.mode = MODE_DRA;
+		}
+		else if(src == TERM_UART2)
+		{
+			term_sendString((uint8_t*)"UART2 switched to DRA mode\r\n", 0);
+			term_sendBuf(TERM_UART2);
+			uart2.mode = MODE_DRA;
+		}
 		return;
 	}
 
-	if((mode == MODE_MONITOR) && (type == DATA_TERM)) //monitor mode
+	if(checkcmd(cmd, 7, (uint8_t*)"boss"))
 	{
-		if(checkcmd(cmd, 4, (uint8_t*)"help"))
+		if(src == TERM_UART1)
 		{
-			term_sendString((uint8_t*)"\r\nCommans available in monitor mode:\r\n", 0);
-			term_sendString((uint8_t*)"help - shows this help page\r\n", 0);
-			term_sendString((uint8_t*)"cal {low|high|alt|stop} - transmits/stops transmitter calibration pattern\r\n", 0);
-			term_sendBuf(src);
-			term_sendString((uint8_t*)"\tlow - transmits MARK tone, high - transmits SPACE tone, alt - transmits alternating tones (null bytes)\r\n", 0);
-			term_sendString((uint8_t*)"beacon <beacon_number> - immediately transmits selected beacon (number from 0 to 7)\r\n", 0);
-			term_sendBuf(src);
-			term_sendString((uint8_t*)"kiss - switches to KISS mode\r\n", 0);
-			term_sendString((uint8_t*)"config - switches to config mode\r\n", 0);
-			term_sendString((uint8_t*)"reboot - reboots the device\r\n", 0);
-			term_sendString((uint8_t*)"version - shows full firmware version info\r\n\r\n\r\n", 0);
-			term_sendBuf(src);
-			return;
+			term_sendString((uint8_t*)"UART1 switched to Mission Boss mode\r\n", 0);
+			term_sendBuf(TERM_UART1);
+			uart1.mode = MODE_BOSS;
 		}
-		if(checkcmd(cmd, 7, (uint8_t*)"version"))
+		else if(src == TERM_UART2)
 		{
-			term_sendString((uint8_t*)versionString, 0);
-			term_sendBuf(src);
-			return;
+			term_sendString((uint8_t*)"UART2 switched to Mission Boss mode\r\n", 0);
+			term_sendBuf(TERM_UART2);
+			uart2.mode = MODE_BOSS;
 		}
-		if(checkcmd(cmd, 6, (uint8_t*)"reboot"))
+		return;
+	}
+}
+
+void term_doIncomingMonitorCommand(uint8_t *cmd, uint16_t len, Terminal_stream src) {
+	if(checkcmd(cmd, 4, (uint8_t*)"help"))
+	{
+		term_sendString((uint8_t*)"\r\nCommands available in monitor mode:\r\n", 0);
+		term_sendString((uint8_t*)"help - shows this help page\r\n", 0);
+		term_sendString((uint8_t*)"cal {low|high|alt|stop} - transmits/stops transmitter calibration pattern\r\n", 0);
+		term_sendBuf(src);
+		term_sendString((uint8_t*)"\tlow - transmits MARK tone, high - transmits SPACE tone, alt - transmits alternating tones (null bytes)\r\n", 0);
+		term_sendString((uint8_t*)"beacon <beacon_number> - immediately transmits selected beacon (number from 0 to 7)\r\n", 0);
+		term_sendBuf(src);
+		term_sendString((uint8_t*)"kiss - switches to KISS mode\r\n", 0);
+		term_sendString((uint8_t*)"config - switches to config mode\r\n", 0);
+		term_sendString((uint8_t*)"reboot - reboots the device\r\n", 0);
+		term_sendString((uint8_t*)"version - shows full firmware version info\r\n\r\n\r\n", 0);
+		term_sendBuf(src);
+		return;
+	}
+	if(checkcmd(cmd, 7, (uint8_t*)"version"))
+	{
+		term_sendString((uint8_t*)versionString, 0);
+		term_sendBuf(src);
+		return;
+	}
+	if(checkcmd(cmd, 6, (uint8_t*)"reboot"))
+	{
+		NVIC_SystemReset();
+		return;
+	}
+	if(checkcmd(cmd, 7, (uint8_t*)"beacon "))
+	{
+		if((cmd[7] > 47) && (cmd[7] < 56))
 		{
-			NVIC_SystemReset();
-			return;
-		}
-		if(checkcmd(cmd, 7, (uint8_t*)"beacon "))
-		{
-			if((cmd[7] > 47) && (cmd[7] < 56))
+			uint8_t bcno = cmd[7] - 48;
+			if((beacon[bcno].interval != 0) && (beacon[bcno].enable != 0))
 			{
-				uint8_t bcno = cmd[7] - 48;
-				if((beacon[bcno].interval != 0) && (beacon[bcno].enable != 0))
-				{
-					Beacon_send(bcno);
-					return;
-				}
-				else
-				{
-					term_sendString((uint8_t*)"Beacon " , 0);
-					term_sendNumber(bcno);
-					term_sendString((uint8_t*)" not enabled. Cannot transmit disabled beacons.\r\n", 0);
-					term_sendBuf(src);
-				}
+				Beacon_send(bcno);
 				return;
 			}
 			else
 			{
-				term_sendString((uint8_t*)"Beacon number must be within 0-7 range\r\n", 0);
+				term_sendString((uint8_t*)"Beacon " , 0);
+				term_sendNumber(bcno);
+				term_sendString((uint8_t*)" not enabled. Cannot transmit disabled beacons.\r\n", 0);
 				term_sendBuf(src);
-				return;
 			}
+			return;
 		}
-
-		if(checkcmd(cmd, 3, (uint8_t*)"cal"))
+		else
 		{
-				if(checkcmd(&cmd[4], 3, (uint8_t*)"low"))
-				{
-					term_sendString((uint8_t*)"Starting low tone calibration transmission\r\n", 0);
-					term_sendBuf(src);
-					Afsk_txTestStart(TEST_MARK);
-					return;
-				}
-				else if(checkcmd(&cmd[4], 4, (uint8_t*)"high"))
-				{
-					term_sendString((uint8_t*)"Starting high tone calibration transmission\r\n", 0);
-					term_sendBuf(src);
-					Afsk_txTestStart(TEST_SPACE);
-					return;
-				}
-				else if(checkcmd(&cmd[4], 3, (uint8_t*)"alt"))
-				{
-					term_sendString((uint8_t*)"Starting alternating tones calibration pattern transmission\r\n", 0);
-					term_sendBuf(src);
-					Afsk_txTestStart(TEST_ALTERNATING);
-					return;
-				}
-				else if(checkcmd(&cmd[4], 4, (uint8_t*)"stop"))
-				{
-					term_sendString((uint8_t*)"Stopping calibration transmission\r\n", 0);
-					term_sendBuf(src);
-					Afsk_txTestStop();
-					return;
-				}
-			term_sendString((uint8_t*)"Usage: cal {low|high|alt|stop}\r\n", 0);
+			term_sendString((uint8_t*)"Beacon number must be within 0-7 range\r\n", 0);
 			term_sendBuf(src);
 			return;
 		}
+	}
 
-		term_sendString((uint8_t*)"Unknown command. For command list type \"help\"\r\n", 0);
+	if(checkcmd(cmd, 3, (uint8_t*)"cal"))
+	{
+			if(checkcmd(&cmd[4], 3, (uint8_t*)"low"))
+			{
+				term_sendString((uint8_t*)"Starting low tone calibration transmission\r\n", 0);
+				term_sendBuf(src);
+				Afsk_txTestStart(TEST_MARK);
+				return;
+			}
+			else if(checkcmd(&cmd[4], 4, (uint8_t*)"high"))
+			{
+				term_sendString((uint8_t*)"Starting high tone calibration transmission\r\n", 0);
+				term_sendBuf(src);
+				Afsk_txTestStart(TEST_SPACE);
+				return;
+			}
+			else if(checkcmd(&cmd[4], 3, (uint8_t*)"alt"))
+			{
+				term_sendString((uint8_t*)"Starting alternating tones calibration pattern transmission\r\n", 0);
+				term_sendBuf(src);
+				Afsk_txTestStart(TEST_ALTERNATING);
+				return;
+			}
+			else if(checkcmd(&cmd[4], 4, (uint8_t*)"stop"))
+			{
+				term_sendString((uint8_t*)"Stopping calibration transmission\r\n", 0);
+				term_sendBuf(src);
+				Afsk_txTestStop();
+				return;
+			}
+		term_sendString((uint8_t*)"Usage: cal {low|high|alt|stop}\r\n", 0);
 		term_sendBuf(src);
 		return;
 	}
 
-	if((mode != MODE_TERM)) return;
+	term_sendString((uint8_t*)"Unknown command. For command list type \"help\"\r\n", 0);
+	term_sendBuf(src);
+	return;
+}
 
-
+void term_doIncomingTerminalCommand(uint8_t *cmd, uint16_t len, Terminal_stream src) {
+	
+	
 	if(checkcmd(cmd, 4, (uint8_t*)"help"))
 	{
-		term_sendString((uint8_t*)"\r\nCommands available in config mode:\r\n", 0);
-		term_sendBuf(src);
-		term_sendString((uint8_t*)"print - prints all configuration parameters\r\n", 0);
-		term_sendBuf(src);
-		term_sendString((uint8_t*)"list - prints callsign filter list\r\n", 0);
-		term_sendBuf(src);
-		term_sendString((uint8_t*)"save - saves configuration and reboots the device\r\n", 0);
-		term_sendBuf(src);
-		term_sendString((uint8_t*)"eraseall - erases all configurations and reboots the device\r\n", 0);
-		term_sendBuf(src);
-		term_sendString((uint8_t*)"help - shows this help page\r\n", 0);
-		term_sendBuf(src);
-		term_sendString((uint8_t*)"reboot - reboots the device\r\n", 0);
-		term_sendBuf(src);
-		term_sendString((uint8_t*)"version - shows full firmware version info\r\n\r\n", 0);
-		term_sendBuf(src);
-		term_sendString((uint8_t*)"call <callsign> - sets callsign\r\n", 0);
-		term_sendBuf(src);
-		term_sendString((uint8_t*)"ssid <0-15> - sets SSID\r\n", 0);
-		term_sendBuf(src);
-		term_sendString((uint8_t*)"dest <address> - sets destination address\r\n", 0);
-		term_sendBuf(src);
-		term_sendString((uint8_t*)"txdelay <50-2550> - sets TXDelay time (ms)\r\n", 0);
-		term_sendBuf(src);
-		term_sendString((uint8_t*)"txtail <10-2550> - sets TXTail time (ms)\r\n", 0);
-		term_sendBuf(src);
-		term_sendString((uint8_t*)"quiet <100-2550> - sets quiet time (ms)\r\n", 0);
-		term_sendBuf(src);
-		term_sendString((uint8_t*)"rs1baud/rs2baud <1200-115200> - sets UART1/UART2 baudrate\r\n", 0);
-		term_sendBuf(src);
-		term_sendString((uint8_t*)"pwm [on/off] - enables/disables PWM. If PWM is off, R2R will be used instead\r\n", 0);
-		term_sendBuf(src);
-		term_sendString((uint8_t*)"flat [on/off] - set to \"on\" if flat audio input is used\r\n", 0);
-		term_sendBuf(src);
-		term_sendString((uint8_t*)"beacon <0-7> [on/off] - enables/disables specified beacon\r\n", 0);
-		term_sendBuf(src);
-		term_sendString((uint8_t*)"beacon <0-7> [iv/dl] <0-720> - sets interval/delay for the specified beacon (min)\r\n", 0);
-		term_sendBuf(src);
-		term_sendString((uint8_t*)"beacon <0-7> path <el1,[el2]>/none - sets path for the specified beacon\r\n", 0);
-		term_sendBuf(src);
-		term_sendString((uint8_t*)"beacon <0-7> data <data> - sets information field for the specified beacon\r\n", 0);
-		term_sendBuf(src);
-		term_sendString((uint8_t*)"digi [on/off] - enables/disables whole digipeater\r\n", 0);
-		term_sendBuf(src);
-		term_sendString((uint8_t*)"digi <0-7> [on/off] - enables/disables specified slot\r\n", 0);
-		term_sendBuf(src);
-		term_sendString((uint8_t*)"digi <0-7> alias <alias> - sets alias for the specified slot\r\n", 0);
-		term_sendBuf(src);
-		term_sendString((uint8_t*)"digi <0-3> [max/rep] <0/1-7> - sets maximum/replacement N for the specified slot\r\n", 0);
-		term_sendBuf(src);
-		term_sendString((uint8_t*)"digi <0-7> trac [on/off] - enables/disables packet tracing for the specified slot\r\n", 0);
-		term_sendBuf(src);
-		term_sendString((uint8_t*)"digi <0-7> viscous [on/off] - enables/disables viscous-delay digipeating for the specified slot\r\n", 0);
-		term_sendBuf(src);
-		term_sendString((uint8_t*)"digi <0-7> direct [on/off] - enables/disables direct-only digipeating for the specified slot\r\n", 0);
-		term_sendBuf(src);
-		term_sendString((uint8_t*)"digi <0-7> filter [on/off] - enables/disables packet filtering for the specified slot\r\n", 0);
-		term_sendBuf(src);
-		term_sendString((uint8_t*)"digi filter [black/white] - sets filtering type to blacklist/whitelist\r\n", 0);
-		term_sendBuf(src);
-		term_sendString((uint8_t*)"digi dupe <5-255> - sets anti-dupe buffer time (s)\r\n", 0);
-		term_sendBuf(src);
-		term_sendString((uint8_t*)"digi list <0-19> [set <call>/remove] - sets/clears specified callsign slot in filter list\r\n", 0);
-		term_sendBuf(src);
-		term_sendString((uint8_t*)"autoreset <0-255> - sets auto-reset interval (h) - 0 to disable\r\n", 0);
-		term_sendBuf(src);
-		term_sendString((uint8_t*)"monkiss [on/off] - send own and digipeated frames to KISS ports\r\n", 0);
-		term_sendBuf(src);
-		term_sendString((uint8_t*)"nonaprs [on/off] - enable reception of non-APRS frames\r\n", 0);
-		term_sendBuf(src);
+		term_printHelpMessage(src);
 		return;
 	}
 	if(checkcmd(cmd, 7, (uint8_t*)"version"))
@@ -1770,6 +1770,78 @@ void term_parse(uint8_t *cmd, uint16_t len, Terminal_stream src, Uart_data_type 
 
 	term_sendString((uint8_t*)"Unknown command. For command list type \"help\"\r\n", 0);
 	term_sendBuf(src);
+	
+}
 
-
+void term_printHelpMessage(Terminal_stream src) {
+	term_sendString((uint8_t*)"\r\nCommands available in config mode:\r\n", 0);
+	term_sendBuf(src);
+	term_sendString((uint8_t*)"print - prints all configuration parameters\r\n", 0);
+	term_sendBuf(src);
+	term_sendString((uint8_t*)"list - prints callsign filter list\r\n", 0);
+	term_sendBuf(src);
+	term_sendString((uint8_t*)"save - saves configuration and reboots the device\r\n", 0);
+	term_sendBuf(src);
+	term_sendString((uint8_t*)"eraseall - erases all configurations and reboots the device\r\n", 0);
+	term_sendBuf(src);
+	term_sendString((uint8_t*)"help - shows this help page\r\n", 0);
+	term_sendBuf(src);
+	term_sendString((uint8_t*)"reboot - reboots the device\r\n", 0);
+	term_sendBuf(src);
+	term_sendString((uint8_t*)"version - shows full firmware version info\r\n\r\n", 0);
+	term_sendBuf(src);
+	term_sendString((uint8_t*)"call <callsign> - sets callsign\r\n", 0);
+	term_sendBuf(src);
+	term_sendString((uint8_t*)"ssid <0-15> - sets SSID\r\n", 0);
+	term_sendBuf(src);
+	term_sendString((uint8_t*)"dest <address> - sets destination address\r\n", 0);
+	term_sendBuf(src);
+	term_sendString((uint8_t*)"txdelay <50-2550> - sets TXDelay time (ms)\r\n", 0);
+	term_sendBuf(src);
+	term_sendString((uint8_t*)"txtail <10-2550> - sets TXTail time (ms)\r\n", 0);
+	term_sendBuf(src);
+	term_sendString((uint8_t*)"quiet <100-2550> - sets quiet time (ms)\r\n", 0);
+	term_sendBuf(src);
+	term_sendString((uint8_t*)"rs1baud/rs2baud <1200-115200> - sets UART1/UART2 baudrate\r\n", 0);
+	term_sendBuf(src);
+	term_sendString((uint8_t*)"pwm [on/off] - enables/disables PWM. If PWM is off, R2R will be used instead\r\n", 0);
+	term_sendBuf(src);
+	term_sendString((uint8_t*)"flat [on/off] - set to \"on\" if flat audio input is used\r\n", 0);
+	term_sendBuf(src);
+	term_sendString((uint8_t*)"beacon <0-7> [on/off] - enables/disables specified beacon\r\n", 0);
+	term_sendBuf(src);
+	term_sendString((uint8_t*)"beacon <0-7> [iv/dl] <0-720> - sets interval/delay for the specified beacon (min)\r\n", 0);
+	term_sendBuf(src);
+	term_sendString((uint8_t*)"beacon <0-7> path <el1,[el2]>/none - sets path for the specified beacon\r\n", 0);
+	term_sendBuf(src);
+	term_sendString((uint8_t*)"beacon <0-7> data <data> - sets information field for the specified beacon\r\n", 0);
+	term_sendBuf(src);
+	term_sendString((uint8_t*)"digi [on/off] - enables/disables whole digipeater\r\n", 0);
+	term_sendBuf(src);
+	term_sendString((uint8_t*)"digi <0-7> [on/off] - enables/disables specified slot\r\n", 0);
+	term_sendBuf(src);
+	term_sendString((uint8_t*)"digi <0-7> alias <alias> - sets alias for the specified slot\r\n", 0);
+	term_sendBuf(src);
+	term_sendString((uint8_t*)"digi <0-3> [max/rep] <0/1-7> - sets maximum/replacement N for the specified slot\r\n", 0);
+	term_sendBuf(src);
+	term_sendString((uint8_t*)"digi <0-7> trac [on/off] - enables/disables packet tracing for the specified slot\r\n", 0);
+	term_sendBuf(src);
+	term_sendString((uint8_t*)"digi <0-7> viscous [on/off] - enables/disables viscous-delay digipeating for the specified slot\r\n", 0);
+	term_sendBuf(src);
+	term_sendString((uint8_t*)"digi <0-7> direct [on/off] - enables/disables direct-only digipeating for the specified slot\r\n", 0);
+	term_sendBuf(src);
+	term_sendString((uint8_t*)"digi <0-7> filter [on/off] - enables/disables packet filtering for the specified slot\r\n", 0);
+	term_sendBuf(src);
+	term_sendString((uint8_t*)"digi filter [black/white] - sets filtering type to blacklist/whitelist\r\n", 0);
+	term_sendBuf(src);
+	term_sendString((uint8_t*)"digi dupe <5-255> - sets anti-dupe buffer time (s)\r\n", 0);
+	term_sendBuf(src);
+	term_sendString((uint8_t*)"digi list <0-19> [set <call>/remove] - sets/clears specified callsign slot in filter list\r\n", 0);
+	term_sendBuf(src);
+	term_sendString((uint8_t*)"autoreset <0-255> - sets auto-reset interval (h) - 0 to disable\r\n", 0);
+	term_sendBuf(src);
+	term_sendString((uint8_t*)"monkiss [on/off] - send own and digipeated frames to KISS ports\r\n", 0);
+	term_sendBuf(src);
+	term_sendString((uint8_t*)"nonaprs [on/off] - enable reception of non-APRS frames\r\n", 0);
+	term_sendBuf(src);
 }
