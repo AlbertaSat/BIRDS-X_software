@@ -226,7 +226,13 @@ void uart_init(Uart *port, USART_TypeDef *uart, uint32_t baud)
 	port->bufrxidx = 0;
 	port->buftxrd = 0;
 	port->buftxwr = 0;
-	port->mode = MODE_KISS;
+
+	// set the default UART modes on boot
+	if (port->port == USART1)
+		port->mode = MODE_BOSS;
+	else if (port->port == USART2)
+		port->mode = MODE_DRA;
+	
 	port->enabled = 0;
 	port->kissTimer = 0;
 	memset(port->bufrx, 0, UARTBUFLEN);
