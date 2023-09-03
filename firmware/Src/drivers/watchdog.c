@@ -24,6 +24,15 @@ void Wdog_init(void)
 	IWDG->PR = 0b101; //prescaler
 	IWDG->RLR = 0xFFF; //timeout register
 	IWDG->KR = 0xCCCC; //start
+
+	// Timeout Period:
+	// To calculate the timeout period:
+	// Timeout = (RLR + 1) / (Clock source frequency / Prescaler)
+	// Timeout = (4095 + 1) / (40,000 Hz / 256)
+	// Timeout ≈ (4096) / (156.25 Hz)
+	// Timeout ≈ 26.13 seconds (approximately)
+	// Source: ChatGPT
+	// TODO: confirm this timeout period is correct
 }
 
 

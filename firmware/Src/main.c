@@ -206,6 +206,9 @@ int main(void)
 
   /* USER CODE BEGIN Init */
 
+  // set PA11 as GPIO output pin
+  // FIXME: do this
+
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -250,6 +253,9 @@ int main(void)
 	Afsk_init();
 	Beacon_init();
 
+	set_dra_awake_mode(1);
+	delay_ms(100);
+	send_dra_init_commands();
 
 	autoResetTimer = autoReset * 360000;
 

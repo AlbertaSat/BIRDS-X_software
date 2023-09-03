@@ -207,6 +207,10 @@ void SendKiss(uint8_t *buf, uint16_t len)
 
 uint32_t get_system_uptime_ms() {
 	// per comment in SysTick_init(), systick is every 10ms
+	// 32 bits unsigned is good for up to 7 weeks of uptime before overflow
 	return HAL_GetTick() * 10;
 }
 
+void delay_ms(uint32_t ms) {
+	HAL_Delay(ms/10);
+}
