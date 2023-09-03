@@ -240,10 +240,10 @@ static uint8_t checkcmd(uint8_t *data, uint8_t dlen, uint8_t *cmd)
  */
 void term_parse(uint8_t *cmd, uint16_t len, Terminal_stream src, Uart_data_type type, Uart_mode mode)
 {
-	if(src == TERM_ANY) //incorrect source
+	if (src == TERM_ANY) //incorrect source
 		return;
 
-	if(
+	if (
 		checkcmd(cmd, 4, (uint8_t*)"kiss") || checkcmd(cmd, 6, (uint8_t*)"config") || checkcmd(cmd, 7, (uint8_t*)"monitor") ||
 		checkcmd(cmd, 3, (uint8_t*)"dra") || checkcmd(cmd, 4, (uint8_t*)"boss")
 	) {
@@ -270,7 +270,7 @@ void term_parse(uint8_t *cmd, uint16_t len, Terminal_stream src, Uart_data_type 
 		return;
 	}
 
-	if ((mode == MODE_BOSS) && (type == DATA_BOSS)) {
+	if ((mode == MODE_BOSS)) { // removed && (type == DATA_BOSS)
 		// incoming command from the boss
 		receive_incoming_boss_cmd(cmd, len, src);
 	}

@@ -21,13 +21,13 @@ BossCommandEntry boss_command_table[] = {
 // TODO: make some sort of check that there are no duplicates in the command table
 
 void debug_echo_back_mboss_command(uint8_t *cmd, uint16_t len, Terminal_stream src) {
-	char received_msg_as_hex[100];
+	char received_msg_as_hex[100] = "";
 	for (int i = 0; i < len; i++) {
 		char hex[10];
 		sprintf(hex, "%02X ", cmd[i]);
 		strcat(received_msg_as_hex, hex);
 	}
-	strcat(received_msg_as_hex, "<END>\n");
+	strcat(received_msg_as_hex, "<END>");
 
 	char msg[255];
 	sprintf(
@@ -155,7 +155,7 @@ void boss_cmd_turn_off_sf_mode(uint8_t *cmd, Terminal_stream src) {
 
 
 void boss_cmd_echo_command(uint8_t *cmd, Terminal_stream src) {
-	char received_msg_as_hex[100];
+	char received_msg_as_hex[100] = "";
 	for (int i = 0; i < MBOSS_COMMAND_LENGTH; i++) {
 		char hex[10];
 		sprintf(hex, "%02X ", cmd[i]);
@@ -166,7 +166,7 @@ void boss_cmd_echo_command(uint8_t *cmd, Terminal_stream src) {
 	char msg[255];
 	sprintf(
 		msg,
-		"%sECHO: len=%d, hex=%s%s",
+		"%sRESP: len=%d, hex=%s%s",
 		MBOSS_RESPONSE_START_STR, MBOSS_COMMAND_LENGTH, received_msg_as_hex, MBOSS_RESPONSE_END_STR
 	);
 	term_sendToMode(msg, strlen(msg), MODE_BOSS);
