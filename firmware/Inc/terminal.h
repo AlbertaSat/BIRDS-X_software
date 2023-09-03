@@ -101,4 +101,6 @@ void term_doIncomingTerminalCommand(uint8_t *cmd, uint16_t len, Terminal_stream 
 
 void term_printHelpMessage(Terminal_stream src);
 
+void switchPortToMonitorMode(Terminal_stream src);
+
 #endif /* DEBUG_H_ */

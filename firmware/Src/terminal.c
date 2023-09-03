@@ -321,20 +321,8 @@ void term_setPortMode(uint8_t *cmd, uint16_t len, Terminal_stream src, Uart_data
 		return;
 	}
 
-	if(checkcmd(cmd, 7, (uint8_t*)"monitor"))
-	{
-		if(src == TERM_UART1)
-		{
-			term_sendString((uint8_t*)"UART1 switched to monitor mode\r\n", 0);
-			term_sendBuf(TERM_UART1);
-			uart1.mode = MODE_MONITOR;
-		}
-		else if(src == TERM_UART2)
-		{
-			term_sendString((uint8_t*)"UART2 switched to monitor mode\r\n", 0);
-			term_sendBuf(TERM_UART2);
-			uart2.mode = MODE_MONITOR;
-		}
+	if(checkcmd(cmd, 7, (uint8_t*)"monitor")) {
+		switchPortToMonitorMode(src);
 		return;
 	}
 
@@ -1860,4 +1848,19 @@ void term_printHelpMessage(Terminal_stream src) {
 	term_sendBuf(src);
 	term_sendString((uint8_t*)"nonaprs [on/off] - enable reception of non-APRS frames\r\n", 0);
 	term_sendBuf(src);
+}
+
+void switchPortToMonitorMode(Terminal_stream src) {
+	if(src == TERM_UART1)
+	{
+		term_sendString((uint8_t*)"UART1 switched to monitor mode\r\n", 0);
+		term_sendBuf(TERM_UART1);
+		uart1.mode = MODE_MONITOR;
+	}
+	else if(src == TERM_UART2)
+	{
+		term_sendString((uint8_t*)"UART2 switched to monitor mode\r\n", 0);
+		term_sendBuf(TERM_UART2);
+		uart2.mode = MODE_MONITOR;
+	}
 }

@@ -10,12 +10,28 @@
 // for example, when the bytes are 0xE0 0x0E, call the boss_cmd_turn_on_digipeat_mode() function
 
 BossCommandEntry boss_command_table[] = {
-	{ 0xFF, boss_cmd_turn_off_payload },
-	{ 0x0E, boss_cmd_turn_on_digipeat_mode },
-	{ 0x1E, boss_cmd_turn_off_sf_mode },
-	// TODO: add more
-
-	{ 0x10, boss_cmd_echo_command }
+	{0xFF, boss_cmd_turn_off_payload},
+	{0x0E, boss_cmd_set_active_aprs_mode},
+	{0x12, boss_cmd_transfer_data_packets},
+	{0x03, boss_cmd_send_temperature},
+	{0x04, boss_cmd_enable_pin_diode_experiment},
+	{0x05, boss_cmd_disable_pin_diode_experiment},
+	{0x06, boss_cmd_enable_radfet_experiment},
+	{0x07, boss_cmd_disable_radfet_experiment},
+	{0x08, boss_cmd_enable_both_experiments},
+	{0x09, boss_cmd_disable_both_experiments},
+	{0x10, boss_cmd_echo_command},
+	{0x13, boss_cmd_set_pin_diode_polling_time},
+	{0x14, boss_cmd_set_radfet_polling_time},
+	{0x15, boss_cmd_set_both_polling_time},
+	{0x16, boss_cmd_set_unix_timestamp},
+	{0x17, boss_cmd_set_unix_timestamp_shutdown},
+	{0x18, boss_cmd_run_power_on_self_test},
+	{0x19, boss_cmd_force_reboot_system},
+	{0x20, boss_cmd_set_beacon_period},
+	{0x21, boss_cmd_clear_flash_memory},
+	{0x22, boss_cmd_exit_mission_boss_mode},
+	{0x23, boss_cmd_get_sys_uptime_and_reboot_reason}
 };
 
 // TODO: make some sort of check that there are no duplicates in the command table
@@ -144,15 +160,42 @@ uint8_t validate_incoming_boss_cmd(uint8_t *cmd, uint16_t len, Terminal_stream s
 void boss_cmd_turn_off_payload(uint8_t *cmd, Terminal_stream src) {
 	// FIXME: implement
 }
-void boss_cmd_turn_on_digipeat_mode(uint8_t *cmd, Terminal_stream src) {
+
+void boss_cmd_set_active_aprs_mode(uint8_t *cmd, Terminal_stream src) {
 	// FIXME: implement
 }
-void boss_cmd_turn_off_sf_mode(uint8_t *cmd, Terminal_stream src) {
+
+void boss_cmd_transfer_data_packets(uint8_t *cmd, Terminal_stream src) {
 	// FIXME: implement
 }
 
+void boss_cmd_send_temperature(uint8_t *cmd, Terminal_stream src) {
+	// FIXME: implement
+}
 
+void boss_cmd_enable_pin_diode_experiment(uint8_t *cmd, Terminal_stream src) {
+	// FIXME: implement
+}
 
+void boss_cmd_disable_pin_diode_experiment(uint8_t *cmd, Terminal_stream src) {
+	// FIXME: implement
+}
+
+void boss_cmd_enable_radfet_experiment(uint8_t *cmd, Terminal_stream src) {
+	// FIXME: implement
+}
+
+void boss_cmd_disable_radfet_experiment(uint8_t *cmd, Terminal_stream src) {
+	// FIXME: implement
+}
+
+void boss_cmd_enable_both_experiments(uint8_t *cmd, Terminal_stream src) {
+	// FIXME: implement
+}
+
+void boss_cmd_disable_both_experiments(uint8_t *cmd, Terminal_stream src) {
+	// FIXME: implement
+}
 
 void boss_cmd_echo_command(uint8_t *cmd, Terminal_stream src) {
 	char received_msg_as_hex[100] = "";
@@ -161,7 +204,7 @@ void boss_cmd_echo_command(uint8_t *cmd, Terminal_stream src) {
 		sprintf(hex, "%02X ", cmd[i]);
 		strcat(received_msg_as_hex, hex);
 	}
-	strcat(received_msg_as_hex, "<END>\n");
+	strcat(received_msg_as_hex, "<END>");
 
 	char msg[255];
 	sprintf(
@@ -170,4 +213,123 @@ void boss_cmd_echo_command(uint8_t *cmd, Terminal_stream src) {
 		MBOSS_RESPONSE_START_STR, MBOSS_COMMAND_LENGTH, received_msg_as_hex, MBOSS_RESPONSE_END_STR
 	);
 	term_sendToMode(msg, strlen(msg), MODE_BOSS);
+}
+
+
+void boss_cmd_set_pin_diode_polling_time(uint8_t *cmd, Terminal_stream src) {
+	// FIXME: implement
+}
+
+void boss_cmd_set_radfet_polling_time(uint8_t *cmd, Terminal_stream src) {
+	// FIXME: implement
+}
+
+void boss_cmd_set_both_polling_time(uint8_t *cmd, Terminal_stream src) {
+	// FIXME: implement
+}
+
+void boss_cmd_set_unix_timestamp(uint8_t *cmd, Terminal_stream src) {
+	// FIXME: implement
+}
+
+void boss_cmd_set_unix_timestamp_shutdown(uint8_t *cmd, Terminal_stream src) {
+	// FIXME: implement
+}
+
+void boss_cmd_run_power_on_self_test(uint8_t *cmd, Terminal_stream src) {
+	// FIXME: implement
+}
+
+void boss_cmd_force_reboot_system(uint8_t *cmd, Terminal_stream src) {
+	uint8_t cmd_password[9] = { 0xE0, 0x19, 0x35, 0xA6, 0x32, 0x18, 0xD3, 0xFF, 0xED };
+	
+	if (check_cmd_password(cmd, cmd_password)) {
+		char msg[255];
+		sprintf(
+			msg,
+			"%sRESP: Rebooting...%s",
+			MBOSS_RESPONSE_START_STR, MBOSS_RESPONSE_END_STR
+		);
+		term_sendToMode(msg, strlen(msg), MODE_BOSS);
+		
+		// FIXME: do reboot
+	}
+	else {
+		char msg[255];
+		sprintf(
+			msg,
+			"%sERROR: password is incorrect%s",
+			MBOSS_RESPONSE_START_STR, MBOSS_RESPONSE_END_STR
+		);
+		term_sendToMode(msg, strlen(msg), MODE_BOSS);
+	}
+}
+
+void boss_cmd_set_beacon_period(uint8_t *cmd, Terminal_stream src) {
+	// FIXME: implement
+}
+
+void boss_cmd_clear_flash_memory(uint8_t *cmd, Terminal_stream src) {
+	uint8_t cmd_password[9] = { 0xE0, 0x21, 0x37, 0x56, 0xCD, 0x21, 0x3D, 0xEE, 0xED };
+	
+	if (check_cmd_password(cmd, cmd_password)) {
+		char msg[255];
+		sprintf(
+			msg,
+			"%sRESP: Exiting mission BOSS mode%s",
+			MBOSS_RESPONSE_START_STR, MBOSS_RESPONSE_END_STR
+		);
+		term_sendToMode(msg, strlen(msg), MODE_BOSS);
+
+		// FIXME: clear flash mem
+	}
+	else {
+		char msg[255];
+		sprintf(
+			msg,
+			"%sERROR: password is incorrect%s",
+			MBOSS_RESPONSE_START_STR, MBOSS_RESPONSE_END_STR
+		);
+		term_sendToMode(msg, strlen(msg), MODE_BOSS);
+	}
+
+	
+}
+
+void boss_cmd_exit_mission_boss_mode(uint8_t *cmd, Terminal_stream src) {
+	uint8_t cmd_password[9] = { 0xE0, 0x22, 0x38, 0x00, 0x00, 0x00, 0x00, 0xAA, 0xED };
+	
+	if (check_cmd_password(cmd, cmd_password)) {
+		char msg[255];
+		sprintf(
+			msg,
+			"%sRESP: Exiting mission BOSS mode%s",
+			MBOSS_RESPONSE_START_STR, MBOSS_RESPONSE_END_STR
+		);
+		term_sendToMode(msg, strlen(msg), MODE_BOSS);
+		switchPortToMonitorMode(src);
+	}
+	else {
+		char msg[255];
+		sprintf(
+			msg,
+			"%sERROR: password is incorrect%s",
+			MBOSS_RESPONSE_START_STR, MBOSS_RESPONSE_END_STR
+		);
+		term_sendToMode(msg, strlen(msg), MODE_BOSS);
+	}
+}
+
+void boss_cmd_get_sys_uptime_and_reboot_reason(uint8_t *cmd, Terminal_stream src) {
+	// FIXME: implement
+}
+
+
+uint8_t check_cmd_password(uint8_t cmd[], uint8_t full_command_with_password[9]) {
+	for (uint8_t i = 0; i < MBOSS_COMMAND_LENGTH; i++) {
+		if (cmd[i] != full_command_with_password[i]) {
+			return 0;
+		}
+	}
+	return 1;
 }
