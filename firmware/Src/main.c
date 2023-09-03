@@ -40,7 +40,6 @@ along with VP-Digi.  If not, see <http://www.gnu.org/licenses/>.
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "drivers/modem.h"
-#include <stdint.h>
 #include "ax25.h"
 #include "drivers/uart.h"
 #include "drivers/systick.h"
@@ -51,6 +50,9 @@ along with VP-Digi.  If not, see <http://www.gnu.org/licenses/>.
 #include "beacon.h"
 #include "terminal.h"
 #include "config.h"
+#include "default_settings.h"
+
+#include <stdint.h>
 #include <string.h>
 
 /* USER CODE END Includes */
@@ -226,8 +228,8 @@ int main(void)
 
 
 	//set some initial values in case there is no configuration saved in memory
-	uart1.baudrate = 9600;
-	uart2.baudrate = 9600;
+	uart1.baudrate = DEFAULT_UART1_BAUD_RATE;
+	uart2.baudrate = DEFAULT_UART2_BAUD_RATE;
 	afskCfg.usePWM = 0;
 	afskCfg.flatAudioIn = 0;
 	ax25Cfg.quietTime = 300;

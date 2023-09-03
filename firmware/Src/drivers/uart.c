@@ -20,10 +20,12 @@ along with VP-Digi.  If not, see <http://www.gnu.org/licenses/>.
 #include "terminal.h"
 #include "ax25.h"
 #include "common.h"
+#include "digipeater.h"
+#include "default_settings.h"
+
 #include <string.h>
 #include <stdlib.h>
 
-#include "digipeater.h"
 
 Uart uart1, uart2;
 
@@ -229,9 +231,9 @@ void uart_init(Uart *port, USART_TypeDef *uart, uint32_t baud)
 
 	// set the default UART modes on boot
 	if (port->port == USART1)
-		port->mode = MODE_BOSS;
+		port->mode = DEFAULT_UART1_MODE;
 	else if (port->port == USART2)
-		port->mode = MODE_DRA;
+		port->mode = DEFAULT_UART2_MODE;
 	
 	port->enabled = 0;
 	port->kissTimer = 0;
