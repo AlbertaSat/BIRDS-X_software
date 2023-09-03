@@ -204,3 +204,9 @@ void SendKiss(uint8_t *buf, uint16_t len)
 		u = &uart2;
 	}
 }
+
+uint32_t get_system_uptime_ms() {
+	// per comment in SysTick_init(), systick is every 10ms
+	return HAL_GetTick() * 10;
+}
+

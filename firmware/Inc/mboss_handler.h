@@ -45,6 +45,7 @@ void boss_cmd_set_beacon_period(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_clear_flash_memory(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_exit_mission_boss_mode(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_get_sys_uptime_and_reboot_reason(uint8_t *cmd, Terminal_stream src);
+void boss_cmd_get_unix_timestamp(uint8_t *cmd, Terminal_stream src);
 
 // returns 1/true if 9 bytes of cmd and full_command_with_password match, 0/false if they don't match
 uint8_t check_cmd_password(uint8_t cmd[], uint8_t full_command_with_password[9]);
