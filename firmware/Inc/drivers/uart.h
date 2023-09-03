@@ -34,10 +34,10 @@ typedef enum
 
 typedef enum
 {
-	DATA_KISS,
-	DATA_TERM,
-	DATA_DRA,
-	DATA_BOSS,
+	DATA_KISS, // DATA_KISS = KISS frame (with 0xc0,... delimiters)
+	DATA_TERM, // DATA_TERM = newline-terminated string
+	// DATA_DRA, // doesn't really happen, because DRA is also DATA_TERM newline delim
+	DATA_BOSS, // DATA_BOSS = 0xE0/0xED-delimited command
 	DATA_NOTHING,
 } Uart_data_type;
 

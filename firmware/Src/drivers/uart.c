@@ -68,47 +68,68 @@ uint8_t Uart_txKiss(uint8_t *buf, uint16_t len)
 
 static volatile void uart_handleInterrupt(Uart *port)
 {
-	if(port->port->SR & USART_SR_RXNE) //byte received
+	// receive data (a byte is received)
+	if(port->port->SR & USART_SR_RXNE)
 	{
+		// store into buffer
 		port->port->SR &= ~USART_SR_RXNE;
 		port->bufrx[port->bufrxidx] = port->port->DR; //store it
 		port->bufrxidx++;
-		if(port->port == USART1) //handle special functions and characters
+
+		// handle special characters/functions (like backspace)
+		if(port->port == USART1)
 			term_handleSpecial(TERM_UART1);
 		else if(port->port == USART2)
 			term_handleSpecial(TERM_UART2);
 
+		// wrap around if required
 		port->bufrxidx %= UARTBUFLEN;
+
+		// TODO: add a special case where if the port is in BOSS mode, and a new start-of-frame is received, set the pointer back to 0
 
 		if(port->mode == MODE_KISS)
 			port->kissTimer = ticks + 500; //set timeout to 5s in KISS mode
 	}
-	if(port->port->SR & USART_SR_IDLE) //line is idle, end of data reception
-	{
-		port->port->DR; //reset idle flag by dummy read
-		if(port->bufrxidx == 0)
-			return; //no data, stop
 
-		if((port->bufrx[0] == 0xc0) && (port->bufrx[port->bufrxidx - 1] == 0xc0))   //data starts with 0xc0 and ends with 0xc0 - this is a KISS frame
+	// if line is idle, end of data reception
+	if(port->port->SR & USART_SR_IDLE)
+	{
+		port->port->DR; // reset idle flag by dummy read
+		if(port->bufrxidx == 0)
+			return; // no data, stop
+
+		if((port->bufrx[0] == 0xc0) && (port->bufrx[port->bufrxidx - 1] == 0xc0))
 		{
+			// data starts with 0xc0 and ends with 0xc0 - this is a KISS frame
 			port->rxflag = DATA_KISS;
 			port->kissTimer = 0;
 		}
 
-		if(((port->bufrx[port->bufrxidx - 1] == '\r') || (port->bufrx[port->bufrxidx - 1] == '\n'))) //data ends with \r or \n, process as data
+		if(((port->bufrx[port->bufrxidx - 1] == '\r') || (port->bufrx[port->bufrxidx - 1] == '\n')))
 		{
+			// data ends with \r or \n, process as data
 			port->rxflag = DATA_TERM;
 			port->kissTimer = 0;
 		}
 
+		if((port->bufrx[0] == 0xe0) && (port->bufrx[port->bufrxidx - 1] == 0xed))
+		{
+			// start=0xE0, end=0xED, this is a BOSS command
+			port->rxflag = DATA_BOSS;
+			port->kissTimer = 0;
+		}
 	}
-	if(port->port->SR & USART_SR_TXE) //TX buffer empty
+
+	// UART TX buffer empty, so send bytes in the `port` buffer
+	if(port->port->SR & USART_SR_TXE)
 	{
 		if(port->buftxrd != port->buftxwr) //if there is anything to transmit
 		{
-			port->port->DR = port->buftx[port->buftxrd++]; //push it to the refister
+			port->port->DR = port->buftx[port->buftxrd++]; // push it to the register
 			port->buftxrd %= UARTBUFLEN;
-		} else //nothing more to be transmitted
+		}
+		
+		else //nothing more to be transmitted
 		{
 			port->txflag = 0; //stop transmission
 			port->port->CR1 &= ~USART_CR1_TXEIE;

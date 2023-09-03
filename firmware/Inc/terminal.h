@@ -20,7 +20,7 @@ along with VP-Digi.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "drivers/uart.h"
 #include <stdint.h>
-
+#include <string.h>
 
 typedef enum
 {

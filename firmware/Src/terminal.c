@@ -22,7 +22,13 @@ along with VP-Digi.  If not, see <http://www.gnu.org/licenses/>.
 #include "config.h"
 #include "drivers/modem.h"
 #include "ax25.h"
+
+#include "mboss_handler.h"
+#include "dra_system.h"
+
 #include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
 
 uint8_t termBuf[TERMBUFLEN]; //terminal mode TX buffer
 uint16_t termBufIdx = 0; //terminal mode TX buffer index
@@ -258,7 +264,16 @@ void term_parse(uint8_t *cmd, uint16_t len, Terminal_stream src, Uart_data_type 
 		return;
 	}
 
-	// FIXME: add MODE_DRA and MODE_BOSS handlers here
+	if ((mode == MODE_DRA) && (type == DATA_TERM)) {
+		// note that "cmd" is a message in this case, and not really a command
+		receive_incoming_dra_message(cmd, len, src);
+		return;
+	}
+
+	if ((mode == MODE_BOSS) && (type == DATA_BOSS)) {
+		// incoming command from the boss
+		receive_incoming_boss_cmd(cmd, len, src);
+	}
 
 	if((mode != MODE_TERM)) return;
 
