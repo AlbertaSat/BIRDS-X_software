@@ -3,6 +3,10 @@
         "editor.insertSpaces": false,
         "editor.tabSize": 4,
         "files.insertFinalNewline": true,
-        "cmake.configureOnOpen": false
+        "cmake.configureOnOpen": false,
+        "files.associations": {
+                "*.h": "c",
+                "*.c": "c"
+        }
 }
 
