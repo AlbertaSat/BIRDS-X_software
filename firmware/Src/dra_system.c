@@ -37,17 +37,12 @@ void send_str_to_dra(uint8_t *str) {
 }
 
 void send_dra_init_commands() {
-	const delay_ms_between_commands = 1000;
+	const uint16_t delay_ms_between_commands = 1000;
 	
 	// Init connection
-	send_str_to_dra("AT+DMOCONNECT=1\r\n");
+	send_str_to_dra("AT+DMOCONNECT\r\n");
 	// TODO: add a check that it worked
-
-	// FIXME: remove
-	return;
-
 	delay_ms(delay_ms_between_commands);
-
 
 	// Send channel configuration
 	// 1 = 25k channel (no other options, says it works well enough at 12.5k)
@@ -68,6 +63,7 @@ void send_dra_init_commands() {
 }
 
 void set_dra_awake_mode(uint8_t new_state) {
+	// TODO: implement this and remove bodge wire, if there's time
 	if (new_state == 0) {
 		// turn off PA11 (LOW)
 	}

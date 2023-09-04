@@ -51,6 +51,8 @@ along with VP-Digi.  If not, see <http://www.gnu.org/licenses/>.
 #include "terminal.h"
 #include "config.h"
 #include "default_settings.h"
+#include "common.h"
+#include "dra_system.h"
 
 #include <stdint.h>
 #include <string.h>

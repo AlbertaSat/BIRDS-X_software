@@ -75,4 +75,6 @@ void SendKiss(uint8_t *buf, uint16_t len);
 
 uint32_t get_system_uptime_ms();
 
+void delay_ms(uint32_t ms);
+
 #endif /* COMMON_H_ */

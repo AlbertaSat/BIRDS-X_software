@@ -17,13 +17,14 @@ global_store = {
 	'baud_rate': 9600,
 	'port': None,
 	'cmd_df': None,
+	'last_cmd_selection_str': None,
 }
 
 MBOSS_COMMAND_LENGTH = 9
 MBOSS_COMMAND_START_BYTE = 0xE0
 MBOSS_COMMAND_END_BYTE = 0xED
 
-# copied from mboss_handler.c
+# copied from mboss_handler.c # TODO: extract it from that file by reading the file directly
 boss_command_table = """
 	{0xFF, boss_cmd_turn_off_payload},
 	{0x0E, boss_cmd_set_active_aprs_mode},
@@ -65,7 +66,7 @@ def make_simple_command_table() -> pd.DataFrame:
 	# 	display_name = pl.struct(['cmd_byte, cmd_func']).apply(lambda x: f"{x.cmd_byte:02X} - {x.cmd_func}")
 	# )
 	cmd_df['bytes_to_send'] = cmd_df['cmd_byte_int'].apply(lambda x: list([MBOSS_COMMAND_START_BYTE, x] + [0] * (MBOSS_COMMAND_LENGTH - 3) + [MBOSS_COMMAND_END_BYTE]))
-	cmd_df['display_name'] = cmd_df.apply(lambda x: f"{x.cmd_byte_int:02X} - {x.cmd_func}", axis=1)
+	cmd_df['display_name'] = cmd_df.apply(lambda x: f"0x{x.cmd_byte_int:02X} - {x.cmd_func}", axis=1)
 
 	logger.info(f"cmd_df:\n{cmd_df.to_markdown()}")
 
@@ -83,6 +84,10 @@ def gui_select_serial_port() -> str:
 	
 	# Show a selection dialog to the user
 	selected_port = easygui.choicebox("Select a Serial Port:", "Serial Port Selection", port_names)
+
+	if not selected_port:
+		logger.info(f"User canceled port selection")
+		sys.exit(0)
 	
 	return selected_port
 
@@ -99,16 +104,23 @@ def gui_prompt_for_command_and_execute_it(ser: serial.Serial) -> None:
 	""" Presents a GUI to the user to select a command to send from the MBOSS. """
 
 	cmd_df = global_store['cmd_df']
+	choices_list: list = cmd_df['display_name'].tolist()
+
+	preselect_int = 0
+	if global_store['last_cmd_selection_str']:
+		preselect_int = choices_list.index(global_store['last_cmd_selection_str'])
 	
 	selected_cmd: str = easygui.choicebox(
 		msg="Select a command to issue",
-		choices=cmd_df['display_name'].tolist(),
-
+		choices=choices_list,
+		preselect=preselect_int,
 	)
 
 	if not selected_cmd:
 		logger.info(f"User canceled command selection")
 		sys.exit(0)
+
+	global_store['last_cmd_selection_str'] = selected_cmd
 
 	# lookup that row in the cmd_df
 	cmd_info = cmd_df[cmd_df['display_name'] == selected_cmd].iloc[0]
