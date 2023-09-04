@@ -12,6 +12,8 @@ import pandas as pd
 import re
 import time
 import sys
+import glob
+import os
 
 global_store = {
 	'baud_rate': 9600,
@@ -25,33 +27,29 @@ MBOSS_COMMAND_START_BYTE = 0xE0
 MBOSS_COMMAND_END_BYTE = 0xED
 
 # copied from mboss_handler.c # TODO: extract it from that file by reading the file directly
-boss_command_table = """
-	{0xFF, boss_cmd_turn_off_payload},
-	{0x0E, boss_cmd_set_active_aprs_mode},
-	{0x12, boss_cmd_transfer_data_packets},
-	{0x03, boss_cmd_send_temperature},
-	{0x04, boss_cmd_enable_pin_diode_experiment},
-	{0x05, boss_cmd_disable_pin_diode_experiment},
-	{0x06, boss_cmd_enable_radfet_experiment},
-	{0x07, boss_cmd_disable_radfet_experiment},
-	{0x08, boss_cmd_enable_both_experiments},
-	{0x09, boss_cmd_disable_both_experiments},
-	{0x10, boss_cmd_echo_command},
-	{0x13, boss_cmd_set_pin_diode_polling_time},
-	{0x14, boss_cmd_set_radfet_polling_time},
-	{0x15, boss_cmd_set_both_polling_time},
-	{0x16, boss_cmd_set_unix_timestamp},
-	{0x17, boss_cmd_set_unix_timestamp_shutdown},
-	{0x18, boss_cmd_run_power_on_self_test},
-	{0x19, boss_cmd_force_reboot_system},
-	{0x20, boss_cmd_set_beacon_period},
-	{0x21, boss_cmd_clear_flash_memory},
-	{0x22, boss_cmd_exit_mission_boss_mode},
-	{0x23, boss_cmd_get_sys_uptime_and_reboot_reason},
-	{0x24, boss_cmd_get_unix_timestamp}
-"""
+
 
 def make_simple_command_table() -> pd.DataFrame:
+	# Read from File
+	mboss_c_file_path = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'firmware', 'Src', 'mboss_handler.c'))
+	with open(mboss_c_file_path, 'r', encoding='utf-8') as f:
+		mboss_c_file_contents = f.read()
+	logger.info(f"Read mboss_handler.c file contents from path: {mboss_c_file_path}")
+
+	# extract table (between start and end markers)
+	hit_start_block = False
+	boss_command_table: str = ''
+	for line in mboss_c_file_contents.splitlines():
+		if 'BossCommandEntry boss_command_table[]' in line:
+			hit_start_block = True
+			continue
+		if hit_start_block:
+			if '};' in line:
+				break
+			boss_command_table += line.strip() + '\n'
+	logger.info(f"boss_command_table (from .c file):\n{boss_command_table}")
+
+	# Do Transformation
 	cmd_regex = re.compile(r"\{(?P<cmd_byte>0x[0-9A-F]{2}), (?P<cmd_func>[a-zA-Z0-9_]+)\}", re.IGNORECASE)
 	
 	cmd_list = re.findall(cmd_regex, boss_command_table)
@@ -68,10 +66,37 @@ def make_simple_command_table() -> pd.DataFrame:
 	cmd_df['bytes_to_send'] = cmd_df['cmd_byte_int'].apply(lambda x: list([MBOSS_COMMAND_START_BYTE, x] + [0] * (MBOSS_COMMAND_LENGTH - 3) + [MBOSS_COMMAND_END_BYTE]))
 	cmd_df['display_name'] = cmd_df.apply(lambda x: f"0x{x.cmd_byte_int:02X} - {x.cmd_func}", axis=1)
 
-	logger.info(f"cmd_df:\n{cmd_df.to_markdown()}")
+	logger.info(f"cmd_df (as loaded from .c file):\n{cmd_df.to_markdown()}")
 
 	return cmd_df
 
+def add_to_command_table(cmd_df: pd.DataFrame) -> pd.DataFrame:
+	""" Adds cases with passwords and special byte args. """
+
+	cmd_df = cmd_df.copy()
+
+	overwrite_df = pd.DataFrame(
+		[
+			[0x22, 'with good password', [0xE0, 0x22, 0x38, 0x00, 0x00, 0x00, 0x00, 0xAA, 0xED]], # exit_mission_boss_mode
+			[0x19, 'with good password', [0xE0, 0x19, 0x35, 0xA6, 0x32, 0x18, 0xD3, 0xFF, 0xED]], # reboot
+			[0x21, 'with good password', [0xE0, 0x21, 0x37, 0x56, 0xCD, 0x21, 0x3D, 0xEE, 0xED]], # clear flash
+		],
+		columns=['cmd_byte_int', 'desc', 'bytes_to_send']
+	)
+
+	overwrite_df = overwrite_df.merge(cmd_df, on='cmd_byte_int', how='left', suffixes=('', '_original'))
+	overwrite_df['display_name'] = overwrite_df.apply(lambda x: f"0x{x.cmd_byte_int:02X} - {x.cmd_func} ({x.desc})", axis=1)
+	overwrite_df = overwrite_df.rename(columns={'cmd_func_original': 'cmd_func', 'cmd_byte_str_original': 'cmd_byte_str'})
+
+	cmd_df = pd.concat([
+		cmd_df,
+		overwrite_df
+	], ignore_index=True)
+
+	cmd_df = cmd_df.sort_values(by='cmd_byte_int')
+	cmd_df = cmd_df[['bytes_to_send', 'display_name', 'cmd_func', 'cmd_byte_int', 'cmd_byte_str', 'desc']]
+
+	return cmd_df
 
 def gui_select_serial_port() -> str:
 	""" Presents a GUI to the user to select a serial port. """
@@ -134,6 +159,8 @@ def main():
 	logger.info(f"Starting main()")
 
 	global_store['cmd_df'] = make_simple_command_table()
+	global_store['cmd_df'] = add_to_command_table(global_store['cmd_df'])
+	logger.info(f"cmd_df (final):\n{global_store['cmd_df'].to_markdown()}")
 
 	global_store['port'] = gui_select_serial_port()
 	logger.info(f"Selected port: {global_store['port']}")
