@@ -14,9 +14,9 @@
 // for example, when the bytes are 0xE0 0x0E, call the boss_cmd_turn_on_digipeat_mode() function
 
 BossCommandEntry boss_command_table[] = {
-	{0xFF, boss_cmd_turn_off_payload},
-	{0x0E, boss_cmd_set_active_aprs_mode},
-	{0x12, boss_cmd_transfer_data_packets},
+	{0x00, boss_cmd_turn_off_payload},
+	{0x01, boss_cmd_set_active_aprs_mode},
+	{0x02, boss_cmd_transfer_data_packets},
 	{0x03, boss_cmd_send_temperature},
 	{0x04, boss_cmd_enable_pin_diode_experiment},
 	{0x05, boss_cmd_disable_pin_diode_experiment},
@@ -25,6 +25,7 @@ BossCommandEntry boss_command_table[] = {
 	{0x08, boss_cmd_enable_both_experiments},
 	{0x09, boss_cmd_disable_both_experiments},
 	{0x10, boss_cmd_echo_command},
+	{0x11, boss_cmd_transfer_n_packets},
 	{0x13, boss_cmd_set_pin_diode_polling_time},
 	{0x14, boss_cmd_set_radfet_polling_time},
 	{0x15, boss_cmd_set_both_polling_time},
@@ -235,6 +236,9 @@ void boss_cmd_echo_command(uint8_t *cmd, Terminal_stream src) {
 	term_sendToMode(msg, strlen(msg), MODE_BOSS);
 }
 
+void boss_cmd_transfer_n_packets(uint8_t *cmd, Terminal_stream src) {
+	// FIXME: implement
+}
 
 void boss_cmd_set_pin_diode_polling_time(uint8_t *cmd, Terminal_stream src) {
 	// FIXME: implement

@@ -34,6 +34,7 @@ void boss_cmd_disable_radfet_experiment(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_enable_both_experiments(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_disable_both_experiments(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_echo_command(uint8_t *cmd, Terminal_stream src);
+void boss_cmd_transfer_n_packets(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_set_pin_diode_polling_time(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_set_radfet_polling_time(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_set_both_polling_time(uint8_t *cmd, Terminal_stream src);
