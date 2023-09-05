@@ -232,11 +232,71 @@ void boss_cmd_set_both_polling_time(uint8_t *cmd, Terminal_stream src) {
 }
 
 void boss_cmd_set_unix_timestamp(uint8_t *cmd, Terminal_stream src) {
-	// FIXME: implement
+
+	// Example CMD 0xE0 16 X X TS_3 TS_2 TS_1 TS_0 ED
+	//const char *cmd = "0xE0 16 00 00 61 33 72 80 ED";
+
+	// Initialize variables to store the extracted bytes
+	unsigned int byteTS_3, byteTS_2, byteTS_1, byteTS_0;
+
+	// Use sscanf to parse the input string and extract the bytes
+	int result = sscanf(cmd, "0x%*x %*x %*x %*x %02x %02x %02x %02x", &byteTS_3, &byteTS_2, &byteTS_1, &byteTS_0);
+
+	if (result != 4) {
+		printf("Failed to extract all 4 bytes.\n");
+	    return -1;
+	}
+
+	// Print the extracted bytes in hexadecimal format
+	//printf("Byte 1: 0x%02x\n", byteTS_3);
+	//printf("Byte 2: 0x%02x\n", byteTS_2);
+	//printf("Byte 3: 0x%02x\n", byteTS_1);
+	//printf("Byte 4: 0x%02x\n", byteTS_0);
+
+	unsigned int extractedValue = (byteTS_3 << 24) | (byteTS_2 << 16) | (byteTS_1 << 8) | byteTS_0;
+
+	//printf("The hexa value is :%x\n", extractedValue);
+
+	time_t unix_timestamp = (time_t)extractedValue;
+	uint32_t current_time =  unix_timestamp;
+
+	// The rest of the code is for testing purposes
+
+	// Create a struct tm variable to store the date and time components
+	//struct tm *tm_info;
+
+	// Convert the Unix timestamp to a struct tm in UTC
+	//tm_info = gmtime(&unix_timestamp);
+
+	// Format and print the date and time
+	//char buffer[26];
+	//strftime(buffer, 26, "%Y-%m-%d %H:%M:%S", tm_info);
+
+	//printf("Unix Timestamp: %ld\n", unix_timestamp);
+	//printf("Human-Readable Date and Time (UTC): %s\n", buffer);
+
 }
 
 void boss_cmd_set_unix_timestamp_shutdown(uint8_t *cmd, Terminal_stream src) {
-	// FIXME: implement
+
+	// Initialize variables to store the extracted bytes
+	unsigned int byteTS_3, byteTS_2, byteTS_1, byteTS_0;
+
+	// Use sscanf to parse the input string and extract the bytes
+	int result = sscanf(cmd, "0x%*x %*x %*x %*x %02x %02x %02x %02x", &byteTS_3, &byteTS_2, &byteTS_1, &byteTS_0);
+
+	if (result != 4) {
+		printf("Failed to extract all 4 bytes.\n");
+		return -1;
+	}
+
+	// Combine the extracted bits into one hexadecimal
+	unsigned int extractedValue = (byteTS_3 << 24) | (byteTS_2 << 16) | (byteTS_1 << 8) | byteTS_0;
+
+	// Convert Hexadecimal to unix time stamp
+	time_t unix_timestamp = (time_t)extractedValue;
+	uint32_t shutdown_time =  unix_timestamp;
+
 }
 
 void boss_cmd_run_power_on_self_test(uint8_t *cmd, Terminal_stream src) {
