@@ -3,6 +3,7 @@
 #include "common.h"
 #include "sys_reboot_reason.h"
 #include "drivers/temperature_sensors.h"
+#include "experiments.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -163,6 +164,8 @@ uint8_t validate_incoming_boss_cmd(uint8_t *cmd, uint16_t len, Terminal_stream s
 
 void boss_cmd_turn_off_payload(uint8_t *cmd, Terminal_stream src) {
 	// FIXME: implement
+	// maybe sorta like NVIC_SystemReset(); ?
+	// also do shutdown tasks, like storing any info to flash we want, then stall for up to an hour
 }
 
 void boss_cmd_set_active_aprs_mode(uint8_t *cmd, Terminal_stream src) {
@@ -189,27 +192,29 @@ void boss_cmd_send_temperature(uint8_t *cmd, Terminal_stream src) {
 }
 
 void boss_cmd_enable_pin_diode_experiment(uint8_t *cmd, Terminal_stream src) {
-	// FIXME: implement
+	config_enable_pin_experiment = 1;
 }
 
 void boss_cmd_disable_pin_diode_experiment(uint8_t *cmd, Terminal_stream src) {
-	// FIXME: implement
+	config_enable_pin_experiment = 0;
 }
 
 void boss_cmd_enable_radfet_experiment(uint8_t *cmd, Terminal_stream src) {
-	// FIXME: implement
+	config_enable_radfet_experiment = 1;
 }
 
 void boss_cmd_disable_radfet_experiment(uint8_t *cmd, Terminal_stream src) {
-	// FIXME: implement
+	config_enable_radfet_experiment = 0;
 }
 
 void boss_cmd_enable_both_experiments(uint8_t *cmd, Terminal_stream src) {
-	// FIXME: implement
+	config_enable_pin_experiment = 1;
+	config_enable_radfet_experiment = 1;
 }
 
 void boss_cmd_disable_both_experiments(uint8_t *cmd, Terminal_stream src) {
-	// FIXME: implement
+	config_enable_pin_experiment = 0;
+	config_enable_radfet_experiment = 0;
 }
 
 void boss_cmd_echo_command(uint8_t *cmd, Terminal_stream src) {
@@ -267,7 +272,7 @@ void boss_cmd_force_reboot_system(uint8_t *cmd, Terminal_stream src) {
 		);
 		term_sendToMode(msg, strlen(msg), MODE_BOSS);
 		
-		// FIXME: do reboot
+		NVIC_SystemReset();
 	}
 	else {
 		char msg[255];
