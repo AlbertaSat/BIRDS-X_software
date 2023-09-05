@@ -57,6 +57,7 @@ void send_dra_init_commands() {
 
 	// Turn off pre/de-emphasis, filters
 	// Format: pre/de (inverted),highpass,lowpass
+	// With this, need to set config: "flat on"
 	send_str_to_dra("AT+SETFILTER=1,0,0\r\n");
 	delay_ms(delay_ms_between_commands);
 

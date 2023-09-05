@@ -26,8 +26,6 @@ MBOSS_COMMAND_LENGTH = 9
 MBOSS_COMMAND_START_BYTE = 0xE0
 MBOSS_COMMAND_END_BYTE = 0xED
 
-# copied from mboss_handler.c # TODO: extract it from that file by reading the file directly
-
 
 def make_simple_command_table() -> pd.DataFrame:
 	# Read from File
@@ -57,12 +55,6 @@ def make_simple_command_table() -> pd.DataFrame:
 	cmd_df = pd.DataFrame(cmd_list, columns=['cmd_byte_str', 'cmd_func'])
 
 	cmd_df['cmd_byte_int'] = cmd_df['cmd_byte_str'].apply(lambda x: int(x[2:], 16))
-		
-	# polars version
-	# boss_command_df = boss_command_df.with_columns(
-	# 	bytes_to_send = pl.col('cmd_byte').apply(lambda x: bytes([MBOSS_COMMAND_START_BYTE, x] + [0] * (MBOSS_COMMAND_LENGTH - 3) + [MBOSS_COMMAND_END_BYTE])),
-	# 	display_name = pl.struct(['cmd_byte, cmd_func']).apply(lambda x: f"{x.cmd_byte:02X} - {x.cmd_func}")
-	# )
 	cmd_df['bytes_to_send'] = cmd_df['cmd_byte_int'].apply(lambda x: list([MBOSS_COMMAND_START_BYTE, x] + [0] * (MBOSS_COMMAND_LENGTH - 3) + [MBOSS_COMMAND_END_BYTE]))
 	cmd_df['display_name'] = cmd_df.apply(lambda x: f"0x{x.cmd_byte_int:02X} - {x.cmd_func}", axis=1)
 

@@ -2,6 +2,7 @@
 #include "mboss_handler.h"
 #include "common.h"
 #include "sys_reboot_reason.h"
+#include "drivers/temperature_sensors.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -173,7 +174,18 @@ void boss_cmd_transfer_data_packets(uint8_t *cmd, Terminal_stream src) {
 }
 
 void boss_cmd_send_temperature(uint8_t *cmd, Terminal_stream src) {
-	// FIXME: implement
+	uint16_t internal_temp_k = get_internal_temperature_k();
+
+	char msg[255];
+	sprintf(
+		msg,
+		"%sRESP: internal_temp_k=%d, ext_temp_0_k=%d, ext_temp_1_k=%d, ext_temp_2_k=%d, ext_temp_3_k=%d, ext_temp_4_k=%d%s",
+		MBOSS_RESPONSE_START_STR,
+		internal_temp_k,
+		get_external_temperature_k(0), get_external_temperature_k(1), get_external_temperature_k(2), get_external_temperature_k(3), get_external_temperature_k(4),
+		MBOSS_RESPONSE_END_STR
+	);
+	term_sendToMode((uint8_t*)msg, strlen(msg), MODE_BOSS);
 }
 
 void boss_cmd_enable_pin_diode_experiment(uint8_t *cmd, Terminal_stream src) {
