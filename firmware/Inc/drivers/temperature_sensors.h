@@ -3,6 +3,7 @@
 #define __TEMPERATURE_SENSORS_H__
 
 #include "main.h"
+#include "common.h"
 
 uint16_t get_internal_temperature_k();
 

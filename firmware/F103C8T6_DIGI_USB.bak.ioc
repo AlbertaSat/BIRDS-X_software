@@ -1,11 +1,7 @@
 #MicroXplorer Configuration settings - do not modify
-CAD.formats=
-CAD.pinconfig=
-CAD.provider=
 File.Version=6
 GPIO.groupedBy=Group By Peripherals
 KeepUserPlacement=false
-Mcu.CPN=STM32F103C8T6
 Mcu.Family=STM32F1
 Mcu.IP0=NVIC
 Mcu.IP1=RCC
@@ -68,7 +64,7 @@ ProjectManager.ProjectFileName=F103C8T6_DIGI_USB.ioc
 ProjectManager.ProjectName=F103C8T6_DIGI_USB
 ProjectManager.RegisterCallBack=
 ProjectManager.StackSize=0x400
-ProjectManager.TargetToolchain=STM32CubeIDE
+ProjectManager.TargetToolchain=SW4STM32
 ProjectManager.ToolChainLocation=
 ProjectManager.UnderRoot=true
 ProjectManager.functionlistsort=1-MX_GPIO_Init-GPIO-false-HAL-true,2-SystemClock_Config-RCC-false-HAL-false
