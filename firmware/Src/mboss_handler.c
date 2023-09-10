@@ -26,6 +26,7 @@ BossCommandEntry boss_command_table[] = {
 	{0x09, boss_cmd_disable_both_experiments},
 	{0x10, boss_cmd_echo_command},
 	{0x11, boss_cmd_transfer_n_packets},
+	{0x12, boss_cmd_get_experiment_polling_times},
 	{0x13, boss_cmd_set_pin_diode_polling_time},
 	{0x14, boss_cmd_set_radfet_polling_time},
 	{0x15, boss_cmd_set_both_polling_time},
@@ -164,9 +165,10 @@ uint8_t validate_incoming_boss_cmd(uint8_t *cmd, uint16_t len, Terminal_stream s
 
 
 void boss_cmd_turn_off_payload(uint8_t *cmd, Terminal_stream src) {
-	// FIXME: implement
 	// maybe sorta like NVIC_SystemReset(); ?
 	// also do shutdown tasks, like storing any info to flash we want, then stall for up to an hour
+
+	send_str_to_mboss("INFO: safe to power off");
 }
 
 void boss_cmd_set_active_aprs_mode(uint8_t *cmd, Terminal_stream src) {
@@ -240,16 +242,20 @@ void boss_cmd_transfer_n_packets(uint8_t *cmd, Terminal_stream src) {
 	// FIXME: implement
 }
 
+void boss_cmd_get_experiment_polling_times(uint8_t *cmd, Terminal_stream src) {
+	send_str_to_mboss("INFO: experiment functionality not implemented");
+}
+
 void boss_cmd_set_pin_diode_polling_time(uint8_t *cmd, Terminal_stream src) {
-	// FIXME: implement
+	send_str_to_mboss("INFO: experiment functionality not implemented");
 }
 
 void boss_cmd_set_radfet_polling_time(uint8_t *cmd, Terminal_stream src) {
-	// FIXME: implement
+	send_str_to_mboss("INFO: experiment functionality not implemented");
 }
 
 void boss_cmd_set_both_polling_time(uint8_t *cmd, Terminal_stream src) {
-	// FIXME: implement
+	send_str_to_mboss("INFO: experiment functionality not implemented");
 }
 
 void boss_cmd_set_unix_timestamp(uint8_t *cmd, Terminal_stream src) {
@@ -374,4 +380,14 @@ uint8_t check_cmd_password(uint8_t cmd[], uint8_t full_command_with_password[9])
 		}
 	}
 	return 1;
+}
+
+void send_str_to_mboss(char input_msg[]) {
+	char msg[255];
+	sprintf(
+		msg,
+		"%s%s%s",
+		MBOSS_RESPONSE_START_STR, input_msg, MBOSS_RESPONSE_END_STR
+	);
+	term_sendToMode(msg, strlen(msg), MODE_BOSS);
 }

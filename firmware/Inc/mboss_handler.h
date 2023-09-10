@@ -10,7 +10,7 @@
 #define MBOSS_COMMAND_START_BYTE 0xE0
 #define MBOSS_COMMAND_END_BYTE 0xED
 #define MBOSS_RESPONSE_START_STR "\xDA\xBE"
-#define MBOSS_RESPONSE_END_STR "\xDA\xED\n" // FIXME: remove newline here
+#define MBOSS_RESPONSE_END_STR "\xDA\xED"
 
 typedef struct {
     uint8_t cmd_byte;
@@ -35,6 +35,7 @@ void boss_cmd_enable_both_experiments(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_disable_both_experiments(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_echo_command(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_transfer_n_packets(uint8_t *cmd, Terminal_stream src);
+void boss_cmd_get_experiment_polling_times(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_set_pin_diode_polling_time(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_set_radfet_polling_time(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_set_both_polling_time(uint8_t *cmd, Terminal_stream src);
@@ -51,6 +52,7 @@ void boss_cmd_get_unix_timestamp(uint8_t *cmd, Terminal_stream src);
 // returns 1/true if 9 bytes of cmd and full_command_with_password match, 0/false if they don't match
 uint8_t check_cmd_password(uint8_t cmd[], uint8_t full_command_with_password[9]);
 
+void send_str_to_mboss(char input_msg[]);
 
 // end include guard
 #endif    // __MBOSS_HANDLER_H__
