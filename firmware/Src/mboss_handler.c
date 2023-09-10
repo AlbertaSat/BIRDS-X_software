@@ -9,16 +9,14 @@
 #include <string.h>
 #include <stdio.h>
 
-// create a command table for the BOSS, which is a list of byte arrays and function pointers
-// for example, when the bytes are 0xE0 0xFF, call the boss_cmd_turn_off_payload() function
-// for example, when the bytes are 0xE0 0x0E, call the boss_cmd_turn_on_digipeat_mode() function
-
+// when enabled, echo back the received command immediately upon receiving it
+// is not compliant with the MBOSS protocol, but is useful for debugging
 const uint8_t debug_enable_echo_command_back = 0;
 
 BossCommandEntry boss_command_table[] = {
 	{0x00, boss_cmd_turn_off_payload},
 	{0x01, boss_cmd_set_active_aprs_mode},
-	{0x02, boss_cmd_transfer_data_packets},
+	{0x02, boss_cmd_transfer_aprs_data_packets},
 	{0x03, boss_cmd_send_temperature},
 	{0x04, boss_cmd_enable_pin_diode_experiment},
 	{0x05, boss_cmd_disable_pin_diode_experiment},
@@ -27,7 +25,7 @@ BossCommandEntry boss_command_table[] = {
 	{0x08, boss_cmd_enable_both_experiments},
 	{0x09, boss_cmd_disable_both_experiments},
 	{0x10, boss_cmd_echo_command},
-	{0x11, boss_cmd_transfer_n_packets},
+	{0x11, boss_cmd_transfer_n_raw_experiment_packets},
 	{0x12, boss_cmd_get_experiment_polling_times},
 	{0x13, boss_cmd_set_pin_diode_polling_time},
 	{0x14, boss_cmd_set_radfet_polling_time},
@@ -40,7 +38,10 @@ BossCommandEntry boss_command_table[] = {
 	{0x21, boss_cmd_clear_flash_memory},
 	{0x22, boss_cmd_exit_mission_boss_mode},
 	{0x23, boss_cmd_get_sys_uptime_and_reboot_reason},
-	{0x24, boss_cmd_get_unix_timestamp}
+	{0x24, boss_cmd_get_unix_timestamp},
+	{0x25, boss_cmd_set_experiment_stat_calc_period},
+	{0x26, boss_cmd_get_experiment_stat_calc_period},
+	{0x27, boss_cmd_transfer_n_statistical_experiment_measurements},
 };
 
 RF_APRS_Mode current_aprs_mode = RF_APRS_MODE_INACTIVE;
@@ -211,7 +212,7 @@ void boss_cmd_set_active_aprs_mode(uint8_t *cmd, Terminal_stream src) {
 
 }
 
-void boss_cmd_transfer_data_packets(uint8_t *cmd, Terminal_stream src) {
+void boss_cmd_transfer_aprs_data_packets(uint8_t *cmd, Terminal_stream src) {
 	// FIXME: implement
 }
 
@@ -274,7 +275,7 @@ void boss_cmd_echo_command(uint8_t *cmd, Terminal_stream src) {
 	term_sendToMode(msg, strlen(msg), MODE_BOSS);
 }
 
-void boss_cmd_transfer_n_packets(uint8_t *cmd, Terminal_stream src) {
+void boss_cmd_transfer_n_raw_experiment_packets(uint8_t *cmd, Terminal_stream src) {
 	// FIXME: implement
 }
 
@@ -428,6 +429,17 @@ void boss_cmd_get_sys_uptime_and_reboot_reason(uint8_t *cmd, Terminal_stream src
 
 void boss_cmd_get_unix_timestamp(uint8_t *cmd, Terminal_stream src) {
 	// FIXME: implement
+}
+
+
+void boss_cmd_set_experiment_stat_calc_period(uint8_t *cmd, Terminal_stream src) {
+	send_str_to_mboss("RESP: experiment functionality not implemented");
+}
+void boss_cmd_get_experiment_stat_calc_period(uint8_t *cmd, Terminal_stream src) {
+	send_str_to_mboss("RESP: experiment functionality not implemented");
+}
+void boss_cmd_transfer_n_statistical_experiment_measurements(uint8_t *cmd, Terminal_stream src) {
+	send_str_to_mboss("RESP: experiment functionality not implemented");
 }
 
 

@@ -32,7 +32,7 @@ uint8_t validate_incoming_boss_cmd(uint8_t *cmd, uint16_t len, Terminal_stream s
 
 void boss_cmd_turn_off_payload(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_set_active_aprs_mode(uint8_t *cmd, Terminal_stream src);
-void boss_cmd_transfer_data_packets(uint8_t *cmd, Terminal_stream src);
+void boss_cmd_transfer_aprs_data_packets(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_send_temperature(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_enable_pin_diode_experiment(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_disable_pin_diode_experiment(uint8_t *cmd, Terminal_stream src);
@@ -41,7 +41,7 @@ void boss_cmd_disable_radfet_experiment(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_enable_both_experiments(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_disable_both_experiments(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_echo_command(uint8_t *cmd, Terminal_stream src);
-void boss_cmd_transfer_n_packets(uint8_t *cmd, Terminal_stream src);
+void boss_cmd_transfer_n_raw_experiment_packets(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_get_experiment_polling_times(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_set_pin_diode_polling_time(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_set_radfet_polling_time(uint8_t *cmd, Terminal_stream src);
@@ -55,6 +55,9 @@ void boss_cmd_clear_flash_memory(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_exit_mission_boss_mode(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_get_sys_uptime_and_reboot_reason(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_get_unix_timestamp(uint8_t *cmd, Terminal_stream src);
+void boss_cmd_set_experiment_stat_calc_period(uint8_t *cmd, Terminal_stream src);
+void boss_cmd_get_experiment_stat_calc_period(uint8_t *cmd, Terminal_stream src);
+void boss_cmd_transfer_n_statistical_experiment_measurements(uint8_t *cmd, Terminal_stream src);
 
 // returns 1/true if 9 bytes of cmd and full_command_with_password match, 0/false if they don't match
 uint8_t check_cmd_password(uint8_t cmd[], uint8_t full_command_with_password[9]);
