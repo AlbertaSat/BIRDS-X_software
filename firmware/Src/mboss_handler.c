@@ -295,11 +295,33 @@ void boss_cmd_set_both_polling_time(uint8_t *cmd, Terminal_stream src) {
 }
 
 void boss_cmd_set_unix_timestamp(uint8_t *cmd, Terminal_stream src) {
-	// FIXME: implement
+	// Example CMD: 0xE0 0x16 X X TS_3 TS_2 TS_1 TS_0 0xED
+
+	// Initialize variables to store the extracted bytes
+	uint8_t byte_TS_3 = cmd[4];
+	uint8_t byte_TS_2 = cmd[5];
+	uint8_t byte_TS_1 = cmd[6];
+	uint8_t byte_TS_0 = cmd[7];
+
+	uint32_t timestamp_sec = (byte_TS_3 << 24) | (byte_TS_2 << 16) | (byte_TS_1 << 8) | byte_TS_0;
+
+	// FIXME: store timestamp as an extern, alongside the current uptime
+	// Together, the uptime and the timestamp can be used to calculate the current timestamp
 }
 
 void boss_cmd_set_unix_timestamp_shutdown(uint8_t *cmd, Terminal_stream src) {
-	// FIXME: implement
+	// Example CMD: 0xE0 0x17 X X TS_3 TS_2 TS_1 TS_0 0xED
+
+	// Initialize variables to store the extracted bytes
+	uint8_t byte_TS_3 = cmd[4];
+	uint8_t byte_TS_2 = cmd[5];
+	uint8_t byte_TS_1 = cmd[6];
+	uint8_t byte_TS_0 = cmd[7];
+
+	uint32_t timestamp_sec = (byte_TS_3 << 24) | (byte_TS_2 << 16) | (byte_TS_1 << 8) | byte_TS_0;
+
+	// FIXME: store timestamp as an extern
+
 }
 
 void boss_cmd_run_power_on_self_test(uint8_t *cmd, Terminal_stream src) {
