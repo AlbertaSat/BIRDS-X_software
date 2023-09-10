@@ -483,7 +483,7 @@ void boss_cmd_exit_mission_boss_mode(uint8_t *cmd, Terminal_stream src) {
 void boss_cmd_get_sys_uptime_and_reboot_reason(uint8_t *cmd, Terminal_stream src) {
 	uint32_t system_uptime_ms = get_system_uptime_ms();
 
-	reset_cause_t reset_cause = reset_cause_get();
+	reset_cause_t reset_cause = this_boot_reset_cause; // formerly: reset_cause_get();
 	
 	char msg[200];
 	sprintf(

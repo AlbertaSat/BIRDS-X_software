@@ -7,6 +7,9 @@
 #include "stm32f1xx_hal.h"
 #include "stm32f1xx_it.h"
 
+// extern
+reset_cause_t this_boot_reset_cause;
+
 /// @brief      Obtain the STM32 system reset cause
 /// @param      None
 /// @return     The system reset cause

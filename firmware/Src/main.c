@@ -53,6 +53,7 @@ along with VP-Digi.  If not, see <http://www.gnu.org/licenses/>.
 #include "common.h"
 #include "dra_system.h"
 #include "mboss_handler.h"
+#include "sys_reboot_reason.h"
 
 #include <stdint.h>
 #include <string.h>
@@ -257,6 +258,9 @@ int main(void)
 
 	Afsk_init();
 	Beacon_init();
+
+	// store reset reason at boot, because it can only be fetched once
+	this_boot_reset_cause = reset_cause_get();
 
 	// DRA init handled during mode setting now
 	/*

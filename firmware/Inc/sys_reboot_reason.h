@@ -42,3 +42,5 @@ reset_cause_t reset_cause_get(void);
 /// @return     A null-terminated ASCII name string describing the system 
 ///             reset cause
 const char * reset_cause_get_name(reset_cause_t reset_cause);
+
+extern reset_cause_t this_boot_reset_cause;
