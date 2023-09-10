@@ -412,7 +412,7 @@ void boss_cmd_exit_mission_boss_mode(uint8_t *cmd, Terminal_stream src) {
 void boss_cmd_get_sys_uptime_and_reboot_reason(uint8_t *cmd, Terminal_stream src) {
 	uint32_t system_uptime_ms = get_system_uptime_ms();
 
-	// reset_cause_t reset_cause = reset_cause_get(); // FIXME: make this work
+	reset_cause_t reset_cause = reset_cause_get(); // FIXME: implement reboot reason
 	
 	char msg[200];
 	sprintf(
@@ -420,8 +420,8 @@ void boss_cmd_get_sys_uptime_and_reboot_reason(uint8_t *cmd, Terminal_stream src
 		"%sRESP: uptime_ms=%lu, reset_cause_str=%s, reset_cause_enum_int=%d%s",
 		MBOSS_RESPONSE_START_STR,
 		system_uptime_ms,
-		"UNKNOWN", 99,
-		//reset_cause_get_name(reset_cause), (uint8_t)reset_cause,
+		//"UNKNOWN", 99,
+		reset_cause_get_name(reset_cause), (uint8_t)reset_cause,
 		MBOSS_RESPONSE_END_STR
 	);
 	term_sendToMode(msg, strlen(msg), MODE_BOSS);

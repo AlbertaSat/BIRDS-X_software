@@ -2,7 +2,7 @@
 
 #include "sys_reboot_reason.h"
 
-#if 0 // FIXME: make this work
+// FIXME: make this work
 
 #include "main.h"
 #include "stm32f1xx.h"
@@ -40,15 +40,17 @@ reset_cause_t reset_cause_get(void)
     }
     else if (__HAL_RCC_GET_FLAG(RCC_FLAG_PINRST))
     {
+        
         reset_cause = RESET_CAUSE_EXTERNAL_RESET_PIN_RESET;
     }
     // Needs to come *after* checking the `RCC_FLAG_PORRST` flag in order to
     // ensure first that the reset cause is NOT a POR/PDR reset. See note
     // below. 
+    /*
     else if (__HAL_RCC_GET_FLAG(RCC_FLAG_BORRST))
     {
         reset_cause = RESET_CAUSE_BROWNOUT_RESET;
-    }
+    }*/
     else
     {
         reset_cause = RESET_CAUSE_UNKNOWN;
@@ -146,10 +148,10 @@ const char* get_last_reset_reason_str(void) {
     }
     if (RCC->CSR & RCC_CSR_PINRSTF) {
         return "External Reset (Pin)";
-    }
+    }/*
     if (RCC->CSR & RCC_CSR_BORRSTF) {
         return "Brownout Reset";
-    }
+    }*/
 
     // Clear the reset flags
     RCC->CSR |= RCC_CSR_RMVF;
@@ -158,5 +160,5 @@ const char* get_last_reset_reason_str(void) {
     return "Unknown Reset Reason";
 }
 
-#endif
+
 
