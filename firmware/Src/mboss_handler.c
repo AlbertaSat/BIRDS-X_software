@@ -46,7 +46,7 @@ BossCommandEntry boss_command_table[] = {
 	{0x27, boss_cmd_transfer_n_statistical_experiment_measurements},
 };
 
-RF_APRS_Mode current_aprs_mode = RF_APRS_MODE_INACTIVE;
+RF_APRS_Mode_t current_aprs_mode = RF_APRS_MODE_INACTIVE;
 uint8_t current_config_beacon_period_minutes = DEFAULT_BEACON_PERIOD_MINUTES;
 
 void debug_echo_back_mboss_command(uint8_t *cmd, uint16_t len, Terminal_stream src) {
@@ -194,7 +194,7 @@ void boss_cmd_set_active_aprs_mode(uint8_t *cmd, Terminal_stream src) {
 		return;
 	}
 
-	current_aprs_mode = (RF_APRS_Mode)new_mode;
+	current_aprs_mode = (RF_APRS_Mode_t)new_mode;
 
 	char msg[255];
 	sprintf(
@@ -530,4 +530,8 @@ void send_str_to_mboss(char input_msg[]) {
 		MBOSS_RESPONSE_START_STR, input_msg, MBOSS_RESPONSE_END_STR
 	);
 	term_sendToMode(msg, strlen(msg), MODE_BOSS);
+}
+
+RF_APRS_Mode_t get_current_aprs_mode(void) {
+	return current_aprs_mode;
 }

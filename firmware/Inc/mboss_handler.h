@@ -22,7 +22,7 @@ typedef enum {
     RF_APRS_MODE_INACTIVE = 0,
     RF_APRS_MODE_DIGIPEAT = 1,
     RF_APRS_MODE_STORE_AND_FORWARD = 2,
-} RF_APRS_Mode;
+} RF_APRS_Mode_t;
 
 void receive_incoming_boss_cmd(uint8_t *cmd, uint16_t len, Terminal_stream src);
 
@@ -63,6 +63,8 @@ void boss_cmd_transfer_n_statistical_experiment_measurements(uint8_t *cmd, Termi
 uint8_t check_cmd_password(uint8_t cmd[], uint8_t full_command_with_password[9]);
 
 void send_str_to_mboss(char input_msg[]);
+
+RF_APRS_Mode_t get_current_aprs_mode(void);
 
 // end include guard
 #endif    // __MBOSS_HANDLER_H__
