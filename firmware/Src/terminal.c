@@ -33,6 +33,8 @@ along with VP-Digi.  If not, see <http://www.gnu.org/licenses/>.
 uint8_t termBuf[TERMBUFLEN]; //terminal mode TX buffer
 uint16_t termBufIdx = 0; //terminal mode TX buffer index
 
+// extern:
+uint8_t internal_response_buffer[500]; // internal buffer for reading response of code
 
 uint16_t spLastIdx[3] = {0, 0, 0}; //index buffer was "special" terminal cases
 
@@ -153,6 +155,12 @@ void term_sendBuf(Terminal_stream way)
 		}
 		uart_transmitStart(&uart2);
 	}
+
+	if (way == TERM_INTERNAL_BUFFER) {
+		// copy to internal buffer, for explicit reading
+		memcpy(internal_response_buffer, termBuf, termBufIdx);
+	}
+	
 	termBufIdx = 0;
 }
 
@@ -1863,4 +1871,30 @@ void switchPortToMonitorMode(Terminal_stream src) {
 		term_sendBuf(TERM_UART2);
 		uart2.mode = MODE_MONITOR;
 	}
+}
+
+void execute_vp_digi_config_cmd(uint8_t cmd_input[]) {
+	uint8_t cmd[500];
+	strcpy(cmd, cmd_input);
+
+	// if last char of cmd is not newline, add a newline
+	uint8_t len = strlen(cmd);
+	if(cmd[len - 1] != '\n') {
+		cmd[len] = '\n';
+		cmd[len + 1] = '\0';
+	}
+	term_doIncomingTerminalCommand(cmd, strlen(cmd), TERM_INTERNAL_BUFFER);
+}
+
+void execute_vp_digi_monitor_cmd(uint8_t cmd_input[]) {
+	uint8_t cmd[500];
+	strcpy(cmd, cmd_input);
+	
+	// if last char of cmd is not newline, add a newline
+	uint8_t len = strlen(cmd);
+	if(cmd[len - 1] != '\n') {
+		cmd[len] = '\n';
+		cmd[len + 1] = '\0';
+	}
+	term_doIncomingMonitorCommand(cmd, strlen(cmd), TERM_INTERNAL_BUFFER);
 }

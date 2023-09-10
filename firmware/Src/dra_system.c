@@ -37,7 +37,7 @@ void send_str_to_dra(uint8_t *str) {
 }
 
 void send_dra_init_commands() {
-	const uint16_t delay_ms_between_commands = 1000;
+	const uint16_t delay_ms_between_commands = 200;
 	
 	// Init connection
 	send_str_to_dra("AT+DMOCONNECT\r\n");

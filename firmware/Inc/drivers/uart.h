@@ -26,7 +26,7 @@ along with VP-Digi.  If not, see <http://www.gnu.org/licenses/>.
 typedef enum
 {
 	MODE_KISS,
-	MODE_TERM,
+	MODE_TERM, // mostly "config" mode, I think
 	MODE_MONITOR,
 	MODE_DRA,
 	MODE_BOSS,

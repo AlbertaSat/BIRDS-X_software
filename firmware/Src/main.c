@@ -258,9 +258,12 @@ int main(void)
 	Afsk_init();
 	Beacon_init();
 
+	// DRA init handled during mode setting now
+	/*
 	set_dra_awake_mode(1);
 	delay_ms(100);
 	send_dra_init_commands();
+	*/
 
 	send_str_to_mboss("INFO: boot complete");
 

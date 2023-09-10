@@ -12,7 +12,8 @@
 #define DEFAULT_UART2_BAUD_RATE 9600
 
 #define DEFAULT_CALLSIGN "N0CALL" // FIXME: use this somewhere
-// TODO: define more defaults here
+
+#define DEFAULT_BEACON_PERIOD_MINUTES 1
 
 #endif	// __DEFAULT_SETTINGS_H__
 

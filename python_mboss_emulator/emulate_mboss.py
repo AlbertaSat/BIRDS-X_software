@@ -58,7 +58,7 @@ def make_simple_command_table() -> pd.DataFrame:
 	cmd_df['bytes_to_send'] = cmd_df['cmd_byte_int'].apply(lambda x: list([MBOSS_COMMAND_START_BYTE, x] + [0] * (MBOSS_COMMAND_LENGTH - 3) + [MBOSS_COMMAND_END_BYTE]))
 	cmd_df['display_name'] = cmd_df.apply(lambda x: f"0x{x.cmd_byte_int:02X} - {x.cmd_func}", axis=1)
 
-	logger.info(f"cmd_df (as loaded from .c file):\n{cmd_df.to_markdown()}")
+	logger.info(f"cmd_df (as loaded from .c file):\n{cmd_df.to_markdown(index=False)}")
 
 	return cmd_df
 
@@ -72,6 +72,14 @@ def add_to_command_table(cmd_df: pd.DataFrame) -> pd.DataFrame:
 			[0x22, 'with good password', [0xE0, 0x22, 0x38, 0x00, 0x00, 0x00, 0x00, 0xAA, 0xED]], # exit_mission_boss_mode
 			[0x19, 'with good password', [0xE0, 0x19, 0x35, 0xA6, 0x32, 0x18, 0xD3, 0xFF, 0xED]], # reboot
 			[0x21, 'with good password', [0xE0, 0x21, 0x37, 0x56, 0xCD, 0x21, 0x3D, 0xEE, 0xED]], # clear flash
+
+			[0x20, '3 minutes', [0xE0, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 3, 0xED]], # set beacon period (3 min)
+			[0x20, '100 minutes', [0xE0, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 100, 0xED]], # set beacon period (100 min)
+
+			# set APRS modes
+			[0x01, 'APRS Mode = Inactive', [0xE0, 0x01, 0x00, 0x00, 0x00, 0, 0, 0x00, 0xED]],
+			[0x01, 'APRS Mode = Digipeat', [0xE0, 0x01, 0x00, 0x00, 0x00, 0, 0, 0x01, 0xED]],
+			[0x01, 'APRS Mode = Store&Fwd', [0xE0, 0x01, 0x00, 0x00, 0x00, 0, 0, 0x02, 0xED]],
 		],
 		columns=['cmd_byte_int', 'desc', 'bytes_to_send']
 	)
@@ -143,7 +151,7 @@ def gui_prompt_for_command_and_execute_it(ser: serial.Serial) -> None:
 	cmd_info = cmd_df[cmd_df['display_name'] == selected_cmd].iloc[0]
 
 	# send the bytes
-	serial_send_bytes(ser, cmd_info['bytes_to_send'], cmd_info['display_name'])
+	serial_send_bytes(ser, cmd_info['bytes_to_send'],  cmd_info['display_name'])
 
 	# time.sleep(0.3)
 
@@ -152,7 +160,12 @@ def main():
 
 	global_store['cmd_df'] = make_simple_command_table()
 	global_store['cmd_df'] = add_to_command_table(global_store['cmd_df'])
-	logger.info(f"cmd_df (final):\n{global_store['cmd_df'].to_markdown()}")
+	logger.info(f"cmd_df (final):\n{global_store['cmd_df'].to_markdown(index=False)}")
+
+	# write command list to files
+	global_store['cmd_df'].to_csv('command_list.csv', index=False)
+	global_store['cmd_df'].to_excel('command_list.xlsx', index=False)
+	global_store['cmd_df'].to_markdown('command_list.md', index=False)
 
 	global_store['port'] = gui_select_serial_port()
 	logger.info(f"Selected port: {global_store['port']}")
@@ -172,7 +185,7 @@ def main():
 			logger.info(f"Received response: len={len(resp)}, time={resp_finished_time - send_finished_time:.3f}s")
 			print(f"RX >>{resp}")
 
-			time.sleep(2) # wait more and read again, in case there's more
+			# time.sleep(2) # wait more and read again, in case there's more
 			resp2 = ser.read(10000)
 			if len(resp2) > 0:
 				logger.info(f"More data available: len={len(resp2)}")

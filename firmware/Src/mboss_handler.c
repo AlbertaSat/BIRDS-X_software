@@ -4,6 +4,8 @@
 #include "sys_reboot_reason.h"
 #include "drivers/temperature_sensors.h"
 #include "experiments.h"
+#include "terminal.h"
+#include "default_settings.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -45,6 +47,7 @@ BossCommandEntry boss_command_table[] = {
 };
 
 RF_APRS_Mode current_aprs_mode = RF_APRS_MODE_INACTIVE;
+uint8_t current_config_beacon_period_minutes = DEFAULT_BEACON_PERIOD_MINUTES;
 
 void debug_echo_back_mboss_command(uint8_t *cmd, uint16_t len, Terminal_stream src) {
 	char received_msg_as_hex[100] = "";
@@ -202,11 +205,44 @@ void boss_cmd_set_active_aprs_mode(uint8_t *cmd, Terminal_stream src) {
 	term_sendToMode(msg, strlen(msg), MODE_BOSS);
 
 	if (new_mode == RF_APRS_MODE_INACTIVE) {
-		// FIXME: turn off digipeating
+		// turn off the DRA enable pin
+		set_dra_awake_mode(0);
+
+		// disable the vp-digi beacon
+		execute_vp_digi_config_cmd("beacon 0 off");
+		execute_vp_digi_config_cmd("digi 0 off");
+		execute_vp_digi_config_cmd("digi off");
+
+
 	}
 
 	if (new_mode == RF_APRS_MODE_DIGIPEAT || new_mode == RF_APRS_MODE_STORE_AND_FORWARD) {
-		// FIXME: activate digipeating
+		// turn on the DRA enable pin
+		set_dra_awake_mode(1);
+		
+		// run the DRA init commands
+		send_dra_init_commands();
+
+		// run all the vp-digi config commands (beacons)
+		execute_vp_digi_config_cmd("beacon 0 on");
+		
+		// run the vp-digi config command to update the beacon freq
+		uint8_t vp_cmd[100];
+		sprintf((char*)vp_cmd, "beacon 0 iv %d", current_config_beacon_period_minutes);
+		execute_vp_digi_config_cmd((char*)vp_cmd); // like "beacon 0 iv 1"
+
+		execute_vp_digi_config_cmd("beacon 0 dl 1"); // delay at boot
+		execute_vp_digi_config_cmd("beacon 0 path WIDE1-1");
+		execute_vp_digi_config_cmd("beacon 0 data >Hello from JASPER satellite");
+
+		// run all the vp-digi config commands (digipeater)
+		execute_vp_digi_config_cmd("digi on");
+		execute_vp_digi_config_cmd("digi 0 on");
+		execute_vp_digi_config_cmd("digi 0 alias WIDE");
+		execute_vp_digi_config_cmd("digi 0 max 2");
+		execute_vp_digi_config_cmd("digi 0 rep 3");
+
+		// TODO: make it do something for store-and-forward mode
 
 	}
 
@@ -358,7 +394,39 @@ void boss_cmd_force_reboot_system(uint8_t *cmd, Terminal_stream src) {
 }
 
 void boss_cmd_set_beacon_period(uint8_t *cmd, Terminal_stream src) {
-	// FIXME: implement
+	char msg[255]; 
+	uint8_t beacon_period_minutes = cmd[7];
+
+	if (beacon_period_minutes == 0) {
+		sprintf(
+			msg,
+			"%sERROR: beacon_period_minutes=%d is invalid, must be >0%s",
+			MBOSS_RESPONSE_START_STR, beacon_period_minutes, MBOSS_RESPONSE_END_STR
+		);
+		term_sendToMode(msg, strlen(msg), MODE_BOSS);
+		return;
+	}
+
+	current_config_beacon_period_minutes = beacon_period_minutes;
+	uint8_t ran_vp_digi_update = 0;
+
+	if (current_aprs_mode == RF_APRS_MODE_DIGIPEAT || current_aprs_mode == RF_APRS_MODE_STORE_AND_FORWARD) {
+		// run the vp-digi config command to update the beacon freq
+		uint8_t vp_cmd[100];
+		sprintf((char*)vp_cmd, "beacon 0 iv %d", beacon_period_minutes);
+		execute_vp_digi_config_cmd((char*)vp_cmd);
+		ran_vp_digi_update = 1;
+	}
+
+	sprintf(
+		msg,
+		"%sRESP: set period_minutes=%d, ran_vp_digi_update=%d%s",
+		MBOSS_RESPONSE_START_STR,
+		beacon_period_minutes, ran_vp_digi_update,
+		MBOSS_RESPONSE_END_STR
+	);
+	term_sendToMode(msg, strlen(msg), MODE_BOSS);
+	
 }
 
 void boss_cmd_clear_flash_memory(uint8_t *cmd, Terminal_stream src) {

@@ -22,6 +22,8 @@ along with VP-Digi.  If not, see <http://www.gnu.org/licenses/>.
 #include <stdint.h>
 #include <string.h>
 
+extern uint8_t internal_response_buffer[500]; // internal buffer for reading response of code
+
 typedef enum
 {
 	TERM_ANY,
@@ -102,5 +104,8 @@ void term_doIncomingTerminalCommand(uint8_t *cmd, uint16_t len, Terminal_stream 
 void term_printHelpMessage(Terminal_stream src);
 
 void switchPortToMonitorMode(Terminal_stream src);
+
+void execute_vp_digi_config_cmd(uint8_t cmd[]);
+void execute_vp_digi_monitor_cmd(uint8_t cmd[]);
 
 #endif /* DEBUG_H_ */
