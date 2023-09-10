@@ -221,7 +221,7 @@ void term_sendNumber(int32_t n)
 }
 
 /**
- * \brief Chceck if received data and command are matching
+ * \brief Chceck if received data and command are matching (is a 'startswith' check)
  * \param[in] *data Received data
  * \param[in] dlen Data length
  * \param[in] *cmd Command

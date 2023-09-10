@@ -13,6 +13,7 @@ const uint8_t debug_enable_dra_echo_to_boss = 0;
 // whether to enable echoing DRA responses to the BOSS
 const uint8_t debug_enable_dra_response_logs_to_boss = 0;
 
+uint8_t latest_dra_response_buf[1000]; // extern
 
 void receive_incoming_dra_message(uint8_t *msg, uint16_t len, Terminal_stream src) {
 
@@ -22,6 +23,12 @@ void receive_incoming_dra_message(uint8_t *msg, uint16_t len, Terminal_stream sr
 		
 		term_sendToMode(msg, len, MODE_BOSS); // null termination not guaranteed (don't use strlen)
 	}
+
+	for (uint16_t i = 0; i < len; i++) {
+		latest_dra_response_buf[i] = msg[i];
+	}
+	latest_dra_response_buf[len] = '\0';
+
 }
 
 
@@ -41,7 +48,6 @@ void send_dra_init_commands() {
 	
 	// Init connection
 	send_str_to_dra("AT+DMOCONNECT\r\n");
-	// TODO: add a check that it worked
 	delay_ms(delay_ms_between_commands);
 
 	// Send channel configuration

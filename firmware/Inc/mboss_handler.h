@@ -62,6 +62,7 @@ void boss_cmd_transfer_n_statistical_experiment_measurements(uint8_t *cmd, Termi
 // returns 1/true if 9 bytes of cmd and full_command_with_password match, 0/false if they don't match
 uint8_t check_cmd_password(uint8_t cmd[], uint8_t full_command_with_password[9]);
 
+// send str to mission boss (do not put start/end delims)
 void send_str_to_mboss(char input_msg[]);
 
 RF_APRS_Mode_t get_current_aprs_mode(void);

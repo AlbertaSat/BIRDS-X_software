@@ -2,10 +2,14 @@
 #include "mboss_handler.h"
 #include "common.h"
 #include "sys_reboot_reason.h"
-#include "drivers/temperature_sensors.h"
 #include "experiments.h"
 #include "terminal.h"
 #include "default_settings.h"
+#include "frame_handler.h"
+#include "dra_system.h"
+
+#include "drivers/temperature_sensors.h"
+#include "drivers/modem.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -249,7 +253,16 @@ void boss_cmd_set_active_aprs_mode(uint8_t *cmd, Terminal_stream src) {
 }
 
 void boss_cmd_transfer_aprs_data_packets(uint8_t *cmd, Terminal_stream src) {
-	// FIXME: implement
+	// FIXME: make this do it better
+	
+	// for debugging, transfer the whole store-and-forward buffer
+	uint8_t msg[STORE_AND_FORWARD_BUFFER_SIZE+100];
+	sprintf(
+		(char*)msg,
+		"%sRESP: store-and-forward buffer: len=%d, val=%s<END>%s",
+		MBOSS_RESPONSE_START_STR, sf_buffer_wr_idx, sf_buffer, MBOSS_RESPONSE_END_STR
+	);
+	term_sendToMode(msg, strlen((char*)msg), MODE_BOSS);
 }
 
 void boss_cmd_send_temperature(uint8_t *cmd, Terminal_stream src) {
@@ -365,7 +378,33 @@ void boss_cmd_set_unix_timestamp_shutdown(uint8_t *cmd, Terminal_stream src) {
 }
 
 void boss_cmd_run_power_on_self_test(uint8_t *cmd, Terminal_stream src) {
-	// FIXME: implement
+	// POST = power on self test
+
+	// TEST 1: check that the DRA is responding to UART commands
+	// TODO: turn on the DRA, if it's not already, and then set it back to its previous state (via the PD sleep pin/function)
+	send_str_to_dra("AT+DMOCONNECT\r\n");
+	delay_ms(800); // await response
+
+	uint8_t dra_connect_check_passed = (strstr(latest_dra_response_buf, "+DMO") != NULL); // ideally contains "+DMOCONNECT:0", but "+DMOERROR" means it's at least responding
+
+	char msg[255];
+	sprintf(
+		msg,
+		"%sRESP: dra_connect_check=%s, is_pwm_mode_on=%s%s",
+		MBOSS_RESPONSE_START_STR,
+
+		// dra_connect_check=XXXX
+		dra_connect_check_passed ? "PASS" : "FAIL",
+		// latest_dra_response_buf, // dra_response=XXXX (for debugging)
+
+		// is_pwm_mode_on=XXXX
+		(afskCfg.usePWM == 1) ? "PASS" : "FAIL",
+		
+		MBOSS_RESPONSE_END_STR
+	);
+	term_sendToMode(msg, strlen(msg), MODE_BOSS);
+
+	// TODO: add more checks
 }
 
 void boss_cmd_force_reboot_system(uint8_t *cmd, Terminal_stream src) {

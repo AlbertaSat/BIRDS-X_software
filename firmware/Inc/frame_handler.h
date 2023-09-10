@@ -4,6 +4,10 @@
 
 #include "common.h"
 
+// store and forward buffer storage
+#define STORE_AND_FORWARD_BUFFER_SIZE 10000
+extern uint8_t sf_buffer[STORE_AND_FORWARD_BUFFER_SIZE];
+extern uint16_t sf_buffer_wr_idx;
 
 /**
  * \brief Handle received frame from RF

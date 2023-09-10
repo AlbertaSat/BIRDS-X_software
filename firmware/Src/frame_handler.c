@@ -7,6 +7,13 @@
 #include "drivers/modem.h"
 #include "drivers/uart.h"
 
+#include <string.h>
+#include <stdio.h>
+
+// store and forward buffer storage (externs)
+uint8_t sf_buffer[STORE_AND_FORWARD_BUFFER_SIZE];
+uint16_t sf_buffer_wr_idx = 0;
+
 /**
  * \brief Handle received frame from RF
  */
@@ -109,5 +116,9 @@ void handleFrame(void)
 void store_frame_for_store_and_forward(uint8_t *buf, uint16_t buflen) {
 	// similar to Send_Kiss();
 
-	// FIXME: implement
+	for (uint16_t i = 0; i < buflen; i++) {
+		sf_buffer[sf_buffer_wr_idx++] = buf[i];
+	}
+
+	send_str_to_mboss("INFO: stored frame for store-and-forward");
 }

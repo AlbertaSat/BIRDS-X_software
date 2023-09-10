@@ -5,6 +5,8 @@
 
 #include "terminal.h"
 
+extern uint8_t latest_dra_response_buf[1000];
+
 void receive_incoming_dra_message(uint8_t *msg, uint16_t len, Terminal_stream src);
 
 void send_str_to_dra(uint8_t *str);
