@@ -74,6 +74,7 @@ uint32_t crc32(uint32_t crc0, uint8_t *s, uint64_t n);
 void SendKiss(uint8_t *buf, uint16_t len);
 
 uint32_t get_system_uptime_ms();
+uint32_t get_system_uptime_sec();
 
 void delay_ms(uint32_t ms);
 

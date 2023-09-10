@@ -211,6 +211,11 @@ uint32_t get_system_uptime_ms() {
 	return HAL_GetTick() * 10;
 }
 
+uint32_t get_system_uptime_sec() {
+	// round get_system_uptime_ms() to nearest second
+	return (get_system_uptime_ms() + 500) / 1000;
+}
+
 void delay_ms(uint32_t ms) {
 	HAL_Delay(ms/10);
 }

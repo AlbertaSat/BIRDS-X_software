@@ -14,10 +14,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdint.h>
 
 // when enabled, echo back the received command immediately upon receiving it
 // is not compliant with the MBOSS protocol, but is useful for debugging
 const uint8_t debug_enable_echo_command_back = 0;
+
+uint32_t timestamp_sec_at_boot = 0;
 
 BossCommandEntry boss_command_table[] = {
 	{0x00, boss_cmd_turn_off_payload},
@@ -350,6 +353,8 @@ void boss_cmd_set_both_polling_time(uint8_t *cmd, Terminal_stream src) {
 void boss_cmd_set_unix_timestamp(uint8_t *cmd, Terminal_stream src) {
 	// Example CMD: 0xE0 0x16 X X TS_3 TS_2 TS_1 TS_0 0xED
 
+	uint32_t uptime_sec_at_timestamp_set = get_system_uptime_sec();
+
 	// Initialize variables to store the extracted bytes
 	uint8_t byte_TS_3 = cmd[4];
 	uint8_t byte_TS_2 = cmd[5];
@@ -358,8 +363,36 @@ void boss_cmd_set_unix_timestamp(uint8_t *cmd, Terminal_stream src) {
 
 	uint32_t timestamp_sec = (byte_TS_3 << 24) | (byte_TS_2 << 16) | (byte_TS_1 << 8) | byte_TS_0;
 
-	// FIXME: store timestamp as an extern, alongside the current uptime
-	// Together, the uptime and the timestamp can be used to calculate the current timestamp
+	// do check that timestamp is between 2023-01-01 and 2028-01-01
+	if (timestamp_sec < 1672531200 || timestamp_sec > 1830301200) {
+		char msg[255];
+		sprintf(
+			msg,
+			"%sERROR: timestamp_sec=%lu is invalid, must be between 2023-01-01 and 2028-01-01%s",
+			MBOSS_RESPONSE_START_STR, timestamp_sec, MBOSS_RESPONSE_END_STR
+		);
+		term_sendToMode(msg, strlen(msg), MODE_BOSS);
+		return;
+	}
+
+	else {
+		// set into extern
+		timestamp_sec_at_boot = timestamp_sec - uptime_sec_at_timestamp_set;
+
+		// print success message
+		char msg[255];
+		sprintf(
+			msg,
+			"%sRESP: timestamp_sec=%lu, uptime_sec_at_timestamp_set=%lu, timestamp_sec_at_boot=%lu%s",
+			MBOSS_RESPONSE_START_STR,
+			
+			timestamp_sec, uptime_sec_at_timestamp_set, timestamp_sec_at_boot,
+			
+			MBOSS_RESPONSE_END_STR
+		);
+		term_sendToMode(msg, strlen(msg), MODE_BOSS);
+		return;
+	}
 }
 
 void boss_cmd_set_unix_timestamp_shutdown(uint8_t *cmd, Terminal_stream src) {
@@ -373,8 +406,8 @@ void boss_cmd_set_unix_timestamp_shutdown(uint8_t *cmd, Terminal_stream src) {
 
 	uint32_t timestamp_sec = (byte_TS_3 << 24) | (byte_TS_2 << 16) | (byte_TS_1 << 8) | byte_TS_0;
 
-	// FIXME: store timestamp as an extern
-
+	// FIXME: store timestamp as an extern, if it needs to be used anywhere
+	send_str_to_mboss("RESP: shutdown timestamp set");
 }
 
 void boss_cmd_run_power_on_self_test(uint8_t *cmd, Terminal_stream src) {
@@ -527,9 +560,10 @@ void boss_cmd_get_sys_uptime_and_reboot_reason(uint8_t *cmd, Terminal_stream src
 	char msg[200];
 	sprintf(
 		msg,
-		"%sRESP: uptime_ms=%lu, reset_cause_str=%s, reset_cause_enum_int=%d%s",
+		"%sRESP: uptime_ms=%lu, uptime_sec=%lu, timestamp_sec_at_boot=%lu, timestamp_sec_now=%lu, reset_cause_str=%s, reset_cause_enum_int=%d%s",
 		MBOSS_RESPONSE_START_STR,
-		system_uptime_ms,
+		system_uptime_ms, get_system_uptime_sec(),
+		timestamp_sec_at_boot, get_unix_timestamp_sec_now(),
 		reset_cause_get_name(reset_cause), (uint8_t)reset_cause,
 		MBOSS_RESPONSE_END_STR
 	);
@@ -537,7 +571,8 @@ void boss_cmd_get_sys_uptime_and_reboot_reason(uint8_t *cmd, Terminal_stream src
 }
 
 void boss_cmd_get_unix_timestamp(uint8_t *cmd, Terminal_stream src) {
-	// FIXME: implement
+	// alias for get_sys_uptime_and_reboot_reason
+	boss_cmd_get_sys_uptime_and_reboot_reason(cmd, src);
 }
 
 
@@ -573,4 +608,8 @@ void send_str_to_mboss(char input_msg[]) {
 
 RF_APRS_Mode_t get_current_aprs_mode(void) {
 	return current_aprs_mode;
+}
+
+uint32_t get_unix_timestamp_sec_now() {
+	return timestamp_sec_at_boot + get_system_uptime_sec();
 }

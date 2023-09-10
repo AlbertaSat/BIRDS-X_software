@@ -6,6 +6,9 @@
 
 #include "terminal.h"
 
+// #include <stdint.h>
+
+
 #define MBOSS_COMMAND_LENGTH 9
 #define MBOSS_COMMAND_START_BYTE 0xE0
 #define MBOSS_COMMAND_END_BYTE 0xED
@@ -66,6 +69,8 @@ uint8_t check_cmd_password(uint8_t cmd[], uint8_t full_command_with_password[9])
 void send_str_to_mboss(char input_msg[]);
 
 RF_APRS_Mode_t get_current_aprs_mode(void);
+
+uint32_t get_unix_timestamp_sec_now();
 
 // end include guard
 #endif    // __MBOSS_HANDLER_H__
