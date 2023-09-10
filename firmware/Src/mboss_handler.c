@@ -218,6 +218,9 @@ void boss_cmd_transfer_aprs_data_packets(uint8_t *cmd, Terminal_stream src) {
 
 void boss_cmd_send_temperature(uint8_t *cmd, Terminal_stream src) {
 	uint16_t internal_temp_k = get_internal_temperature_k();
+	
+	// NOTE: this function is blocking and takes about 1.5s to run
+	// TODO: make the get_external_temperature_k() part run asynchronously so that all the sensors can be fetched in parallel
 
 	char msg[255];
 	sprintf(

@@ -25,7 +25,7 @@ global_store = {
 MBOSS_COMMAND_LENGTH = 9
 MBOSS_COMMAND_START_BYTE = 0xE0
 MBOSS_COMMAND_END_BYTE = 0xED
-
+MBOSS_RESPONSE_END_STR = b"\xDA\xED"
 
 def make_simple_command_table() -> pd.DataFrame:
 	# Read from File
@@ -145,7 +145,7 @@ def gui_prompt_for_command_and_execute_it(ser: serial.Serial) -> None:
 	# send the bytes
 	serial_send_bytes(ser, cmd_info['bytes_to_send'], cmd_info['display_name'])
 
-	time.sleep(0.3)
+	# time.sleep(0.3)
 
 def main():
 	logger.info(f"Starting main()")
@@ -157,15 +157,26 @@ def main():
 	global_store['port'] = gui_select_serial_port()
 	logger.info(f"Selected port: {global_store['port']}")
 
-	with serial.Serial(port=global_store['port'], timeout=1, baudrate=global_store['baud_rate']) as ser:
-
+	with serial.Serial(port=global_store['port'], timeout=3, baudrate=global_store['baud_rate']) as ser:
+		logger.info(f"Opened port successfully.")
+		
 		while True:
 			gui_prompt_for_command_and_execute_it(ser)
+			send_finished_time = time.time()
+
+			# time.sleep(1) # wait for mboss to send data
 
 			# read response
-			resp = ser.read(10000)
-			logger.info(f"Received response: len={len(resp)}")
+			resp = ser.read_until(MBOSS_RESPONSE_END_STR, size=10000)
+			resp_finished_time = time.time()
+			logger.info(f"Received response: len={len(resp)}, time={resp_finished_time - send_finished_time:.3f}s")
 			print(f"RX >>{resp}")
+
+			time.sleep(2) # wait more and read again, in case there's more
+			resp2 = ser.read(10000)
+			if len(resp2) > 0:
+				logger.info(f"More data available: len={len(resp2)}")
+				print(f"RX >>{resp2}")
 
 			# TODO: pretty-print non-printable chars as hex
 			# TODO: continuously check for incoming data while user is clicking buttons

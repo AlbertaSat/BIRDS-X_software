@@ -7,7 +7,7 @@
 #define FALSE 0
 
 uint16_t get_internal_temperature_k() {
-	// FIXME: implement this, eventually
+	// FIXME: implement get_internal_temperature_k()
 	return 1;
 }
 
