@@ -53,6 +53,7 @@ along with VP-Digi.  If not, see <http://www.gnu.org/licenses/>.
 #include "default_settings.h"
 #include "common.h"
 #include "dra_system.h"
+#include "mboss_handler.h"
 
 #include <stdint.h>
 #include <string.h>
@@ -208,7 +209,7 @@ int main(void)
 
   /* USER CODE BEGIN Init */
 
-  // set PA11 as GPIO output pin
+  // set PA11 as GPIO output pin (for DRA sleep mode enable [DRA_PD])
   // FIXME: do this
 
   /* USER CODE END Init */
@@ -259,6 +260,8 @@ int main(void)
 	delay_ms(100);
 	send_dra_init_commands();
 
+	send_str_to_mboss("INFO: boot complete");
+
 	autoResetTimer = autoReset * 360000;
 
   /* USER CODE END 2 */
@@ -271,40 +274,41 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  Wdog_reset();
+	Wdog_reset();
 
-	  if(ax25.frameReceived)
-		  handleFrame();
+	if(ax25.frameReceived)
+		handleFrame();
 
-	  Digi_viscousRefresh(); //refresh viscous-delay buffers
-
-
-	  Ax25_transmitBuffer(); //transmit buffer (will return if nothing to be transmitted)
-
-	  Ax25_transmitCheck(); //check for pending transmission request
-
-	  if(uart1.rxflag != DATA_NOTHING)
-	  {
-		  term_parse(uart1.bufrx, uart1.bufrxidx, TERM_UART1, uart1.rxflag, uart1.mode);
-		  uart1.rxflag = DATA_NOTHING;
-		  uart1.bufrxidx = 0;
-		  memset(uart1.bufrx, 0, UARTBUFLEN);
-	  }
-	  if(uart2.rxflag != DATA_NOTHING)
-	  {
-		  term_parse(uart2.bufrx, uart2.bufrxidx, TERM_UART2, uart2.rxflag, uart2.mode);
-		  uart2.rxflag = DATA_NOTHING;
-		  uart2.bufrxidx = 0;
-		  memset(uart2.bufrx, 0, UARTBUFLEN);
-	  }
-
-	  Beacon_check(); //check beacons
+	Digi_viscousRefresh(); //refresh viscous-delay buffers
 
 
-	  if(((autoResetTimer != 0) && (ticks > autoResetTimer)) || (ticks > 4294960000))
-		  NVIC_SystemReset();
+	Ax25_transmitBuffer(); //transmit buffer (will return if nothing to be transmitted)
+
+	Ax25_transmitCheck(); //check for pending transmission request
+
+	if(uart1.rxflag != DATA_NOTHING)
+	{
+		term_parse(uart1.bufrx, uart1.bufrxidx, TERM_UART1, uart1.rxflag, uart1.mode);
+		uart1.rxflag = DATA_NOTHING;
+		uart1.bufrxidx = 0;
+		memset(uart1.bufrx, 0, UARTBUFLEN);
+	}
+	if(uart2.rxflag != DATA_NOTHING)
+	{
+		term_parse(uart2.bufrx, uart2.bufrxidx, TERM_UART2, uart2.rxflag, uart2.mode);
+		uart2.rxflag = DATA_NOTHING;
+		uart2.bufrxidx = 0;
+		memset(uart2.bufrx, 0, UARTBUFLEN);
+	}
+
+	Beacon_check(); //check beacons
 
 
+	if(((autoResetTimer != 0) && (ticks > autoResetTimer)) || (ticks > 4294960000)) {
+		// auto-reset timer expired, or ticks overflowed
+		send_str_to_mboss("INFO: auto-reset timer expired. Resetting.");
+		NVIC_SystemReset();
+	}
 
   }
   /* USER CODE END 3 */

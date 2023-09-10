@@ -8,10 +8,10 @@
 #include <stdio.h>
 
 // whether to enable echoing of DRA commands to the BOSS
-const uint8_t debug_enable_dra_echo_to_boss = 1; // FIXME: disable
+const uint8_t debug_enable_dra_echo_to_boss = 0;
 
 // whether to enable echoing DRA responses to the BOSS
-const uint8_t debug_enable_dra_response_logs_to_boss = 1; // FIXME: disable
+const uint8_t debug_enable_dra_response_logs_to_boss = 0;
 
 
 void receive_incoming_dra_message(uint8_t *msg, uint16_t len, Terminal_stream src) {

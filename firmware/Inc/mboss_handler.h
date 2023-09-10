@@ -17,6 +17,13 @@ typedef struct {
     void (*cmd_func)(uint8_t*, Terminal_stream);
 } BossCommandEntry;
 
+
+typedef enum {
+    RF_APRS_MODE_INACTIVE = 0,
+    RF_APRS_MODE_DIGIPEAT = 1,
+    RF_APRS_MODE_STORE_AND_FORWARD = 2,
+} RF_APRS_Mode;
+
 void receive_incoming_boss_cmd(uint8_t *cmd, uint16_t len, Terminal_stream src);
 
 // returns 1 if the command is good, 0 if bad

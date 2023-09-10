@@ -13,6 +13,8 @@
 // for example, when the bytes are 0xE0 0xFF, call the boss_cmd_turn_off_payload() function
 // for example, when the bytes are 0xE0 0x0E, call the boss_cmd_turn_on_digipeat_mode() function
 
+const uint8_t debug_enable_echo_command_back = 0;
+
 BossCommandEntry boss_command_table[] = {
 	{0x00, boss_cmd_turn_off_payload},
 	{0x01, boss_cmd_set_active_aprs_mode},
@@ -41,7 +43,7 @@ BossCommandEntry boss_command_table[] = {
 	{0x24, boss_cmd_get_unix_timestamp}
 };
 
-// TODO: make some sort of check that there are no duplicates in the command table
+RF_APRS_Mode current_aprs_mode = RF_APRS_MODE_INACTIVE;
 
 void debug_echo_back_mboss_command(uint8_t *cmd, uint16_t len, Terminal_stream src) {
 	char received_msg_as_hex[100] = "";
@@ -64,9 +66,9 @@ void debug_echo_back_mboss_command(uint8_t *cmd, uint16_t len, Terminal_stream s
 
 void receive_incoming_boss_cmd(uint8_t *cmd, uint16_t len, Terminal_stream src) {
 
-	// FIXME: disable this, or make it a flag
-	debug_echo_back_mboss_command(cmd, len, src);
-	
+	if (debug_enable_echo_command_back) {
+		debug_echo_back_mboss_command(cmd, len, src);
+	}
 
 	if (validate_incoming_boss_cmd(cmd, len, src) == 0) {
 		char err_msg[255];
@@ -168,11 +170,45 @@ void boss_cmd_turn_off_payload(uint8_t *cmd, Terminal_stream src) {
 	// maybe sorta like NVIC_SystemReset(); ?
 	// also do shutdown tasks, like storing any info to flash we want, then stall for up to an hour
 
-	send_str_to_mboss("INFO: safe to power off");
+	send_str_to_mboss("RESP: safe to power off");
 }
 
 void boss_cmd_set_active_aprs_mode(uint8_t *cmd, Terminal_stream src) {
-	// FIXME: implement
+	// M = 0: inactive
+	// M = 1: digipeating mode
+	// M = 2: store-and-forward mode
+
+	uint8_t new_mode = cmd[7];
+	if (new_mode > 2) {
+		char msg[255];
+		sprintf(
+			msg,
+			"%sERROR: new_mode=%d is invalid, must be 0, 1, or 2%s",
+			MBOSS_RESPONSE_START_STR, new_mode, MBOSS_RESPONSE_END_STR
+		);
+		term_sendToMode(msg, strlen(msg), MODE_BOSS);
+		return;
+	}
+
+	current_aprs_mode = (RF_APRS_Mode)new_mode;
+
+	char msg[255];
+	sprintf(
+		msg,
+		"%sRESP: set new_mode=%d%s",
+		MBOSS_RESPONSE_START_STR, new_mode, MBOSS_RESPONSE_END_STR
+	);
+	term_sendToMode(msg, strlen(msg), MODE_BOSS);
+
+	if (new_mode == RF_APRS_MODE_INACTIVE) {
+		// FIXME: turn off digipeating
+	}
+
+	if (new_mode == RF_APRS_MODE_DIGIPEAT || new_mode == RF_APRS_MODE_STORE_AND_FORWARD) {
+		// FIXME: activate digipeating
+
+	}
+
 }
 
 void boss_cmd_transfer_data_packets(uint8_t *cmd, Terminal_stream src) {
@@ -243,19 +279,19 @@ void boss_cmd_transfer_n_packets(uint8_t *cmd, Terminal_stream src) {
 }
 
 void boss_cmd_get_experiment_polling_times(uint8_t *cmd, Terminal_stream src) {
-	send_str_to_mboss("INFO: experiment functionality not implemented");
+	send_str_to_mboss("RESP: experiment functionality not implemented");
 }
 
 void boss_cmd_set_pin_diode_polling_time(uint8_t *cmd, Terminal_stream src) {
-	send_str_to_mboss("INFO: experiment functionality not implemented");
+	send_str_to_mboss("RESP: experiment functionality not implemented");
 }
 
 void boss_cmd_set_radfet_polling_time(uint8_t *cmd, Terminal_stream src) {
-	send_str_to_mboss("INFO: experiment functionality not implemented");
+	send_str_to_mboss("RESP: experiment functionality not implemented");
 }
 
 void boss_cmd_set_both_polling_time(uint8_t *cmd, Terminal_stream src) {
-	send_str_to_mboss("INFO: experiment functionality not implemented");
+	send_str_to_mboss("RESP: experiment functionality not implemented");
 }
 
 void boss_cmd_set_unix_timestamp(uint8_t *cmd, Terminal_stream src) {
