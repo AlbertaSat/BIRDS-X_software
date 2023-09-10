@@ -24,6 +24,7 @@ along with VP-Digi.  If not, see <http://www.gnu.org/licenses/>.
 #include "beacon.h"
 #include "stm32f1xx.h"
 #include "drivers/modem.h"
+
 #include <string.h>
 
 /**

@@ -47,14 +47,13 @@ extern Ax25_config ax25Cfg;
 
 typedef struct
 {
-	uint8_t frameBuf[FRAMEBUFLEN]; //cirucal buffer for received frames, frames are separated with 0xFF
-	uint16_t frameBufWr; //cirucal RX buffer write index
-	uint16_t frameBufRd; //circural TX buffer read index
+	uint8_t frameBuf[FRAMEBUFLEN]; //circular buffer for received frames, frames are separated with 0xFF
+	uint16_t frameBufWr; //circular RX buffer write index
+	uint16_t frameBufRd; //circular TX buffer read index
 	uint8_t frameXmit[FRAMEBUFLEN];  //TX frame buffer
 	uint16_t xmitIdx; //TX frame buffer index
 	uint16_t sLvl; //RMS of the frame
 	uint8_t frameReceived; //frame received flag, must be polled in main loop for >0. Bit 0 for frame received on decoder 1, bit 1 for decoder 2
-
 } Ax25;
 
 extern Ax25 ax25;
