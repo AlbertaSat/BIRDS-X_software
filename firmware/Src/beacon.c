@@ -20,6 +20,7 @@ along with VP-Digi.  If not, see <http://www.gnu.org/licenses/>.
 #include "common.h"
 #include "ax25.h"
 #include "terminal.h"
+#include "frame_handler.h"
 #include "drivers/systick.h"
 
 #include <string.h>
@@ -38,8 +39,10 @@ void Beacon_send(uint8_t no)
 	if(beacon[no].enable == 0)
 		return; //beacon disabled
 
-	uint8_t buf[150] = {0}; //frame buffer
+	uint8_t buf[FRAMELEN] = {0}; //frame buffer
 	uint16_t idx = 0;
+
+	beacon_count_since_boot++;
 
 	for(uint8_t i = 0; i < 7; i++) //add destination address
 		buf[idx++] = dest[i];

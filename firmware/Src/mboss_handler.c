@@ -7,6 +7,7 @@
 #include "default_settings.h"
 #include "frame_handler.h"
 #include "dra_system.h"
+#include "ax25.h"
 
 #include "drivers/temperature_sensors.h"
 #include "drivers/modem.h"
@@ -51,6 +52,7 @@ BossCommandEntry boss_command_table[] = {
 	{0x25, boss_cmd_set_experiment_stat_calc_period},
 	{0x26, boss_cmd_get_experiment_stat_calc_period},
 	{0x27, boss_cmd_transfer_n_statistical_experiment_measurements},
+	{0x28, boss_cmd_get_stored_aprs_packets_stats},
 };
 
 RF_APRS_Mode_t current_aprs_mode = RF_APRS_MODE_INACTIVE;
@@ -254,9 +256,10 @@ void boss_cmd_set_active_aprs_mode(uint8_t *cmd, Terminal_stream src) {
 }
 
 void boss_cmd_transfer_aprs_data_packets(uint8_t *cmd, Terminal_stream src) {
-	// FIXME: make this do it better
+	// FIXME: implement critical function
 	
 	// for debugging, transfer the whole store-and-forward buffer
+	/*
 	uint8_t msg[STORE_AND_FORWARD_BUFFER_SIZE+100];
 	sprintf(
 		(char*)msg,
@@ -264,6 +267,54 @@ void boss_cmd_transfer_aprs_data_packets(uint8_t *cmd, Terminal_stream src) {
 		MBOSS_RESPONSE_START_STR, sf_buffer_wr_idx, sf_buffer, MBOSS_RESPONSE_END_STR
 	);
 	term_sendToMode(msg, strlen((char*)msg), MODE_BOSS);
+	*/
+
+	uint8_t target_frame_fetch_count = cmd[7]; // number of frames to catch
+
+	if (target_frame_fetch_count == 0) {
+		send_str_to_mboss("ERROR: can't fetch 0 frames");
+		return;
+	}
+
+	uint16_t cur_frame_count = get_stored_frame_count();
+	if (cur_frame_count == 0) {
+		send_str_to_mboss("ERROR: no frames stored yet");
+		return;
+	}
+
+	if (target_frame_fetch_count > cur_frame_count) {
+		target_frame_fetch_count = cur_frame_count;
+	}
+
+	for (uint8_t frame_num = 0; frame_num < target_frame_fetch_count; frame_num++) {
+		uint8_t frame[FRAMELEN+10];
+		memset(frame, 0, FRAMELEN+9);
+
+		uint16_t frame_length = 0;
+		uint8_t fetch_result = get_leftmost_stored_frame_and_shift_left(frame, &frame_length);
+
+		// do error check
+		if (fetch_result > 0) {
+			char err_msg[255];
+			sprintf(
+				err_msg,
+				"%sERROR: failed to fetch frame %d from store-and-forward buffer, error code %d%s",
+				MBOSS_RESPONSE_START_STR, frame_num, fetch_result, MBOSS_RESPONSE_END_STR
+			);
+			term_sendToMode(err_msg, strlen(err_msg), MODE_BOSS);
+			return;
+		}
+
+		// just send the frame as-is
+		char msg[255];
+		sprintf(
+			msg,
+			"%sRESP: len=%d, frame=%s%s",
+			MBOSS_RESPONSE_START_STR, frame_length, frame, MBOSS_RESPONSE_END_STR
+		);
+		term_sendToMode(msg, strlen(msg), MODE_BOSS);
+	}
+	
 }
 
 void boss_cmd_send_temperature(uint8_t *cmd, Terminal_stream src) {
@@ -512,7 +563,7 @@ void boss_cmd_clear_aprs_packet_store(uint8_t *cmd, Terminal_stream src) {
 	char msg[255];
 	sprintf(
 		msg,
-		"%sRESP: Clearing APRS packet store memory%s",
+		"%sRESP: Cleared APRS packet store memory%s",
 		MBOSS_RESPONSE_START_STR, MBOSS_RESPONSE_END_STR
 	);
 	term_sendToMode(msg, strlen(msg), MODE_BOSS);
@@ -576,6 +627,17 @@ void boss_cmd_transfer_n_statistical_experiment_measurements(uint8_t *cmd, Termi
 	send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
 }
 
+void boss_cmd_get_stored_aprs_packets_stats(uint8_t *cmd, Terminal_stream src) {
+	char msg[255];
+	sprintf(
+		msg,
+		"%sRESP: aprs_packets_stored=%d, aprs_packets_stored_bytes_occupied=%d, aprs_packets_total_bytes=%d, frame_rx_count_since_boot=%lu, beacon_count_since_boot=%lu%s",
+		MBOSS_RESPONSE_START_STR,
+		get_stored_frame_count(), sf_buffer_wr_idx, STORE_AND_FORWARD_BUFFER_SIZE, frame_rx_count_since_boot, beacon_count_since_boot,
+		MBOSS_RESPONSE_END_STR
+	);
+	term_sendToMode(msg, strlen(msg), MODE_BOSS);
+}
 
 uint8_t check_cmd_password(uint8_t cmd[], uint8_t full_command_with_password[9]) {
 	for (uint8_t i = 0; i < MBOSS_COMMAND_LENGTH; i++) {
