@@ -16,5 +16,6 @@ void handleFrame(void);
 
 void store_frame_for_store_and_forward(uint8_t *buf, uint16_t buflen);
 
+void clear_frame_store();
 
 #endif	// __FRAME_HANDLER_H__

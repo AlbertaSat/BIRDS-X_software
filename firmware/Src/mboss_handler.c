@@ -44,7 +44,7 @@ BossCommandEntry boss_command_table[] = {
 	{0x18, boss_cmd_run_power_on_self_test},
 	{0x19, boss_cmd_force_reboot_system},
 	{0x20, boss_cmd_set_beacon_period},
-	{0x21, boss_cmd_clear_flash_memory},
+	{0x21, boss_cmd_clear_aprs_packet_store},
 	{0x22, boss_cmd_exit_mission_boss_mode},
 	{0x23, boss_cmd_get_sys_uptime_and_reboot_reason},
 	{0x24, boss_cmd_get_unix_timestamp},
@@ -249,8 +249,6 @@ void boss_cmd_set_active_aprs_mode(uint8_t *cmd, Terminal_stream src) {
 		execute_vp_digi_config_cmd("digi 0 max 2");
 		execute_vp_digi_config_cmd("digi 0 rep 3");
 
-		// TODO: make it do something for store-and-forward mode
-
 	}
 
 }
@@ -331,23 +329,23 @@ void boss_cmd_echo_command(uint8_t *cmd, Terminal_stream src) {
 }
 
 void boss_cmd_transfer_n_raw_experiment_packets(uint8_t *cmd, Terminal_stream src) {
-	// FIXME: implement
+	send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
 }
 
 void boss_cmd_get_experiment_polling_times(uint8_t *cmd, Terminal_stream src) {
-	send_str_to_mboss("RESP: experiment functionality not implemented");
+	send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
 }
 
 void boss_cmd_set_pin_diode_polling_time(uint8_t *cmd, Terminal_stream src) {
-	send_str_to_mboss("RESP: experiment functionality not implemented");
+	send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
 }
 
 void boss_cmd_set_radfet_polling_time(uint8_t *cmd, Terminal_stream src) {
-	send_str_to_mboss("RESP: experiment functionality not implemented");
+	send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
 }
 
 void boss_cmd_set_both_polling_time(uint8_t *cmd, Terminal_stream src) {
-	send_str_to_mboss("RESP: experiment functionality not implemented");
+	send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
 }
 
 void boss_cmd_set_unix_timestamp(uint8_t *cmd, Terminal_stream src) {
@@ -406,7 +404,7 @@ void boss_cmd_set_unix_timestamp_shutdown(uint8_t *cmd, Terminal_stream src) {
 
 	uint32_t timestamp_sec = (byte_TS_3 << 24) | (byte_TS_2 << 16) | (byte_TS_1 << 8) | byte_TS_0;
 
-	// FIXME: store timestamp as an extern, if it needs to be used anywhere
+	// TODO: store timestamp as an extern, if it needs to be used anywhere
 	send_str_to_mboss("RESP: shutdown timestamp set");
 }
 
@@ -501,31 +499,17 @@ void boss_cmd_set_beacon_period(uint8_t *cmd, Terminal_stream src) {
 	
 }
 
-void boss_cmd_clear_flash_memory(uint8_t *cmd, Terminal_stream src) {
-	uint8_t cmd_password[9] = { 0xE0, 0x21, 0x37, 0x56, 0xCD, 0x21, 0x3D, 0xEE, 0xED };
+void boss_cmd_clear_aprs_packet_store(uint8_t *cmd, Terminal_stream src) {
 	
-	if (check_cmd_password(cmd, cmd_password)) {
-		char msg[255];
-		sprintf(
-			msg,
-			"%sRESP: Exiting mission BOSS mode%s",
-			MBOSS_RESPONSE_START_STR, MBOSS_RESPONSE_END_STR
-		);
-		term_sendToMode(msg, strlen(msg), MODE_BOSS);
-
-		// FIXME: clear flash mem
-	}
-	else {
-		char msg[255];
-		sprintf(
-			msg,
-			"%sERROR: password is incorrect%s",
-			MBOSS_RESPONSE_START_STR, MBOSS_RESPONSE_END_STR
-		);
-		term_sendToMode(msg, strlen(msg), MODE_BOSS);
-	}
-
+	clear_frame_store();
 	
+	char msg[255];
+	sprintf(
+		msg,
+		"%sRESP: Clearing APRS packet store memory%s",
+		MBOSS_RESPONSE_START_STR, MBOSS_RESPONSE_END_STR
+	);
+	term_sendToMode(msg, strlen(msg), MODE_BOSS);
 }
 
 void boss_cmd_exit_mission_boss_mode(uint8_t *cmd, Terminal_stream src) {
@@ -577,13 +561,13 @@ void boss_cmd_get_unix_timestamp(uint8_t *cmd, Terminal_stream src) {
 
 
 void boss_cmd_set_experiment_stat_calc_period(uint8_t *cmd, Terminal_stream src) {
-	send_str_to_mboss("RESP: experiment functionality not implemented");
+	send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
 }
 void boss_cmd_get_experiment_stat_calc_period(uint8_t *cmd, Terminal_stream src) {
-	send_str_to_mboss("RESP: experiment functionality not implemented");
+	send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
 }
 void boss_cmd_transfer_n_statistical_experiment_measurements(uint8_t *cmd, Terminal_stream src) {
-	send_str_to_mboss("RESP: experiment functionality not implemented");
+	send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
 }
 
 

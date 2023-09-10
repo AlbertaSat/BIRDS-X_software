@@ -122,3 +122,7 @@ void store_frame_for_store_and_forward(uint8_t *buf, uint16_t buflen) {
 
 	send_str_to_mboss("INFO: stored frame for store-and-forward");
 }
+
+void clear_frame_store() {
+	sf_buffer_wr_idx = 0;
+}

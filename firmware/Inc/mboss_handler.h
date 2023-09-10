@@ -54,7 +54,7 @@ void boss_cmd_set_unix_timestamp_shutdown(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_run_power_on_self_test(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_force_reboot_system(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_set_beacon_period(uint8_t *cmd, Terminal_stream src);
-void boss_cmd_clear_flash_memory(uint8_t *cmd, Terminal_stream src);
+void boss_cmd_clear_aprs_packet_store(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_exit_mission_boss_mode(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_get_sys_uptime_and_reboot_reason(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_get_unix_timestamp(uint8_t *cmd, Terminal_stream src);
