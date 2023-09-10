@@ -18,10 +18,12 @@ along with VP-Digi.  If not, see <http://www.gnu.org/licenses/>.
 #include "beacon.h"
 #include "digipeater.h"
 #include "common.h"
-#include <string.h>
 #include "ax25.h"
 #include "terminal.h"
 #include "drivers/systick.h"
+
+#include <string.h>
+#include <stdio.h>
 
 uint32_t beaconDelay[8] = {0};
 
@@ -56,7 +58,7 @@ void Beacon_send(uint8_t no)
 				buf[idx] = (beacon[no].path[i] << 1); //copy path
 				if((i == 6) || (i == 13)) //it was and ssid
 				{
-					buf[idx] += 0b01100000; //add appripriate bits for ssid
+					buf[idx] += 0b01100000; //add appropriate bits for ssid
 				}
 				idx++;
 			}
@@ -67,9 +69,23 @@ void Beacon_send(uint8_t no)
 	buf[idx - 1] |= 1; //add c-bit on the last element
 	buf[idx++] = 0x03; //control
 	buf[idx++] = 0xF0; //pid
-	for(uint8_t i = 0; i < strlen((char*)beacon[no].data); i++)
-	{
-		buf[idx++] = beacon[no].data[i]; //copy beacon comment
+
+	if (no == 0) {
+		// for JASPER, beacon 0 is a special case which must fetch telemetry data
+		uint8_t beacon_data[100];
+		sprintf(
+			beacon_data,
+			"JASPER Telem Data"
+			// TODO: add telem data
+		);
+		for (uint8_t i = 0; i < strlen((char*)beacon_data); i++) {
+			buf[idx++] = beacon_data[i]; // copy beacon comment
+		}
+	}
+	else {
+		for(uint8_t i = 0; i < strlen((char*)beacon[no].data); i++) {
+			buf[idx++] = beacon[no].data[i]; // copy beacon comment
+		}
 	}
 
 	if((FRAMEBUFLEN - ax25.xmitIdx) > (idx + 2)) //check for free space in TX buffer

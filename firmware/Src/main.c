@@ -259,7 +259,7 @@ int main(void)
 	Afsk_init();
 	Beacon_init();
 
-	// store reset reason at boot, because it can only be fetched once
+	// store reset reason at boot, because it can only be fetched once via `reset_cause_get()`
 	this_boot_reset_cause = reset_cause_get();
 
 	// DRA init handled during mode setting now
