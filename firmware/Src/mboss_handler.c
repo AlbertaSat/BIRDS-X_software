@@ -286,28 +286,34 @@ void boss_cmd_send_temperature(uint8_t *cmd, Terminal_stream src) {
 
 void boss_cmd_enable_pin_diode_experiment(uint8_t *cmd, Terminal_stream src) {
 	config_enable_pin_experiment = 1;
+	send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
 }
 
 void boss_cmd_disable_pin_diode_experiment(uint8_t *cmd, Terminal_stream src) {
 	config_enable_pin_experiment = 0;
+	send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
 }
 
 void boss_cmd_enable_radfet_experiment(uint8_t *cmd, Terminal_stream src) {
 	config_enable_radfet_experiment = 1;
+	send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
 }
 
 void boss_cmd_disable_radfet_experiment(uint8_t *cmd, Terminal_stream src) {
 	config_enable_radfet_experiment = 0;
+	send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
 }
 
 void boss_cmd_enable_both_experiments(uint8_t *cmd, Terminal_stream src) {
 	config_enable_pin_experiment = 1;
 	config_enable_radfet_experiment = 1;
+	send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
 }
 
 void boss_cmd_disable_both_experiments(uint8_t *cmd, Terminal_stream src) {
 	config_enable_pin_experiment = 0;
 	config_enable_radfet_experiment = 0;
+	send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
 }
 
 void boss_cmd_echo_command(uint8_t *cmd, Terminal_stream src) {

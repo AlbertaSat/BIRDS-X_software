@@ -1,6 +1,7 @@
 // Source: https://stackoverflow.com/a/54728664
 
-#pragma once
+#ifndef __SYS_REBOOT_REASON_H__
+#define __SYS_REBOOT_REASON_H__
 
 /// @brief  Possible STM32 system reset causes
 typedef enum reset_cause_e
@@ -44,3 +45,5 @@ reset_cause_t reset_cause_get(void);
 const char * reset_cause_get_name(reset_cause_t reset_cause);
 
 extern reset_cause_t this_boot_reset_cause;
+
+#endif   // __SYS_REBOOT_REASON_H__
