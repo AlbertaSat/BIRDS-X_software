@@ -7,16 +7,14 @@
 #define FALSE 0
 
 uint16_t get_internal_temperature_k() {
-	// Referencing https://github.com/avislab/STM32F103/
-	int adc_value;
-	int temperature;
-	const uint16_t V25 = 1750;// when V25=1.41V at ref 3.3V
-	const uint16_t Avg_Slope = 5; //when avg_slope=4.3mV/C at ref 3.3V
-
 	// FIXME: implement get_internal_temperature_k()
-	adc_value = ADC_GetConversionValue(ADC1);
-	temperature = (uint16_t)((V25-adc_value)/Avg_Slope+25);
-	return 1;
+	// Source: https://mevihub.com/how-to-use-adc-in-stm32f103c8t6-stm32f303/
+	HAL_ADC_Start(ADC_CHANNEL_1);
+	HAL_ADC_PollForConversion(ADC_CHANNEL_1, 300);
+
+	uint16_t raw = HAL_ADC_GetValue(ADC_CHANNEL_1);
+	float vin = raw*(3.3/4096);
+	return vin;
 }
 
 uint16_t get_external_temperature_k(uint8_t sensor_index) {
