@@ -52,7 +52,7 @@ void send_dra_init_commands() {
 	delay_ms(delay_ms_between_commands);
 
 	// Adjust volume 1-8
-	send_str_to_dra("AT+DMOSETVOLUME=1\r\n");
+	send_str_to_dra("AT+DMOSETVOLUME=8\r\n");
 	delay_ms(delay_ms_between_commands);
 
 	// Turn off pre/de-emphasis, filters
