@@ -53,6 +53,7 @@ BossCommandEntry boss_command_table[] = {
 	{0x26, boss_cmd_get_experiment_stat_calc_period},
 	{0x27, boss_cmd_transfer_n_statistical_experiment_measurements},
 	{0x28, boss_cmd_get_stored_aprs_packets_stats},
+	{0x29, boss_cmd_beacon_right_now},
 };
 
 RF_APRS_Mode_t current_aprs_mode = RF_APRS_MODE_INACTIVE;
@@ -637,6 +638,11 @@ void boss_cmd_get_stored_aprs_packets_stats(uint8_t *cmd, Terminal_stream src) {
 		MBOSS_RESPONSE_END_STR
 	);
 	term_sendToMode(msg, strlen(msg), MODE_BOSS);
+}
+
+void boss_cmd_beacon_right_now(uint8_t *cmd, Terminal_stream src) {
+	execute_vp_digi_monitor_cmd("beacon 0");
+	send_str_to_mboss("RESP: beacon 0 sent");
 }
 
 uint8_t check_cmd_password(uint8_t cmd[], uint8_t full_command_with_password[9]) {

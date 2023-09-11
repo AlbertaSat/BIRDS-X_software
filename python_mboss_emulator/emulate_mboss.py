@@ -198,6 +198,8 @@ def main():
 			resp = ser.read_until(MBOSS_RESPONSE_END_STR, size=10000)
 			resp_finished_time = time.time()
 			logger.info(f"Received response: len={len(resp)}, time={resp_finished_time - send_finished_time:.3f}s")
+			if len(resp) > 190:
+				logger.warning(f"Response is nearing the max length from MBOSS. len={len(resp)}")
 			print(f"RX >>{resp}")
 
 			# time.sleep(2) # wait more and read again, in case there's more

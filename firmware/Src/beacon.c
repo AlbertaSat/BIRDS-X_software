@@ -21,6 +21,8 @@ along with VP-Digi.  If not, see <http://www.gnu.org/licenses/>.
 #include "ax25.h"
 #include "terminal.h"
 #include "frame_handler.h"
+#include "mboss_handler.h"
+#include "drivers/temperature_sensors.h"
 #include "drivers/systick.h"
 
 #include <string.h>
@@ -75,12 +77,19 @@ void Beacon_send(uint8_t no)
 
 	if (no == 0) {
 		// for JASPER, beacon 0 is a special case which must fetch telemetry data
+		uint16_t temp_sensor_val_k = get_external_temperature_k(4);
+
 		uint8_t beacon_data[100];
 		sprintf(
-			beacon_data,
-			"JASPER Telem Data"
-			// TODO: add telem data
+			(char*)beacon_data,
+			"JASPER-SAT up%d temp%03dlo%03dhi%03d sto%02d rx%d tx%d bt%d",
+			get_system_uptime_sec(),
+			temp_sensor_val_k, min_sensor_temp_k, max_sensor_temp_k,
+			(uint8_t)(sf_buffer_wr_idx/STORE_AND_FORWARD_BUFFER_SIZE*100),
+			frame_rx_count_since_boot, beacon_count_since_boot,
+			timestamp_sec_at_boot
 		);
+		beacon_data[69] = '\0'; // truncate to 69 characters (one less than max of 70 chars)
 		for (uint8_t i = 0; i < strlen((char*)beacon_data); i++) {
 			buf[idx++] = beacon_data[i]; // copy beacon comment
 		}

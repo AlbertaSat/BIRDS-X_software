@@ -6,6 +6,9 @@
 #define TRUE 1
 #define FALSE 0
 
+// externs
+uint16_t min_sensor_temp_k=FAKE_SENSOR_TEMP_ON_BOOT, max_sensor_temp_k=FAKE_SENSOR_TEMP_ON_BOOT;
+
 uint16_t get_internal_temperature_k() {
 	// FIXME: implement get_internal_temperature_k()
 	return 1;
@@ -42,5 +45,14 @@ uint16_t get_external_temperature_k(uint8_t sensor_index) {
 
 	// convert to kelvin
 	uint16_t temp_k = temp_signed_c + 273;
+
+	// update the global min/max store
+	if (temp_k > max_sensor_temp_k || max_sensor_temp_k == FAKE_SENSOR_TEMP_ON_BOOT) {
+		max_sensor_temp_k = temp_k;
+	}
+	if (temp_k < min_sensor_temp_k || min_sensor_temp_k == FAKE_SENSOR_TEMP_ON_BOOT) {
+		min_sensor_temp_k = temp_k;
+	}
+	
 	return temp_k;
 }

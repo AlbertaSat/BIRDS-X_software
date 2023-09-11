@@ -8,6 +8,7 @@
 
 // #include <stdint.h>
 
+extern uint32_t timestamp_sec_at_boot;
 
 #define MBOSS_COMMAND_LENGTH 9
 #define MBOSS_COMMAND_START_BYTE 0xE0
@@ -62,6 +63,7 @@ void boss_cmd_set_experiment_stat_calc_period(uint8_t *cmd, Terminal_stream src)
 void boss_cmd_get_experiment_stat_calc_period(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_transfer_n_statistical_experiment_measurements(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_get_stored_aprs_packets_stats(uint8_t *cmd, Terminal_stream src);
+void boss_cmd_beacon_right_now(uint8_t *cmd, Terminal_stream src);
 
 // returns 1/true if 9 bytes of cmd and full_command_with_password match, 0/false if they don't match
 uint8_t check_cmd_password(uint8_t cmd[], uint8_t full_command_with_password[9]);
