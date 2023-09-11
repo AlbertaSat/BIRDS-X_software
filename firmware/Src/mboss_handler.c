@@ -168,7 +168,7 @@ uint8_t validate_incoming_boss_cmd(uint8_t *cmd, uint16_t len, Terminal_stream s
 		char err_msg[255];
 		sprintf(
 			err_msg,
-			"%sERROR: BOSS command byte (cmd[1]=%02X) is not in command table%s",
+			"%sERROR: BOSS command byte (cmd[1]=0x%02X) is not in command table%s",
 			MBOSS_RESPONSE_START_STR, cmd[1], MBOSS_RESPONSE_END_STR
 		);
 		term_sendToMode(err_msg, strlen(err_msg), MODE_BOSS);
@@ -387,7 +387,23 @@ void boss_cmd_echo_command(uint8_t *cmd, Terminal_stream src) {
 }
 
 void boss_cmd_transfer_n_raw_experiment_packets(uint8_t *cmd, Terminal_stream src) {
-	send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
+	uint8_t pkt_count = cmd[7];
+
+	if (pkt_count == 0) {
+		send_str_to_mboss("ERROR: can't fetch 0 packets");
+		return;
+	}
+
+	// TODO: make this return results other than the fake data here
+
+	for (uint8_t i = 0; i < pkt_count; i++) {
+		if (get_system_uptime_ms() % 100 > 50) {
+			send_str_to_mboss("RESP: type=1,ts=1694401503,r1=10,r2=12,r3=99,r4=66");
+		}
+		else {
+			send_str_to_mboss("RESP: type=2,ts=1694401503,p1=100,p2=102,p3=69,p4=420");
+		}
+	}
 }
 
 void boss_cmd_get_experiment_polling_times(uint8_t *cmd, Terminal_stream src) {
@@ -626,7 +642,23 @@ void boss_cmd_get_experiment_stat_calc_period(uint8_t *cmd, Terminal_stream src)
 	send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
 }
 void boss_cmd_transfer_n_statistical_experiment_measurements(uint8_t *cmd, Terminal_stream src) {
-	send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
+	// TODO: implement experiment functions
+
+	uint8_t pkt_count = cmd[7];
+
+	if (pkt_count == 0) {
+		send_str_to_mboss("ERROR: can't fetch 0 packets");
+		return;
+	}
+
+	for (uint8_t i = 0; i < pkt_count; i++) {
+		if (get_system_uptime_ms() % 100 > 50) {
+			send_str_to_mboss("RESP: type=1,ts=1694401503,avg_c=22,r1lo=10,r2lo=12,r3lo=99,r4lo=66,r1hi=110,r2hi=112,r3hi=99,r4hi=66");
+		}
+		else {
+			send_str_to_mboss("RESP: type=2,ts=1694401503,avg_c=22,p1lo=10,p2lo=12,p3lo=99,p4lo=66,p1hi=110,p2hi=112,p3hi=99,p4hi=66");
+		}
+	}
 }
 
 void boss_cmd_get_stored_aprs_packets_stats(uint8_t *cmd, Terminal_stream src) {
@@ -642,8 +674,14 @@ void boss_cmd_get_stored_aprs_packets_stats(uint8_t *cmd, Terminal_stream src) {
 }
 
 void boss_cmd_beacon_right_now(uint8_t *cmd, Terminal_stream src) {
-	execute_vp_digi_monitor_cmd("beacon 0");
-	send_str_to_mboss("RESP: beacon 0 sent");
+	if (current_aprs_mode == RF_APRS_MODE_INACTIVE) {
+		send_str_to_mboss("ERROR: can't beacon when APRS mode is inactive");
+	}
+	else if (current_aprs_mode == RF_APRS_MODE_DIGIPEAT || current_aprs_mode == RF_APRS_MODE_STORE_AND_FORWARD) {
+		execute_vp_digi_monitor_cmd("beacon 0");
+		send_str_to_mboss("RESP: beacon 0 sent");
+	}
+	
 }
 
 uint8_t check_cmd_password(uint8_t cmd[], uint8_t full_command_with_password[9]) {
