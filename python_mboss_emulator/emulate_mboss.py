@@ -95,6 +95,19 @@ def add_to_command_table(cmd_df: pd.DataFrame) -> pd.DataFrame:
 			[0x02, '10 frames', [0xE0, 0x02, 0x00, 0x00, 0, 0, 0, 10, 0xED]],
 			[0x02, '100 frames', [0xE0, 0x02, 0x00, 0x00, 0, 0, 0, 100, 0xED]],
 			[0x02, '255 frames', [0xE0, 0x02, 0x00, 0x00, 0, 0, 0, 255, 0xED]],
+
+			# request experiment data packets
+			[0x11, '1 packet', [0xE0, 0x11, 0x00, 0x00, 0, 0, 0, 1, 0xED]],
+			[0x27, '1 packet', [0xE0, 0x27, 0x00, 0x00, 0, 0, 0, 1, 0xED]],
+			[0x11, '2 packets', [0xE0, 0x11, 0x00, 0x00, 0, 0, 0, 2, 0xED]],
+			[0x27, '2 packets', [0xE0, 0x27, 0x00, 0x00, 0, 0, 0, 2, 0xED]],
+			[0x11, '10 packets', [0xE0, 0x11, 0x00, 0x00, 0, 0, 0, 10, 0xED]],
+			[0x27, '10 packets', [0xE0, 0x27, 0x00, 0x00, 0, 0, 0, 10, 0xED]],
+			[0x11, '100 packets', [0xE0, 0x11, 0x00, 0x00, 0, 0, 0, 100, 0xED]],
+			[0x27, '100 packets', [0xE0, 0x27, 0x00, 0x00, 0, 0, 0, 100, 0xED]],
+			[0x11, '255 packets', [0xE0, 0x11, 0x00, 0x00, 0, 0, 0, 255, 0xED]],
+			[0x27, '255 packets', [0xE0, 0x27, 0x00, 0x00, 0, 0, 0, 255, 0xED]],
+
 		],
 		columns=['cmd_byte_int', 'desc', 'bytes_to_send']
 	)
@@ -139,7 +152,20 @@ def serial_send_bytes(ser: serial.Serial, bytes_to_send: bytes|list[int], displa
 	logger.info(f"Sending '{display_name}': >>{bytes_to_send.hex(' ').upper()}")
 	ser.write(bytes_to_send)
 	# logger.info(f"Sent    bytes: >>{bytes_to_send}")
-	
+
+def fn_run_full_test_sequence(ser: serial.Serial) -> None:
+	""" Runs the full test sequence. """
+
+	df = global_store['cmd_df'].copy()
+
+	# filter out the "exit mission boss mode" command, since it breaks all future tests
+	df = df[df['cmd_byte_int'] != 0x22]
+
+	for _, row in df.iterrows():
+		serial_send_bytes(ser, row['bytes_to_send'],  row['display_name'])
+		time.sleep(0.3)
+		read_response(ser)
+
 def gui_prompt_for_command_and_execute_it(ser: serial.Serial) -> None:
 	""" Presents a GUI to the user to select a command to send from the MBOSS. """
 
@@ -149,6 +175,10 @@ def gui_prompt_for_command_and_execute_it(ser: serial.Serial) -> None:
 	preselect_int = 0
 	if global_store['last_cmd_selection_str']:
 		preselect_int = choices_list.index(global_store['last_cmd_selection_str'])
+
+	function_options = [fn_run_full_test_sequence]
+
+	choices_list += [f"--- {f.__name__}() ---" for f in function_options]
 	
 	selected_cmd: str = easygui.choicebox(
 		msg="Select a command to issue",
@@ -160,15 +190,42 @@ def gui_prompt_for_command_and_execute_it(ser: serial.Serial) -> None:
 		logger.info(f"User canceled command selection")
 		sys.exit(0)
 
-	global_store['last_cmd_selection_str'] = selected_cmd
+	if selected_cmd.startswith('---'):
+		func_name = selected_cmd.replace('-', '').replace('()', '').strip()
+		logger.info(f"Running function: {func_name}()")
+		selected_fn = globals()[func_name]
+		selected_fn(ser)
+		logger.info(f"Running function: {func_name}()")
 
-	# lookup that row in the cmd_df
-	cmd_info = cmd_df[cmd_df['display_name'] == selected_cmd].iloc[0]
+	else:
+		global_store['last_cmd_selection_str'] = selected_cmd
 
-	# send the bytes
-	serial_send_bytes(ser, cmd_info['bytes_to_send'],  cmd_info['display_name'])
+		# lookup that row in the cmd_df
+		cmd_info = cmd_df[cmd_df['display_name'] == selected_cmd].iloc[0]
+
+		# send the bytes
+		serial_send_bytes(ser, cmd_info['bytes_to_send'],  cmd_info['display_name'])
+		read_response(ser)
 
 	# time.sleep(0.3)
+
+def read_response(ser: serial.Serial) -> None:
+	send_finished_time = time.time()
+
+	# read response
+	resp = ser.read_until(MBOSS_RESPONSE_END_STR, size=10000)
+	resp_finished_time = time.time()
+	logger.info(f"Received response: len={len(resp)}, time={resp_finished_time - send_finished_time:.3f}s")
+	if len(resp) > 190:
+		logger.warning(f"Response is nearing the max length from MBOSS. len={len(resp)}")
+	print(f"RX >>{resp}")
+
+	# time.sleep(2) # wait more and read again, in case there's more
+	resp2 = ser.read(10000)
+	if len(resp2) > 0:
+		logger.info(f"More data available: len={len(resp2)}")
+		print(f"RX >>{resp2}")
+
 
 def main():
 	logger.info(f"Starting main()")
@@ -182,6 +239,8 @@ def main():
 	global_store['cmd_df'].to_excel('command_list.xlsx', index=False)
 	global_store['cmd_df'].to_markdown('command_list.md', index=False)
 
+	logger.info(f"There are {len(global_store['cmd_df'])} commands available, with {len(global_store['cmd_df']['cmd_byte_int'].unique())} distinct command bytes.")
+
 	global_store['port'] = gui_select_serial_port()
 	logger.info(f"Selected port: {global_store['port']}")
 
@@ -190,23 +249,8 @@ def main():
 		
 		while True:
 			gui_prompt_for_command_and_execute_it(ser)
-			send_finished_time = time.time()
 
 			# time.sleep(1) # wait for mboss to send data
-
-			# read response
-			resp = ser.read_until(MBOSS_RESPONSE_END_STR, size=10000)
-			resp_finished_time = time.time()
-			logger.info(f"Received response: len={len(resp)}, time={resp_finished_time - send_finished_time:.3f}s")
-			if len(resp) > 190:
-				logger.warning(f"Response is nearing the max length from MBOSS. len={len(resp)}")
-			print(f"RX >>{resp}")
-
-			# time.sleep(2) # wait more and read again, in case there's more
-			resp2 = ser.read(10000)
-			if len(resp2) > 0:
-				logger.info(f"More data available: len={len(resp2)}")
-				print(f"RX >>{resp2}")
 
 			# TODO: pretty-print non-printable chars as hex
 			# TODO: continuously check for incoming data while user is clicking buttons
