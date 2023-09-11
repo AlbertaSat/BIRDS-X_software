@@ -8,25 +8,29 @@
 
 // #include <stdint.h>
 
+
+typedef struct {
+	uint8_t cmd_byte;
+	void (*cmd_func)(uint8_t*, Terminal_stream);
+} BossCommandEntry;
+
+
+typedef enum {
+	RF_APRS_MODE_INACTIVE = 0,
+	RF_APRS_MODE_DIGIPEAT = 1,
+	RF_APRS_MODE_STORE_AND_FORWARD = 2,
+} RF_APRS_Mode_t;
+
+
+// externs
 extern uint32_t timestamp_sec_at_boot;
+extern RF_APRS_Mode_t current_aprs_mode;
 
 #define MBOSS_COMMAND_LENGTH 9
 #define MBOSS_COMMAND_START_BYTE 0xE0
 #define MBOSS_COMMAND_END_BYTE 0xED
 #define MBOSS_RESPONSE_START_STR "\xDA\xBE"
 #define MBOSS_RESPONSE_END_STR "\xDA\xED"
-
-typedef struct {
-    uint8_t cmd_byte;
-    void (*cmd_func)(uint8_t*, Terminal_stream);
-} BossCommandEntry;
-
-
-typedef enum {
-    RF_APRS_MODE_INACTIVE = 0,
-    RF_APRS_MODE_DIGIPEAT = 1,
-    RF_APRS_MODE_STORE_AND_FORWARD = 2,
-} RF_APRS_Mode_t;
 
 void receive_incoming_boss_cmd(uint8_t *cmd, uint16_t len, Terminal_stream src);
 

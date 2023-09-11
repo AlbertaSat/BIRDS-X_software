@@ -602,11 +602,12 @@ void boss_cmd_get_sys_uptime_and_reboot_reason(uint8_t *cmd, Terminal_stream src
 	char msg[200];
 	sprintf(
 		msg,
-		"%sRESP: uptime_ms=%lu, uptime_sec=%lu, timestamp_sec_at_boot=%lu, timestamp_sec_now=%lu, reset_cause_str=%s, reset_cause_enum_int=%d%s",
+		"%sRESP: uptime_ms=%lu, uptime_sec=%lu, timestamp_sec_at_boot=%lu, timestamp_sec_now=%lu, reset_cause_str=%s, reset_cause_enum_int=%d, mode=%d%s",
 		MBOSS_RESPONSE_START_STR,
 		system_uptime_ms, get_system_uptime_sec(),
 		timestamp_sec_at_boot, get_unix_timestamp_sec_now(),
 		reset_cause_get_name(reset_cause), (uint8_t)reset_cause,
+		(uint8_t) current_aprs_mode,
 		MBOSS_RESPONSE_END_STR
 	);
 	term_sendToMode(msg, strlen(msg), MODE_BOSS);

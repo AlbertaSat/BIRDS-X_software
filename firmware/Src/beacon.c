@@ -82,8 +82,9 @@ void Beacon_send(uint8_t no)
 		uint8_t beacon_data[100];
 		sprintf(
 			(char*)beacon_data,
-			"JASPER-SAT up%d temp%03dlo%03dhi%03d sto%02d rx%d tx%d bt%d",
+			"JASPER-SAT up%lu m%d temp%03dlo%03dhi%03d sto%02d rx%lu tx%lu bt%lu",
 			get_system_uptime_sec(),
+			(uint8_t) current_aprs_mode,
 			temp_sensor_val_k, min_sensor_temp_k, max_sensor_temp_k,
 			(uint8_t)(sf_buffer_wr_idx/STORE_AND_FORWARD_BUFFER_SIZE*100),
 			frame_rx_count_since_boot, beacon_count_since_boot,
