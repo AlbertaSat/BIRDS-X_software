@@ -41,7 +41,7 @@ BossCommandEntry boss_command_table[] = {
 	{0x14, boss_cmd_set_radfet_polling_time},
 	{0x15, boss_cmd_set_both_polling_time},
 	{0x16, boss_cmd_set_unix_timestamp},
-	{0x17, boss_cmd_set_unix_timestamp_shutdown},
+	{0x17, boss_cmd_set_unix_timestamp_shutdown}, // not used anymore
 	{0x18, boss_cmd_run_power_on_self_test},
 	{0x19, boss_cmd_force_reboot_system},
 	{0x20, boss_cmd_set_beacon_period},
