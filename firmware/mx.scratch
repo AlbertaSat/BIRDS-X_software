@@ -16,58 +16,10 @@
       <Secure/>
       <filestoremove>
         <file>
-          <name>../Src/custom.c</name>
-        </file>
-        <file>
-          <name>Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_gpio_ex.c</name>
-        </file>
-        <file>
-          <name>Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_i2c.c</name>
-        </file>
-        <file>
-          <name>Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal.c</name>
-        </file>
-        <file>
-          <name>Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_rcc.c</name>
-        </file>
-        <file>
-          <name>Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_rcc_ex.c</name>
-        </file>
-        <file>
-          <name>Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_gpio.c</name>
-        </file>
-        <file>
-          <name>Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_dma.c</name>
-        </file>
-        <file>
-          <name>Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_cortex.c</name>
-        </file>
-        <file>
-          <name>Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_pwr.c</name>
-        </file>
-        <file>
-          <name>Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_flash.c</name>
-        </file>
-        <file>
-          <name>Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_flash_ex.c</name>
-        </file>
-        <file>
-          <name>Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_exti.c</name>
-        </file>
-        <file>
-          <name>Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_tim.c</name>
-        </file>
-        <file>
-          <name>Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_tim_ex.c</name>
-        </file>
-        <file>
-          <name>Drivers/CMSIS/Device/ST/STM32F1xx/Source/Templates/system_stm32f1xx.c</name>
-        </file>
-        <file>
-          <name>Src/system_stm32f1xx.c</name>
-        </file>
-        <file>
           <name>stm32f1xx_it.h</name>
+        </file>
+        <file>
+          <name>../Src/custom.c</name>
         </file>
         <file>
           <name>stm32f1xx_hal_conf.h</name>

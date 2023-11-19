@@ -75,6 +75,8 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define RFET_EN_OUT_PIN_Pin GPIO_PIN_12
+#define RFET_EN_OUT_PIN_GPIO_Port GPIOA
 
 /* USER CODE BEGIN Private defines */
 
