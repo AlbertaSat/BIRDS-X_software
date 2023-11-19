@@ -81,6 +81,7 @@ ADC_HandleTypeDef hadc1;
 I2C_HandleTypeDef hi2c2;
 
 /* USER CODE BEGIN PV */
+uint32_t value_adc_radfet_1;
 
 /* USER CODE END PV */
 
@@ -115,9 +116,6 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
-  // set PA11 as GPIO output pin (for DRA sleep mode enable [DRA_PD])
-  // FIXME: do this
 
   /* USER CODE END Init */
 
@@ -177,6 +175,13 @@ int main(void)
 	delay_ms(100);
 	send_dra_init_commands();
 	*/
+
+	// ADC Setup Stuff (https://wiki.st.com/stm32mcu/wiki/Getting_started_with_ADC)
+	//HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);
+	//HAL_ADC_Start_DMA(&hadc1,(uint32_t*)&value_adc,1);
+
+	// ADC Setup Stuff: https://controllerstech.com/stm32-adc-single-channel/
+	HAL_ADC_Start(&hadc1); // start the adc
 
 	send_str_to_mboss("INFO: boot complete");
 
@@ -314,7 +319,7 @@ static void MX_ADC1_Init(void)
   */
   sConfig.Channel = ADC_CHANNEL_1;
   sConfig.Rank = ADC_REGULAR_RANK_1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
+  sConfig.SamplingTime = ADC_SAMPLETIME_13CYCLES_5;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     Error_Handler();
