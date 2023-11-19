@@ -49,7 +49,7 @@
           </LinkSettings>
           <heapSize>0x200</heapSize>
           <stackSize>0x400</stackSize>
-          <cpuclock>64</cpuclock>
+          <cpuclock>8</cpuclock>
           <board>custom</board>
           <debugprobe>jtag</debugprobe>
           <optimization/>
