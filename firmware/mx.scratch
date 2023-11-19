@@ -3,10 +3,10 @@
   <FileVersion>3.0</FileVersion>
   <Workspace>
     <WorkspaceType>Single-project</WorkspaceType>
-    <WorkspacePath>C:\Users\Parker\Github\BIRDS-X_Firmware\firmware\</WorkspacePath>
+    <WorkspacePath>/home/user/GitHub/BIRDS-X_Firmware/firmware/</WorkspacePath>
     <underRoot>true</underRoot>
     <TrustZone>0</TrustZone>
-    <HAL_Driver>C:\Users\Parker\STM32Cube\Repository\STM32Cube_FW_F1_V1.8.5</HAL_Driver>
+    <HAL_Driver>/home/user/STM32Cube/Repository//STM32Cube_FW_F1_V1.8.5</HAL_Driver>
     <CMSIS>Drivers/CMSIS</CMSIS>
     <Toolchain>STM32CubeIDE</Toolchain>
     <IocFile>F103C8T6_DIGI_USB.ioc</IocFile>
@@ -16,10 +16,58 @@
       <Secure/>
       <filestoremove>
         <file>
-          <name>stm32f1xx_it.h</name>
+          <name>../Src/custom.c</name>
         </file>
         <file>
-          <name>..\Src\custom.c</name>
+          <name>Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_gpio_ex.c</name>
+        </file>
+        <file>
+          <name>Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_i2c.c</name>
+        </file>
+        <file>
+          <name>Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal.c</name>
+        </file>
+        <file>
+          <name>Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_rcc.c</name>
+        </file>
+        <file>
+          <name>Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_rcc_ex.c</name>
+        </file>
+        <file>
+          <name>Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_gpio.c</name>
+        </file>
+        <file>
+          <name>Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_dma.c</name>
+        </file>
+        <file>
+          <name>Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_cortex.c</name>
+        </file>
+        <file>
+          <name>Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_pwr.c</name>
+        </file>
+        <file>
+          <name>Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_flash.c</name>
+        </file>
+        <file>
+          <name>Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_flash_ex.c</name>
+        </file>
+        <file>
+          <name>Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_exti.c</name>
+        </file>
+        <file>
+          <name>Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_tim.c</name>
+        </file>
+        <file>
+          <name>Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_tim_ex.c</name>
+        </file>
+        <file>
+          <name>Drivers/CMSIS/Device/ST/STM32F1xx/Source/Templates/system_stm32f1xx.c</name>
+        </file>
+        <file>
+          <name>Src/system_stm32f1xx.c</name>
+        </file>
+        <file>
+          <name>stm32f1xx_it.h</name>
         </file>
         <file>
           <name>stm32f1xx_hal_conf.h</name>
@@ -43,7 +91,7 @@
             <memory access="xrw" name="RAM" size="20480" start="0x20000000"/>
             <memory access="rx" name="FLASH" size="65536" start="0x8000000"/>
           </memories>
-          <startup>C:\Users\Parker\STM32Cube\Repository\STM32Cube_FW_F1_V1.8.5\Drivers\CMSIS\Device\ST\STM32F1xx\Source\Templates\gcc\startup_stm32f103xb.s</startup>
+          <startup>/home/user/STM32Cube/Repository/STM32Cube_FW_F1_V1.8.5/Drivers/CMSIS/Device\ST\STM32F1xx\Source\Templates\gcc\startup_stm32f103xb.s</startup>
           <LinkSettings>
             <LinkAdditionalLibs/>
           </LinkSettings>
@@ -64,10 +112,10 @@
           <Ldefines/>
           <Cincludes>
             <include>Inc</include>
-            <include>Drivers\STM32F1xx_HAL_Driver\Inc</include>
-            <include>Drivers\STM32F1xx_HAL_Driver\Inc\Legacy</include>
-            <include>Drivers\CMSIS\Device\ST\STM32F1xx\Include</include>
-            <include>Drivers\CMSIS\Include</include>
+            <include>Drivers/STM32F1xx_HAL_Driver/Inc</include>
+            <include>Drivers/STM32F1xx_HAL_Driver/Inc/Legacy</include>
+            <include>Drivers/CMSIS/Device/ST/STM32F1xx/Include</include>
+            <include>Drivers/CMSIS/Include</include>
           </Cincludes>
           <definestoremove>
             <Adefines/>
