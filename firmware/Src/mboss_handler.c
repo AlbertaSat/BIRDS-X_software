@@ -57,7 +57,8 @@ BossCommandEntry boss_command_table[] = {
 
 	{0xA0, boss_cmd_exp_disable_radfets},
 	{0xA1, boss_cmd_exp_enable_radfets},
-	{0xA2, boss_cmd_exp_get_adc_values}
+	{0xA2, boss_cmd_exp_get_adc_values},
+	{0xA3, boss_cmd_exp_get_adc_values_on_loop}
 };
 
 RF_APRS_Mode_t current_aprs_mode = RF_APRS_MODE_INACTIVE;
@@ -718,6 +719,27 @@ void boss_cmd_exp_get_adc_values(uint8_t *cmd, Terminal_stream src) {
 
 }
 
+void boss_cmd_exp_get_adc_values_on_loop(uint8_t *cmd, Terminal_stream src) {
+	while (1) {
+		// read ADC values
+		uint32_t adc_val_radfet_1 = ADC_Read_Channel(ADC_CHANNEL_1); // get the adc value
+
+		// prep message
+		char msg[255];
+		sprintf(
+			msg,
+			"%sRESP: adc_radfet_1=%d, ...%s",
+			MBOSS_RESPONSE_START_STR,
+			adc_val_radfet_1,
+			//0,
+			MBOSS_RESPONSE_END_STR
+		);
+		term_sendToMode(msg, strlen(msg), MODE_BOSS);
+
+		// delay
+		HAL_Delay(100);
+	}
+}
 
 
 uint8_t check_cmd_password(uint8_t cmd[], uint8_t full_command_with_password[9]) {

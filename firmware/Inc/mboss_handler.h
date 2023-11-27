@@ -71,6 +71,7 @@ void boss_cmd_beacon_right_now(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_exp_disable_radfets(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_exp_enable_radfets(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_exp_get_adc_values(uint8_t *cmd, Terminal_stream src);
+void boss_cmd_exp_get_adc_values_on_loop(uint8_t *cmd, Terminal_stream src);
 
 // returns 1/true if 9 bytes of cmd and full_command_with_password match, 0/false if they don't match
 uint8_t check_cmd_password(uint8_t cmd[], uint8_t full_command_with_password[9]);

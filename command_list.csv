@@ -1,0 +1,61 @@
+bytes_to_send,display_name,cmd_func,cmd_byte_int,cmd_byte_str,desc
+"[224, 0, 0, 0, 0, 0, 0, 0, 237]",0x00 - boss_cmd_turn_off_payload,boss_cmd_turn_off_payload,0,0x00,
+"[224, 1, 0, 0, 0, 0, 0, 0, 237]",0x01 - boss_cmd_set_active_aprs_mode,boss_cmd_set_active_aprs_mode,1,0x01,
+"[224, 1, 0, 0, 0, 0, 0, 0, 237]",0x01 - boss_cmd_set_active_aprs_mode (APRS Mode = Inactive),boss_cmd_set_active_aprs_mode,1,0x01,APRS Mode = Inactive
+"[224, 1, 0, 0, 0, 0, 0, 1, 237]",0x01 - boss_cmd_set_active_aprs_mode (APRS Mode = Digipeat),boss_cmd_set_active_aprs_mode,1,0x01,APRS Mode = Digipeat
+"[224, 1, 0, 0, 0, 0, 0, 2, 237]",0x01 - boss_cmd_set_active_aprs_mode (APRS Mode = Store&Fwd),boss_cmd_set_active_aprs_mode,1,0x01,APRS Mode = Store&Fwd
+"[224, 2, 0, 0, 0, 0, 0, 0, 237]",0x02 - boss_cmd_transfer_aprs_data_packets,boss_cmd_transfer_aprs_data_packets,2,0x02,
+"[224, 2, 0, 0, 0, 0, 0, 1, 237]",0x02 - boss_cmd_transfer_aprs_data_packets (1 frame),boss_cmd_transfer_aprs_data_packets,2,0x02,1 frame
+"[224, 2, 0, 0, 0, 0, 0, 2, 237]",0x02 - boss_cmd_transfer_aprs_data_packets (2 frames),boss_cmd_transfer_aprs_data_packets,2,0x02,2 frames
+"[224, 2, 0, 0, 0, 0, 0, 10, 237]",0x02 - boss_cmd_transfer_aprs_data_packets (10 frames),boss_cmd_transfer_aprs_data_packets,2,0x02,10 frames
+"[224, 2, 0, 0, 0, 0, 0, 100, 237]",0x02 - boss_cmd_transfer_aprs_data_packets (100 frames),boss_cmd_transfer_aprs_data_packets,2,0x02,100 frames
+"[224, 2, 0, 0, 0, 0, 0, 255, 237]",0x02 - boss_cmd_transfer_aprs_data_packets (255 frames),boss_cmd_transfer_aprs_data_packets,2,0x02,255 frames
+"[224, 3, 0, 0, 0, 0, 0, 0, 237]",0x03 - boss_cmd_send_temperature,boss_cmd_send_temperature,3,0x03,
+"[224, 4, 0, 0, 0, 0, 0, 0, 237]",0x04 - boss_cmd_enable_pin_diode_experiment,boss_cmd_enable_pin_diode_experiment,4,0x04,
+"[224, 5, 0, 0, 0, 0, 0, 0, 237]",0x05 - boss_cmd_disable_pin_diode_experiment,boss_cmd_disable_pin_diode_experiment,5,0x05,
+"[224, 6, 0, 0, 0, 0, 0, 0, 237]",0x06 - boss_cmd_enable_radfet_experiment,boss_cmd_enable_radfet_experiment,6,0x06,
+"[224, 7, 0, 0, 0, 0, 0, 0, 237]",0x07 - boss_cmd_disable_radfet_experiment,boss_cmd_disable_radfet_experiment,7,0x07,
+"[224, 8, 0, 0, 0, 0, 0, 0, 237]",0x08 - boss_cmd_enable_both_experiments,boss_cmd_enable_both_experiments,8,0x08,
+"[224, 9, 0, 0, 0, 0, 0, 0, 237]",0x09 - boss_cmd_disable_both_experiments,boss_cmd_disable_both_experiments,9,0x09,
+"[224, 16, 0, 0, 0, 0, 0, 0, 237]",0x10 - boss_cmd_echo_command,boss_cmd_echo_command,16,0x10,
+"[224, 17, 0, 0, 0, 0, 0, 0, 237]",0x11 - boss_cmd_transfer_n_raw_experiment_packets,boss_cmd_transfer_n_raw_experiment_packets,17,0x11,
+"[224, 17, 0, 0, 0, 0, 0, 1, 237]",0x11 - boss_cmd_transfer_n_raw_experiment_packets (1 packet),boss_cmd_transfer_n_raw_experiment_packets,17,0x11,1 packet
+"[224, 17, 0, 0, 0, 0, 0, 2, 237]",0x11 - boss_cmd_transfer_n_raw_experiment_packets (2 packets),boss_cmd_transfer_n_raw_experiment_packets,17,0x11,2 packets
+"[224, 17, 0, 0, 0, 0, 0, 10, 237]",0x11 - boss_cmd_transfer_n_raw_experiment_packets (10 packets),boss_cmd_transfer_n_raw_experiment_packets,17,0x11,10 packets
+"[224, 17, 0, 0, 0, 0, 0, 100, 237]",0x11 - boss_cmd_transfer_n_raw_experiment_packets (100 packets),boss_cmd_transfer_n_raw_experiment_packets,17,0x11,100 packets
+"[224, 17, 0, 0, 0, 0, 0, 255, 237]",0x11 - boss_cmd_transfer_n_raw_experiment_packets (255 packets),boss_cmd_transfer_n_raw_experiment_packets,17,0x11,255 packets
+"[224, 18, 0, 0, 0, 0, 0, 0, 237]",0x12 - boss_cmd_get_experiment_polling_times,boss_cmd_get_experiment_polling_times,18,0x12,
+"[224, 19, 0, 0, 0, 0, 0, 0, 237]",0x13 - boss_cmd_set_pin_diode_polling_time,boss_cmd_set_pin_diode_polling_time,19,0x13,
+"[224, 20, 0, 0, 0, 0, 0, 0, 237]",0x14 - boss_cmd_set_radfet_polling_time,boss_cmd_set_radfet_polling_time,20,0x14,
+"[224, 21, 0, 0, 0, 0, 0, 0, 237]",0x15 - boss_cmd_set_both_polling_time,boss_cmd_set_both_polling_time,21,0x15,
+"[224, 22, 0, 0, 0, 0, 0, 0, 237]",0x16 - boss_cmd_set_unix_timestamp,boss_cmd_set_unix_timestamp,22,0x16,
+"[224, 22, 0, 0, 100, 254, 49, 61, 237]",0x16 - boss_cmd_set_unix_timestamp (2023-09-10 T21:12:29Z),boss_cmd_set_unix_timestamp,22,0x16,2023-09-10 T21:12:29Z
+"[224, 23, 0, 0, 0, 0, 0, 0, 237]",0x17 - boss_cmd_set_unix_timestamp_shutdown,boss_cmd_set_unix_timestamp_shutdown,23,0x17,
+"[224, 22, 0, 0, 100, 254, 49, 61, 237]",0x17 - boss_cmd_set_unix_timestamp_shutdown (2023-09-10 T21:12:29Z),boss_cmd_set_unix_timestamp_shutdown,23,0x17,2023-09-10 T21:12:29Z
+"[224, 24, 0, 0, 0, 0, 0, 0, 237]",0x18 - boss_cmd_run_power_on_self_test,boss_cmd_run_power_on_self_test,24,0x18,
+"[224, 25, 0, 0, 0, 0, 0, 0, 237]",0x19 - boss_cmd_force_reboot_system,boss_cmd_force_reboot_system,25,0x19,
+"[224, 25, 53, 166, 50, 24, 211, 255, 237]",0x19 - boss_cmd_force_reboot_system (with good password),boss_cmd_force_reboot_system,25,0x19,with good password
+"[224, 32, 0, 0, 0, 0, 0, 0, 237]",0x20 - boss_cmd_set_beacon_period,boss_cmd_set_beacon_period,32,0x20,
+"[224, 32, 0, 0, 0, 0, 0, 1, 237]",0x20 - boss_cmd_set_beacon_period (1 minute),boss_cmd_set_beacon_period,32,0x20,1 minute
+"[224, 32, 0, 0, 0, 0, 0, 3, 237]",0x20 - boss_cmd_set_beacon_period (3 minutes),boss_cmd_set_beacon_period,32,0x20,3 minutes
+"[224, 32, 0, 0, 0, 0, 0, 100, 237]",0x20 - boss_cmd_set_beacon_period (100 minutes),boss_cmd_set_beacon_period,32,0x20,100 minutes
+"[224, 33, 0, 0, 0, 0, 0, 0, 237]",0x21 - boss_cmd_clear_aprs_packet_store,boss_cmd_clear_aprs_packet_store,33,0x21,
+"[224, 33, 55, 86, 205, 33, 61, 238, 237]",0x21 - boss_cmd_clear_aprs_packet_store (with good password),boss_cmd_clear_aprs_packet_store,33,0x21,with good password
+"[224, 34, 0, 0, 0, 0, 0, 0, 237]",0x22 - boss_cmd_exit_mission_boss_mode,boss_cmd_exit_mission_boss_mode,34,0x22,
+"[224, 34, 56, 0, 0, 0, 0, 170, 237]",0x22 - boss_cmd_exit_mission_boss_mode (with good password),boss_cmd_exit_mission_boss_mode,34,0x22,with good password
+"[224, 35, 0, 0, 0, 0, 0, 0, 237]",0x23 - boss_cmd_get_sys_uptime_and_reboot_reason,boss_cmd_get_sys_uptime_and_reboot_reason,35,0x23,
+"[224, 36, 0, 0, 0, 0, 0, 0, 237]",0x24 - boss_cmd_get_unix_timestamp,boss_cmd_get_unix_timestamp,36,0x24,
+"[224, 37, 0, 0, 0, 0, 0, 0, 237]",0x25 - boss_cmd_set_experiment_stat_calc_period,boss_cmd_set_experiment_stat_calc_period,37,0x25,
+"[224, 38, 0, 0, 0, 0, 0, 0, 237]",0x26 - boss_cmd_get_experiment_stat_calc_period,boss_cmd_get_experiment_stat_calc_period,38,0x26,
+"[224, 39, 0, 0, 0, 0, 0, 0, 237]",0x27 - boss_cmd_transfer_n_statistical_experiment_measurements,boss_cmd_transfer_n_statistical_experiment_measurements,39,0x27,
+"[224, 39, 0, 0, 0, 0, 0, 1, 237]",0x27 - boss_cmd_transfer_n_statistical_experiment_measurements (1 packet),boss_cmd_transfer_n_statistical_experiment_measurements,39,0x27,1 packet
+"[224, 39, 0, 0, 0, 0, 0, 2, 237]",0x27 - boss_cmd_transfer_n_statistical_experiment_measurements (2 packets),boss_cmd_transfer_n_statistical_experiment_measurements,39,0x27,2 packets
+"[224, 39, 0, 0, 0, 0, 0, 10, 237]",0x27 - boss_cmd_transfer_n_statistical_experiment_measurements (10 packets),boss_cmd_transfer_n_statistical_experiment_measurements,39,0x27,10 packets
+"[224, 39, 0, 0, 0, 0, 0, 100, 237]",0x27 - boss_cmd_transfer_n_statistical_experiment_measurements (100 packets),boss_cmd_transfer_n_statistical_experiment_measurements,39,0x27,100 packets
+"[224, 39, 0, 0, 0, 0, 0, 255, 237]",0x27 - boss_cmd_transfer_n_statistical_experiment_measurements (255 packets),boss_cmd_transfer_n_statistical_experiment_measurements,39,0x27,255 packets
+"[224, 40, 0, 0, 0, 0, 0, 0, 237]",0x28 - boss_cmd_get_stored_aprs_packets_stats,boss_cmd_get_stored_aprs_packets_stats,40,0x28,
+"[224, 41, 0, 0, 0, 0, 0, 0, 237]",0x29 - boss_cmd_beacon_right_now,boss_cmd_beacon_right_now,41,0x29,
+"[224, 160, 0, 0, 0, 0, 0, 0, 237]",0xA0 - boss_cmd_exp_disable_radfets,boss_cmd_exp_disable_radfets,160,0xA0,
+"[224, 161, 0, 0, 0, 0, 0, 0, 237]",0xA1 - boss_cmd_exp_enable_radfets,boss_cmd_exp_enable_radfets,161,0xA1,
+"[224, 162, 0, 0, 0, 0, 0, 0, 237]",0xA2 - boss_cmd_exp_get_adc_values,boss_cmd_exp_get_adc_values,162,0xA2,
+"[224, 163, 0, 0, 0, 0, 0, 0, 237]",0xA3 - boss_cmd_exp_get_adc_values_on_loop,boss_cmd_exp_get_adc_values_on_loop,163,0xA3,
