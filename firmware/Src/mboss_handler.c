@@ -723,21 +723,26 @@ void boss_cmd_exp_get_adc_values_on_loop(uint8_t *cmd, Terminal_stream src) {
 	while (1) {
 		// read ADC values
 		uint32_t adc_val_radfet_1 = ADC_Read_Channel(ADC_CHANNEL_1); // get the adc value
-
+		uint32_t adc_val_radfet_2 = ADC_Read_Channel(ADC_CHANNEL_2);
+		
 		// prep message
 		char msg[255];
 		sprintf(
 			msg,
-			"%sRESP: adc_radfet_1=%d, ...%s",
+			"%sRESP: adc_radfet_1=%d, adc_radfet_2=%d, ...%s",
 			MBOSS_RESPONSE_START_STR,
 			adc_val_radfet_1,
+			adc_val_radfet_2,
 			//0,
 			MBOSS_RESPONSE_END_STR
 		);
 		term_sendToMode(msg, strlen(msg), MODE_BOSS);
 
+		// service watchdog
+		Wdog_reset();
+
 		// delay
-		HAL_Delay(100);
+		delay_ms(100);
 	}
 }
 

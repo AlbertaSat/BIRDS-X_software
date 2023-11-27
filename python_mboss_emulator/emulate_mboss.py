@@ -174,7 +174,7 @@ def fn_just_receive_forever(ser: serial.Serial) -> None:
 		try:
 			data = ser.read()
 			if data:
-				print(bytes_to_nice_str(data), end='')
+				print(bytes_to_nice_str(data), end='', flush=True)
 			
 			# TODO: add timestamps between long pauses
 		except KeyboardInterrupt:
