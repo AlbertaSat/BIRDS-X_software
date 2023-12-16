@@ -55,6 +55,7 @@ extern "C" {
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
 extern I2C_HandleTypeDef hi2c2;
+extern ADC_HandleTypeDef hadc1;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
@@ -75,6 +76,8 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define RFET_EN_OUT_PIN_Pin GPIO_PIN_12
+#define RFET_EN_OUT_PIN_GPIO_Port GPIOA
 
 /* USER CODE BEGIN Private defines */
 

@@ -166,6 +166,22 @@ def fn_run_full_test_sequence(ser: serial.Serial) -> None:
 		time.sleep(0.3)
 		read_response(ser)
 
+def fn_just_receive_forever(ser: serial.Serial) -> None:
+	""" Receives bytes over UART and prints them as ASCII. """
+	print(f"Press Ctrl+C to exit the receive loop.")
+
+	while True:
+		try:
+			data = ser.read()
+			if data:
+				print(bytes_to_nice_str(data), end='', flush=True)
+			
+			# TODO: add timestamps between long pauses
+		except KeyboardInterrupt:
+			print(f"\nKeyboardInterrupt: going back to menu.")
+			break
+
+
 def gui_prompt_for_command_and_execute_it(ser: serial.Serial) -> None:
 	""" Presents a GUI to the user to select a command to send from the MBOSS. """
 
@@ -176,7 +192,10 @@ def gui_prompt_for_command_and_execute_it(ser: serial.Serial) -> None:
 	if global_store['last_cmd_selection_str']:
 		preselect_int = choices_list.index(global_store['last_cmd_selection_str'])
 
-	function_options = [fn_run_full_test_sequence]
+	function_options = [
+		fn_run_full_test_sequence,
+		fn_just_receive_forever,
+	]
 
 	choices_list += [f"--- {f.__name__}() ---" for f in function_options]
 	
@@ -195,7 +214,7 @@ def gui_prompt_for_command_and_execute_it(ser: serial.Serial) -> None:
 		logger.info(f"Running function: {func_name}()")
 		selected_fn = globals()[func_name]
 		selected_fn(ser)
-		logger.info(f"Running function: {func_name}()")
+		logger.info(f"Done running function: {func_name}()")
 
 	else:
 		global_store['last_cmd_selection_str'] = selected_cmd
@@ -209,6 +228,19 @@ def gui_prompt_for_command_and_execute_it(ser: serial.Serial) -> None:
 
 	# time.sleep(0.3)
 
+def bytes_to_nice_str(byte_obj: bytes) -> str:
+	""" Prints a byte object as hex or ASCII, whichever is better.
+	Example print: [0xDA][0xBE]INFO: boot complete[0xDA][0xED]
+	"""
+	out: str = ''
+	for b in byte_obj:
+		# if it's a printable ASCII character
+		if 0x20 <= b <= 0x7E:
+			out += bytes([b]).decode('ascii')
+		else:
+			out += f"[{hex(b).upper().replace('0X', '0x')}]"
+	return out
+
 def read_response(ser: serial.Serial) -> None:
 	send_finished_time = time.time()
 
@@ -218,14 +250,14 @@ def read_response(ser: serial.Serial) -> None:
 	logger.info(f"Received response: len={len(resp)}, time={resp_finished_time - send_finished_time:.3f}s")
 	if len(resp) > 190:
 		logger.warning(f"Response is nearing the max length from MBOSS. len={len(resp)}")
-	print(f"RX >>{resp}")
+	
+	print(f"RX >>{bytes_to_nice_str(resp)}")
 
 	# time.sleep(2) # wait more and read again, in case there's more
 	resp2 = ser.read(10000)
 	if len(resp2) > 0:
 		logger.info(f"More data available: len={len(resp2)}")
-		print(f"RX >>{resp2}")
-
+		print(f"RX >>{bytes_to_nice_str(resp2)}")
 
 def main():
 	logger.info(f"Starting main()")

@@ -54,6 +54,11 @@ BossCommandEntry boss_command_table[] = {
 	{0x27, boss_cmd_transfer_n_statistical_experiment_measurements},
 	{0x28, boss_cmd_get_stored_aprs_packets_stats},
 	{0x29, boss_cmd_beacon_right_now},
+
+	{0xA0, boss_cmd_exp_disable_radfets},
+	{0xA1, boss_cmd_exp_enable_radfets},
+	{0xA2, boss_cmd_exp_get_adc_values},
+	{0xA3, boss_cmd_exp_get_adc_values_on_loop}
 };
 
 RF_APRS_Mode_t current_aprs_mode = RF_APRS_MODE_INACTIVE;
@@ -338,34 +343,34 @@ void boss_cmd_send_temperature(uint8_t *cmd, Terminal_stream src) {
 
 void boss_cmd_enable_pin_diode_experiment(uint8_t *cmd, Terminal_stream src) {
 	config_enable_pin_experiment = 1;
-	send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
+	//send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
 }
 
 void boss_cmd_disable_pin_diode_experiment(uint8_t *cmd, Terminal_stream src) {
 	config_enable_pin_experiment = 0;
-	send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
+	//send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
 }
 
 void boss_cmd_enable_radfet_experiment(uint8_t *cmd, Terminal_stream src) {
 	config_enable_radfet_experiment = 1;
-	send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
+	//send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
 }
 
 void boss_cmd_disable_radfet_experiment(uint8_t *cmd, Terminal_stream src) {
 	config_enable_radfet_experiment = 0;
-	send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
+	//send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
 }
 
 void boss_cmd_enable_both_experiments(uint8_t *cmd, Terminal_stream src) {
 	config_enable_pin_experiment = 1;
 	config_enable_radfet_experiment = 1;
-	send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
+	//send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
 }
 
 void boss_cmd_disable_both_experiments(uint8_t *cmd, Terminal_stream src) {
 	config_enable_pin_experiment = 0;
 	config_enable_radfet_experiment = 0;
-	send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
+	//send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
 }
 
 void boss_cmd_echo_command(uint8_t *cmd, Terminal_stream src) {
@@ -387,7 +392,7 @@ void boss_cmd_echo_command(uint8_t *cmd, Terminal_stream src) {
 }
 
 void boss_cmd_transfer_n_raw_experiment_packets(uint8_t *cmd, Terminal_stream src) {
-	uint8_t pkt_count = cmd[7];
+	/*uint8_t pkt_count = cmd[7];
 
 	if (pkt_count == 0) {
 		send_str_to_mboss("ERROR: can't fetch 0 packets");
@@ -404,22 +409,23 @@ void boss_cmd_transfer_n_raw_experiment_packets(uint8_t *cmd, Terminal_stream sr
 			send_str_to_mboss("RESP: type=2,ts=1694401503,p1=100,p2=102,p3=69,p4=420");
 		}
 	}
+	*/
 }
 
 void boss_cmd_get_experiment_polling_times(uint8_t *cmd, Terminal_stream src) {
-	send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
+	//send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
 }
 
 void boss_cmd_set_pin_diode_polling_time(uint8_t *cmd, Terminal_stream src) {
-	send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
+	//send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
 }
 
 void boss_cmd_set_radfet_polling_time(uint8_t *cmd, Terminal_stream src) {
-	send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
+	//send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
 }
 
 void boss_cmd_set_both_polling_time(uint8_t *cmd, Terminal_stream src) {
-	send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
+	//send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
 }
 
 void boss_cmd_set_unix_timestamp(uint8_t *cmd, Terminal_stream src) {
@@ -574,7 +580,7 @@ void boss_cmd_set_beacon_period(uint8_t *cmd, Terminal_stream src) {
 }
 
 void boss_cmd_clear_aprs_packet_store(uint8_t *cmd, Terminal_stream src) {
-	
+
 	clear_frame_store();
 	
 	char msg[255];
@@ -636,10 +642,10 @@ void boss_cmd_get_unix_timestamp(uint8_t *cmd, Terminal_stream src) {
 
 
 void boss_cmd_set_experiment_stat_calc_period(uint8_t *cmd, Terminal_stream src) {
-	send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
+	//send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
 }
 void boss_cmd_get_experiment_stat_calc_period(uint8_t *cmd, Terminal_stream src) {
-	send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
+	//send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
 }
 void boss_cmd_transfer_n_statistical_experiment_measurements(uint8_t *cmd, Terminal_stream src) {
 	// TODO: implement experiment functions
@@ -683,6 +689,63 @@ void boss_cmd_beacon_right_now(uint8_t *cmd, Terminal_stream src) {
 	}
 	
 }
+
+void boss_cmd_exp_disable_radfets(uint8_t *cmd, Terminal_stream src) {
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_RESET);
+
+	send_str_to_mboss("RESP: RADFET experiment disabled");
+}
+void boss_cmd_exp_enable_radfets(uint8_t *cmd, Terminal_stream src) {
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_SET);
+
+	send_str_to_mboss("RESP: RADFET experiment enabled");
+}
+
+void boss_cmd_exp_get_adc_values(uint8_t *cmd, Terminal_stream src) {
+	// read ADC values
+	uint32_t adc_val_radfet_1 = ADC_Read_Channel(ADC_CHANNEL_1); // get the adc value
+
+	// prep message
+	char msg[255];
+	sprintf(
+		msg,
+		"%sRESP: adc_radfet_1=%d, ...%s",
+		MBOSS_RESPONSE_START_STR,
+		adc_val_radfet_1,
+		//0,
+		MBOSS_RESPONSE_END_STR
+	);
+	term_sendToMode(msg, strlen(msg), MODE_BOSS);
+
+}
+
+void boss_cmd_exp_get_adc_values_on_loop(uint8_t *cmd, Terminal_stream src) {
+	while (1) {
+		// read ADC values
+		uint32_t adc_val_radfet_1 = ADC_Read_Channel(ADC_CHANNEL_1); // get the adc value
+		uint32_t adc_val_radfet_2 = ADC_Read_Channel(ADC_CHANNEL_2);
+		
+		// prep message
+		char msg[255];
+		sprintf(
+			msg,
+			"%sRESP: adc_radfet_1=%d, adc_radfet_2=%d, ...%s",
+			MBOSS_RESPONSE_START_STR,
+			adc_val_radfet_1,
+			adc_val_radfet_2,
+			//0,
+			MBOSS_RESPONSE_END_STR
+		);
+		term_sendToMode(msg, strlen(msg), MODE_BOSS);
+
+		// service watchdog
+		Wdog_reset();
+
+		// delay
+		delay_ms(100);
+	}
+}
+
 
 uint8_t check_cmd_password(uint8_t cmd[], uint8_t full_command_with_password[9]) {
 	for (uint8_t i = 0; i < MBOSS_COMMAND_LENGTH; i++) {
