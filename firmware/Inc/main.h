@@ -76,6 +76,16 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define PIN_CCD_OS_IN1_Pin GPIO_PIN_5
+#define PIN_CCD_OS_IN1_GPIO_Port GPIOA
+#define PIN_CCD_OS_IN2_Pin GPIO_PIN_6
+#define PIN_CCD_OS_IN2_GPIO_Port GPIOA
+#define PIN_CCD_PHI_M_Pin GPIO_PIN_13
+#define PIN_CCD_PHI_M_GPIO_Port GPIOB
+#define PIN_CCD_ICG_Pin GPIO_PIN_14
+#define PIN_CCD_ICG_GPIO_Port GPIOB
+#define PIN_CCD_SH_Pin GPIO_PIN_15
+#define PIN_CCD_SH_GPIO_Port GPIOB
 #define RFET_EN_OUT_PIN_Pin GPIO_PIN_12
 #define RFET_EN_OUT_PIN_GPIO_Port GPIOA
 
