@@ -772,11 +772,11 @@ void boss_cmd_exp_ccd_do_debug_convert(uint8_t *cmd, Terminal_stream src) {
 		);
 
 		// add a newline every 50 bytes
-		if (i % 50 == 0) {
-			uint16_t msg_len = strlen(msg);
-			msg[msg_len] = '\n';
-			msg[msg_len + 1] = '\0';
-		}
+		// if (i % 50 == 0) {
+		// 	uint16_t msg_len = strlen(msg);
+		// 	msg[msg_len] = '\n';
+		// 	msg[msg_len + 1] = '\0';
+		// }
 
 		// send
 		term_sendToMode(msg, strlen(msg), MODE_BOSS);

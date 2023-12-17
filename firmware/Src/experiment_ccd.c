@@ -34,7 +34,7 @@ void query_ccd_measurement(uint8_t *fetched_data_1, uint8_t *fetched_data_2) {
 	Wdog_reset();
 
 	// configure the ADC for reading
-	hadc1.Instance->SQR3 = ADC_CHANNEL_6;
+	// hadc1.Instance->SQR3 = ADC_CHANNEL_6; // NOW DONE BELOW
 	// Note: PA5 = IC601 = ADC_CHANNEL_5
 	//       PA6 = IC701 = ADC_CHANNEL_6
 	// TODO: un-hardcode this
@@ -67,20 +67,21 @@ void query_ccd_measurement(uint8_t *fetched_data_1, uint8_t *fetched_data_2) {
 			delay_ms(40);
 		}
 
+		// configure the ADC for reading
+		hadc1.Instance->SQR3 = ADC_CHANNEL_6;
+		
 		// read the ADC, and convert the 12-bit ADC value to an 8-bit value
-		adc_val = HAL_ADC_GetValue(&hadc1);
-		fetched_data_1[i] = (uint8_t)(adc_val >> 4);
+		//adc_val = HAL_ADC_GetValue(&hadc1);
 
-		// alternative:
-		// if (HAL_ADC_PollForConversion(&hadc1, 1000) == HAL_OK) {
-		// 	// Read ADC value
-		// 	// adcValue = HAL_ADC_GetValue(&hadc1);
-		// 	fetched_data_1[i] = HAL_ADC_GetValue(&hadc1);
-		// }
-		// else {
-		// 	fetched_data_1[i] = 42; // hardcoded read error
-		// }
-		//fetched_data_1[i] = 99;
+		if (HAL_ADC_PollForConversion(&hadc1, 1000) == HAL_OK) {
+			// Read ADC value
+			adc_val = HAL_ADC_GetValue(&hadc1);
+		}
+		else {
+			adc_val = 0;
+		}
+
+		fetched_data_1[i] = (uint8_t)(adc_val >> 4);
 
 		if (i < 3) { // FIXME
 			send_str_to_mboss_no_tail("query_ccd_measurement -> right after ADC");
