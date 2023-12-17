@@ -55,7 +55,6 @@ void boss_cmd_set_pin_diode_polling_time(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_set_radfet_polling_time(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_set_both_polling_time(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_set_unix_timestamp(uint8_t *cmd, Terminal_stream src);
-void boss_cmd_set_unix_timestamp_shutdown(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_run_power_on_self_test(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_force_reboot_system(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_set_beacon_period(uint8_t *cmd, Terminal_stream src);
@@ -72,12 +71,14 @@ void boss_cmd_exp_disable_radfets(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_exp_enable_radfets(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_exp_get_adc_values(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_exp_get_adc_values_on_loop(uint8_t *cmd, Terminal_stream src);
+void boss_cmd_exp_ccd_do_debug_convert(uint8_t *cmd, Terminal_stream src);
 
 // returns 1/true if 9 bytes of cmd and full_command_with_password match, 0/false if they don't match
 uint8_t check_cmd_password(uint8_t cmd[], uint8_t full_command_with_password[9]);
 
-// send str to mission boss (do not put start/end delims)
+// send str to mission boss (includes start/end delims by default)
 void send_str_to_mboss(char input_msg[]);
+void send_str_to_mboss_no_tail(char input_msg[]);
 
 RF_APRS_Mode_t get_current_aprs_mode(void);
 

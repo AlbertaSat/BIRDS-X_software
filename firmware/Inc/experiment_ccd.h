@@ -11,8 +11,10 @@ typedef enum {
     CCD_SENSOR_2 = 2
 } ccd_sensor_t;
 
-#define CCD_DATA_LEN_BYTES 1546
+#define CCD_DATA_LEN_BYTES 75 // real: 1546
 
+
+void query_ccd_measurement(uint8_t *fetched_data_1, uint8_t *fetched_data_2);
 
 
 #endif  // __EXPERIMENT_CCD_H__

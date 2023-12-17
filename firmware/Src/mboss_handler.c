@@ -3,6 +3,7 @@
 #include "common.h"
 #include "sys_reboot_reason.h"
 #include "experiments.h"
+#include "experiment_ccd.h"
 #include "terminal.h"
 #include "default_settings.h"
 #include "frame_handler.h"
@@ -11,6 +12,7 @@
 
 #include "drivers/temperature_sensors.h"
 #include "drivers/modem.h"
+#include "drivers/watchdog.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -41,7 +43,6 @@ BossCommandEntry boss_command_table[] = {
 	{0x14, boss_cmd_set_radfet_polling_time},
 	{0x15, boss_cmd_set_both_polling_time},
 	{0x16, boss_cmd_set_unix_timestamp},
-	{0x17, boss_cmd_set_unix_timestamp_shutdown}, // not used anymore
 	{0x18, boss_cmd_run_power_on_self_test},
 	{0x19, boss_cmd_force_reboot_system},
 	{0x20, boss_cmd_set_beacon_period},
@@ -58,7 +59,9 @@ BossCommandEntry boss_command_table[] = {
 	{0xA0, boss_cmd_exp_disable_radfets},
 	{0xA1, boss_cmd_exp_enable_radfets},
 	{0xA2, boss_cmd_exp_get_adc_values},
-	{0xA3, boss_cmd_exp_get_adc_values_on_loop}
+	{0xA3, boss_cmd_exp_get_adc_values_on_loop},
+
+	{0xC0, boss_cmd_exp_ccd_do_debug_convert}
 };
 
 RF_APRS_Mode_t current_aprs_mode = RF_APRS_MODE_INACTIVE;
@@ -473,21 +476,6 @@ void boss_cmd_set_unix_timestamp(uint8_t *cmd, Terminal_stream src) {
 	}
 }
 
-void boss_cmd_set_unix_timestamp_shutdown(uint8_t *cmd, Terminal_stream src) {
-	// Example CMD: 0xE0 0x17 X X TS_3 TS_2 TS_1 TS_0 0xED
-
-	// Initialize variables to store the extracted bytes
-	uint8_t byte_TS_3 = cmd[4];
-	uint8_t byte_TS_2 = cmd[5];
-	uint8_t byte_TS_1 = cmd[6];
-	uint8_t byte_TS_0 = cmd[7];
-
-	uint32_t timestamp_sec = (byte_TS_3 << 24) | (byte_TS_2 << 16) | (byte_TS_1 << 8) | byte_TS_0;
-
-	// TODO: store timestamp as an extern, if it needs to be used anywhere
-	send_str_to_mboss("RESP: shutdown timestamp set");
-}
-
 void boss_cmd_run_power_on_self_test(uint8_t *cmd, Terminal_stream src) {
 	// POST = power on self test
 
@@ -746,6 +734,64 @@ void boss_cmd_exp_get_adc_values_on_loop(uint8_t *cmd, Terminal_stream src) {
 	}
 }
 
+void boss_cmd_exp_ccd_do_debug_convert(uint8_t *cmd, Terminal_stream src) {
+	send_str_to_mboss_no_tail("DEBUG: boss_cmd_exp_ccd_do_debug_convert -> called");
+	delay_ms(120);
+
+	uint8_t fetched_data_1[CCD_DATA_LEN_BYTES+1];
+	uint8_t fetched_data_2[CCD_DATA_LEN_BYTES+1];
+	
+	// fill all bytes with zeros (for good measure)
+	for (int i = 0; i < CCD_DATA_LEN_BYTES; i++) {
+		fetched_data_1[i] = 0;
+		fetched_data_2[i] = 0;
+	}
+	send_str_to_mboss_no_tail("DEBUG: array init complete");
+	delay_ms(120);
+
+	// fill the arrays with data, if possible
+	query_ccd_measurement(fetched_data_1, fetched_data_2);
+	Wdog_reset();
+
+	// prep start of message
+	char msg[255];
+	sprintf(
+		msg,
+		"%sRESP: CCD fetched_data_1=[",
+		MBOSS_RESPONSE_START_STR
+	);
+	term_sendToMode(msg, strlen(msg), MODE_BOSS);
+	delay_ms(40);
+	Wdog_reset();
+
+	for (uint8_t i = 0; i < CCD_DATA_LEN_BYTES; i++) {
+		sprintf(
+			msg,
+			"%02X ",
+			fetched_data_1[i]
+		);
+
+		// add a newline every 50 bytes
+		if (i % 50 == 0) {
+			uint16_t msg_len = strlen(msg);
+			msg[msg_len] = '\n';
+			msg[msg_len + 1] = '\0';
+		}
+
+		// send
+		term_sendToMode(msg, strlen(msg), MODE_BOSS);
+		delay_ms(20);
+		Wdog_reset();
+	}
+
+	// prep end of message
+	sprintf(
+		msg,
+		"]%s",
+		MBOSS_RESPONSE_END_STR
+	);
+	term_sendToMode(msg, strlen(msg), MODE_BOSS);
+}
 
 uint8_t check_cmd_password(uint8_t cmd[], uint8_t full_command_with_password[9]) {
 	for (uint8_t i = 0; i < MBOSS_COMMAND_LENGTH; i++) {
@@ -754,6 +800,10 @@ uint8_t check_cmd_password(uint8_t cmd[], uint8_t full_command_with_password[9])
 		}
 	}
 	return 1;
+}
+
+void send_str_to_mboss_no_tail(char input_msg[]) {
+	term_sendToMode(input_msg, strlen(input_msg), MODE_BOSS);
 }
 
 void send_str_to_mboss(char input_msg[]) {

@@ -87,7 +87,6 @@ def add_to_command_table(cmd_df: pd.DataFrame) -> pd.DataFrame:
 			# datetime.datetime(2023, 9, 10, 21, 12, 29)
 			# '0x64fe313d'
 			[0x16, '2023-09-10 T21:12:29Z', [0xE0, 0x16, 0x00, 0x00, 0x64, 0xfe, 0x31, 0x3d, 0xED]],
-			[0x17, '2023-09-10 T21:12:29Z', [0xE0, 0x16, 0x00, 0x00, 0x64, 0xfe, 0x31, 0x3d, 0xED]],
 
 			# request APRS frames
 			[0x02, '1 frame', [0xE0, 0x02, 0x00, 0x00, 0, 0, 0, 1, 0xED]],
@@ -167,7 +166,7 @@ def fn_run_full_test_sequence(ser: serial.Serial) -> None:
 		read_response(ser)
 
 def fn_just_receive_forever(ser: serial.Serial) -> None:
-	""" Receives bytes over UART and prints them as ASCII. """
+	""" Receives bytes over UART and prints them as ASCII. Loops forever. """
 	print(f"Press Ctrl+C to exit the receive loop.")
 
 	while True:
@@ -181,23 +180,35 @@ def fn_just_receive_forever(ser: serial.Serial) -> None:
 			print(f"\nKeyboardInterrupt: going back to menu.")
 			break
 
+def fn_view_incoming_once(ser: serial.Serial) -> None:
+	""" Receives bytes over UART and prints them as ASCII. Runs once."""
+
+	# data = ser.read_all()
+	# if data:
+	# 	print(bytes_to_nice_str(data), end='', flush=True)
+	# else:
+	# 	print("No data.")
+
+	read_response(ser)
 
 def gui_prompt_for_command_and_execute_it(ser: serial.Serial) -> None:
 	""" Presents a GUI to the user to select a command to send from the MBOSS. """
 
 	cmd_df = global_store['cmd_df']
 	choices_list: list = cmd_df['display_name'].tolist()
+	
+	function_options = [
+		fn_run_full_test_sequence,
+		fn_just_receive_forever,
+		fn_view_incoming_once,
+	]
+
+	choices_list += [f"--- {f.__name__}() ---" for f in function_options]
 
 	preselect_int = 0
 	if global_store['last_cmd_selection_str']:
 		preselect_int = choices_list.index(global_store['last_cmd_selection_str'])
 
-	function_options = [
-		fn_run_full_test_sequence,
-		fn_just_receive_forever,
-	]
-
-	choices_list += [f"--- {f.__name__}() ---" for f in function_options]
 	
 	selected_cmd: str = easygui.choicebox(
 		msg="Select a command to issue",
@@ -209,6 +220,8 @@ def gui_prompt_for_command_and_execute_it(ser: serial.Serial) -> None:
 		logger.info(f"User canceled command selection")
 		sys.exit(0)
 
+	global_store['last_cmd_selection_str'] = selected_cmd
+
 	if selected_cmd.startswith('---'):
 		func_name = selected_cmd.replace('-', '').replace('()', '').strip()
 		logger.info(f"Running function: {func_name}()")
@@ -217,8 +230,6 @@ def gui_prompt_for_command_and_execute_it(ser: serial.Serial) -> None:
 		logger.info(f"Done running function: {func_name}()")
 
 	else:
-		global_store['last_cmd_selection_str'] = selected_cmd
-
 		# lookup that row in the cmd_df
 		cmd_info = cmd_df[cmd_df['display_name'] == selected_cmd].iloc[0]
 
