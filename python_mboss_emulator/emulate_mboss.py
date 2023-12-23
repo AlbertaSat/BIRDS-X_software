@@ -286,17 +286,25 @@ def gui_prompt_for_command_and_execute_it(ser: serial.Serial) -> None:
 
 	# time.sleep(0.3)
 
-def bytes_to_nice_str(byte_obj: bytes) -> str:
+def bytes_to_nice_str(byte_obj: bytes, include_tstamp: bool = True) -> str:
 	""" Prints a byte object as hex or ASCII, whichever is better.
 	Example print: [0xDA][0xBE]INFO: boot complete[0xDA][0xED]
 	"""
 	out: str = ''
+	# byte_obj = byte_obj.replace(MBOSS_RESPONSE_END_STR, MBOSS_RESPONSE_END_STR+b'\n')
 	for b in byte_obj:
 		# if it's a printable ASCII character
 		if 0x20 <= b <= 0x7E:
 			out += bytes([b]).decode('ascii')
 		else:
 			out += f"[{hex(b).upper().replace('0X', '0x')}]"
+
+		if b == MBOSS_RESPONSE_END_STR[-1]:
+			if include_tstamp:
+				out += f" [<{time.time():,.3f}s>]"
+
+			out += '\n'
+
 	return out
 
 def read_response(ser: serial.Serial) -> None:

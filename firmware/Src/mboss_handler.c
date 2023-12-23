@@ -680,52 +680,41 @@ void boss_cmd_beacon_right_now(uint8_t *cmd, Terminal_stream src) {
 }
 
 void boss_cmd_exp_disable_radfets(uint8_t *cmd, Terminal_stream src) {
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(PIN_RFET_EN_OUT_GPIO_Port, PIN_RFET_EN_OUT_Pin, GPIO_PIN_RESET);
 
 	send_str_to_mboss("RESP: RADFET experiment disabled");
 }
 void boss_cmd_exp_enable_radfets(uint8_t *cmd, Terminal_stream src) {
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(PIN_RFET_EN_OUT_GPIO_Port, PIN_RFET_EN_OUT_Pin, GPIO_PIN_SET);
 
 	send_str_to_mboss("RESP: RADFET experiment enabled");
 }
 
 void boss_cmd_exp_get_adc_values(uint8_t *cmd, Terminal_stream src) {
 	// read ADC values
-	uint32_t adc_val_radfet_1 = ADC_Read_Channel(ADC_CHANNEL_1); // get the adc value
+	uint16_t adc_val_radfet_1 = get_radfet_measurement(1);
+	uint16_t adc_val_radfet_2 = get_radfet_measurement(2);
+	uint16_t adc_val_radfet_3 = get_radfet_measurement(3);
+	uint16_t adc_val_radfet_4 = get_radfet_measurement(4);
 
 	// prep message
-	char msg[255];
+	char msg[100];
 	sprintf(
 		msg,
-		"%sRESP: adc_radfet_1=%d, ...%s",
+		"%sRESP: %d,%d,%d,%d%s",
 		MBOSS_RESPONSE_START_STR,
 		adc_val_radfet_1,
-		//0,
+		adc_val_radfet_2,
+		adc_val_radfet_3,
+		adc_val_radfet_4,
 		MBOSS_RESPONSE_END_STR
 	);
 	term_sendToMode(msg, strlen(msg), MODE_BOSS);
-
 }
 
 void boss_cmd_exp_get_adc_values_on_loop(uint8_t *cmd, Terminal_stream src) {
 	while (1) {
-		// read ADC values
-		uint32_t adc_val_radfet_1 = ADC_Read_Channel(ADC_CHANNEL_1); // get the adc value
-		uint32_t adc_val_radfet_2 = ADC_Read_Channel(ADC_CHANNEL_2);
-		
-		// prep message
-		char msg[255];
-		sprintf(
-			msg,
-			"%sRESP: adc_radfet_1=%d, adc_radfet_2=%d, ...%s",
-			MBOSS_RESPONSE_START_STR,
-			adc_val_radfet_1,
-			adc_val_radfet_2,
-			//0,
-			MBOSS_RESPONSE_END_STR
-		);
-		term_sendToMode(msg, strlen(msg), MODE_BOSS);
+		boss_cmd_exp_get_adc_values(cmd, src);
 
 		// service watchdog
 		Wdog_reset();

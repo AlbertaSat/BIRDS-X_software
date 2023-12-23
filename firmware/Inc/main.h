@@ -55,8 +55,8 @@ extern "C" {
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
 extern I2C_HandleTypeDef hi2c2;
-extern ADC_HandleTypeDef hadc1;
-extern ADC_HandleTypeDef hadc2;
+// extern ADC_HandleTypeDef hadc1;
+// extern ADC_HandleTypeDef hadc2;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
@@ -79,10 +79,6 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define PIN_LED_D303_Pin GPIO_PIN_13
 #define PIN_LED_D303_GPIO_Port GPIOC
-#define PIN_CCD_OS_IN1_Pin GPIO_PIN_5
-#define PIN_CCD_OS_IN1_GPIO_Port GPIOA
-#define PIN_CCD_OS_IN2_Pin GPIO_PIN_6
-#define PIN_CCD_OS_IN2_GPIO_Port GPIOA
 #define PIN_CCD_PHI_M_Pin GPIO_PIN_13
 #define PIN_CCD_PHI_M_GPIO_Port GPIOB
 #define PIN_CCD_ICG_Pin GPIO_PIN_14
@@ -91,8 +87,8 @@ void Error_Handler(void);
 #define PIN_CCD_SH_GPIO_Port GPIOB
 #define PIN_LED_D304_Pin GPIO_PIN_8
 #define PIN_LED_D304_GPIO_Port GPIOA
-#define RFET_EN_OUT_PIN_Pin GPIO_PIN_12
-#define RFET_EN_OUT_PIN_GPIO_Port GPIOA
+#define PIN_RFET_EN_OUT_Pin GPIO_PIN_12
+#define PIN_RFET_EN_OUT_GPIO_Port GPIOA
 
 /* USER CODE BEGIN Private defines */
 

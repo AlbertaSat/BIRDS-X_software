@@ -79,7 +79,7 @@ void query_ccd_measurement(uint8_t *fetched_data_1, uint8_t *fetched_data_2) {
 	Wdog_reset();
 
 	// configure the ADC for reading
-	// hadc1.Instance->SQR3 = ADC_CHANNEL_6; // NOW DONE BELOW
+	// hadc2.Instance->SQR3 = ADC_CHANNEL_6; // NOW DONE BELOW
 	// Note: PA5 = IC601 = ADC_CHANNEL_5
 	//       PA6 = IC701 = ADC_CHANNEL_6
 	// TODO: un-hardcode this
@@ -168,15 +168,15 @@ void query_ccd_measurement(uint8_t *fetched_data_1, uint8_t *fetched_data_2) {
 		// }
 
 		// configure the ADC for reading
-		// hadc1.Instance->SQR3 = ADC_CHANNEL_6; // 5 (PA5, IC601) or 6 (PA6, IC701)
+		// hadc2.Instance->SQR3 = ADC_CHANNEL_6; // 5 (PA5, IC601) or 6 (PA6, IC701)
 		
 		// read the ADC, and convert the 12-bit ADC value to an 8-bit value
-		//adc_val = HAL_ADC_GetValue(&hadc1);
+		//adc_val = HAL_ADC_GetValue(&hadc2);
 
 		#if 0
-		// if (HAL_ADC_PollForConversion(&hadc1, 1) == HAL_OK) {
+		// if (HAL_ADC_PollForConversion(&hadc2, 1) == HAL_OK) {
 		// 	// Read ADC value
-		// 	adc_val = HAL_ADC_GetValue(&hadc1);
+		// 	adc_val = HAL_ADC_GetValue(&hadc2);
 		// }
 		// else {
 		// 	adc_val = 0;
@@ -253,7 +253,7 @@ void init_ccd_adc(void)
     // RCC->CFGR |= RCC_CFGR_ADCPRE_DIV6;
 
     /* Enable clock for ADC & PortA */
-    // orig: // RCC->APB2ENR |= RCC_APB2ENR_ADC1EN | RCC_APB2ENR_IOPAEN;
+    // orig: // RCC->APB2ENR |= RCC_APB2ENR_ADC2EN | RCC_APB2ENR_IOPAEN;
 	RCC->APB2ENR |= RCC_APB2ENR_ADC2EN | RCC_APB2ENR_IOPAEN;
 
     /* Configure PA5 and PA6 in analog input mode */
@@ -262,7 +262,7 @@ void init_ccd_adc(void)
 
     /* Set sampling time = 28.5 cycles*/
     // orig: // ADC2->SMPR2 |= (ADC_SMPR2_SMP0_1 | ADC_SMPR2_SMP0_0);
-	ADC1->SMPR2 = ADC_SAMPLE_TIME6(SAMPLE_TIME_1_5);
+	ADC2->SMPR2 = ADC_SAMPLE_TIME6(SAMPLE_TIME_1_5);
 
     /* Put adc in Continuous mode and wake up from power down mode*/
     ADC2->CR2 |= (ADC_CR2_CONT | ADC_CR2_ADON);
