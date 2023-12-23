@@ -6,38 +6,7 @@
 uint8_t config_enable_radfet_experiment = 0;
 uint8_t config_enable_pin_experiment = 0;
 
-#if 0
-uint16_t ADC_Read_Channel_bad(uint32_t channel) {
-	// Source: ChatGPT
-	
-    uint16_t adcValue = 0;
-
-    // Configure the channel to be converted
-    hadc2.Instance->SQR3 = channel;
-
-    // Start ADC conversion
-    /*if (HAL_ADC_Start(&hadc2) != HAL_OK) {
-        Error_Handler();
-    }*/
-
-    // Wait for conversion to complete
-    if (HAL_ADC_PollForConversion(&hadc2, 100) == HAL_OK) {
-        // Read ADC value
-        // It's only a 12-bit number, so casting into 16-bits is easy.
-        return (uint16_t) (HAL_ADC_GetValue(&hadc2) & 0x0FFF);
-    } else {
-        // Error_Handler();
-        return 3;
-    }
-
-    // Stop ADC conversion
-    /*if (HAL_ADC_Stop(&hadc2) != HAL_OK) {
-        Error_Handler();
-    }*/
-
-    return adcValue;
-}
-#endif
+#define RADFET_ADC_SAMPLE_TIME_CLOCK_CYCLES (SAMPLE_TIME_239_5)
 
 uint16_t ADC_Read_Channel(uint32_t channel) {
 
@@ -45,6 +14,13 @@ uint16_t ADC_Read_Channel(uint32_t channel) {
 
     // Configure the channel to be converted
     ADC2->SQR3 = channel;
+
+    // SOURCE: ChatGPT
+    // Start the conversion
+    ADC2->CR2 |= ADC_CR2_SWSTART;
+    // Wait for the conversion to complete
+    while (!(ADC2->SR & ADC_SR_EOC));
+    // END SOURCE
 
     // delay_ms(20); // try waiting for conversion
 
@@ -105,7 +81,7 @@ void init_adc_radfets(void)
     /* Set sampling time = 28.5 cycles*/
     // orig: // ADC2->SMPR2 |= (ADC_SMPR2_SMP0_1 | ADC_SMPR2_SMP0_0);
 	// ADC2->SMPR2 = ADC_SAMPLE_TIME6(SAMPLE_TIME_1_5);
-    ADC2->SMPR2 = ADC_SAMPLE_TIME1(SAMPLE_TIME_1_5) | ADC_SAMPLE_TIME8(SAMPLE_TIME_1_5) | ADC_SAMPLE_TIME9(SAMPLE_TIME_1_5) | ADC_SAMPLE_TIME4(SAMPLE_TIME_1_5);
+    ADC2->SMPR2 = ADC_SAMPLE_TIME1(RADFET_ADC_SAMPLE_TIME_CLOCK_CYCLES) | ADC_SAMPLE_TIME8(RADFET_ADC_SAMPLE_TIME_CLOCK_CYCLES) | ADC_SAMPLE_TIME9(RADFET_ADC_SAMPLE_TIME_CLOCK_CYCLES) | ADC_SAMPLE_TIME4(RADFET_ADC_SAMPLE_TIME_CLOCK_CYCLES);
 
     /* Put adc in Continuous mode and wake up from power down mode*/
     ADC2->CR2 |= (ADC_CR2_CONT | ADC_CR2_ADON);
