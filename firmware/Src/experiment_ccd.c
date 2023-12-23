@@ -67,11 +67,15 @@ void fetch_ccd_measurement_and_log_it() {
 void query_ccd_measurement(uint8_t *fetched_data_1, uint8_t *fetched_data_2) {
 	// this is a naive timer-less implementation
 
+
+	uint8_t last_sh_val = 0;
+	const uint8_t pixels_between_sh_toggles = 1000;
+
 	#ifdef ENABLE_CCD_DEBUG_PRINTS
 	send_str_to_mboss_no_tail("query_ccd_measurement -> called");
 	#endif
 
-	delay_ms(120);
+	// delay_ms(120);
 	Wdog_reset();
 
 	// configure the ADC for reading
@@ -89,6 +93,8 @@ void query_ccd_measurement(uint8_t *fetched_data_1, uint8_t *fetched_data_2) {
 	// DEBUG: write LED high to see how long this func takes
 	HAL_GPIO_WritePin(PIN_LED_D304_GPIO_Port, PIN_LED_D304_Pin, GPIO_PIN_SET);
 
+
+	#ifdef ENABLE_RANDOM_STARTUP_GARBAGE
 	Wdog_reset();
 
 	// pretend that it's always going
@@ -124,27 +130,34 @@ void query_ccd_measurement(uint8_t *fetched_data_1, uint8_t *fetched_data_2) {
 		write_phi_m_pin(AFTER_INVERTER_IS_LOW);
 		// 2 and 2 give a T=1.5us
 	}
+	#endif
 
 	// trigger the CCD reading
+	write_phi_m_pin(AFTER_INVERTER_IS_HIGH); // PHI_M must be HIGH when ICG goes L->H
 	write_icg_pin(AFTER_INVERTER_IS_HIGH); // indicates start of data transfer dump
 	// SH is alread AFTER_INVERTER_IS_LOW
 
+	// awful delay code to test integration
+	// for (uint16_t i = 0; i < 1; i++) { // 350 gives 260us
+	// 	write_icg_pin(AFTER_INVERTER_IS_HIGH);
+	// }
+
 	uint32_t adc_val = 0;
 
-	for (uint8_t i = 0; i < 200; i++) { // CCD_DATA_LEN_BYTES
+	for (uint16_t i = 0; i < CCD_DATA_LEN_BYTES; i++) { // CCD_DATA_LEN_BYTES
 		// Wdog_reset();
 
 		// HAL_GPIO_WritePin(PIN_CCD_PHI_M_GPIO_Port, PIN_CCD_PHI_M_Pin, GPIO_PIN_RESET);
-		write_phi_m_pin(0);
-		// write_phi_m_pin(0);
+		write_phi_m_pin(AFTER_INVERTER_IS_HIGH);
+		write_phi_m_pin(AFTER_INVERTER_IS_HIGH);
 		// asm("NOP"); // write_0 + NOP -> high for 250ns
 		// asm("NOP"); // write_0 + NOP + NOP -> high for 360ns
 		// asm("NOP"); // write_0 + NOP + NOP -> high for 600ns
 
 		//delay_ms(20);
 		//HAL_GPIO_WritePin(PIN_CCD_PHI_M_GPIO_Port, PIN_CCD_PHI_M_Pin, GPIO_PIN_SET);
-		write_phi_m_pin(1);
-		// write_phi_m_pin(1); // no-op equivalent
+		write_phi_m_pin(AFTER_INVERTER_IS_LOW);
+		write_phi_m_pin(AFTER_INVERTER_IS_LOW); // no-op equivalent
 		// asm("NOP");
 		// asm("NOP");
 		//delay_ms(20);
@@ -184,15 +197,27 @@ void query_ccd_measurement(uint8_t *fetched_data_1, uint8_t *fetched_data_2) {
 		// }
 
 		//HAL_GPIO_WritePin(PIN_CCD_PHI_M_GPIO_Port, PIN_CCD_PHI_M_Pin, GPIO_PIN_RESET);
-		write_phi_m_pin(0);
-		// write_phi_m_pin(0);
+		write_phi_m_pin(AFTER_INVERTER_IS_HIGH);
+		write_phi_m_pin(AFTER_INVERTER_IS_HIGH);
 		// asm("NOP"); // write_0 + NOP -> high for 250ns
 		// asm("NOP"); // write_0 + NOP + NOP -> high for 360ns
 
 		//HAL_GPIO_WritePin(PIN_CCD_PHI_M_GPIO_Port, PIN_CCD_PHI_M_Pin, GPIO_PIN_SET);
-		write_phi_m_pin(1);
-		// write_phi_m_pin(1);
+		write_phi_m_pin(AFTER_INVERTER_IS_LOW);
+		write_phi_m_pin(AFTER_INVERTER_IS_LOW);
 		// delay_ms(20);
+
+		if (i % pixels_between_sh_toggles == 0 && i != 0) {
+			// toggle SH
+			if (last_sh_val == 0) {
+				write_sh_pin(AFTER_INVERTER_IS_HIGH);
+				last_sh_val = 1;
+			}
+			else {
+				write_sh_pin(AFTER_INVERTER_IS_LOW);
+				last_sh_val = 0;
+			}
+		}
 
 	}
 
@@ -200,8 +225,6 @@ void query_ccd_measurement(uint8_t *fetched_data_1, uint8_t *fetched_data_2) {
 	send_str_to_mboss_no_tail("query_ccd_measurement -> after recording"); // FIXME
 	delay_ms(40);
 	#endif
-
-	Wdog_reset();
 
 	// stop recording
 	write_icg_pin(AFTER_INVERTER_IS_LOW);

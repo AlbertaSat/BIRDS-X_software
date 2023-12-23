@@ -56,6 +56,8 @@ along with VP-Digi.  If not, see <http://www.gnu.org/licenses/>.
 #include "sys_reboot_reason.h"
 #include "frame_handler.h"
 
+#include "experiment_ccd.h" // FIXME remove
+
 #include <stdint.h>
 #include <string.h>
 
@@ -162,6 +164,7 @@ int main(void)
 
 	Config_read();
 
+  #if 0 // FIXME
 	Ax25_init();
 
 	uart_init(&uart1, USART1, uart1.baudrate);
@@ -172,6 +175,7 @@ int main(void)
 
 	Afsk_init();
 	Beacon_init();
+  #endif
 
 	// store reset reason at boot, because it can only be fetched once via `reset_cause_get()`
 	this_boot_reset_cause = reset_cause_get();
@@ -195,7 +199,25 @@ int main(void)
 
   init_ccd_adc();
 
+  delay_ms(1000);
+
+
+  uint8_t fetched_data_1[CCD_DATA_LEN_BYTES];
+  uint8_t fetched_data_2[CCD_DATA_LEN_BYTES];
+  while (1) {
+    query_ccd_measurement(fetched_data_1, fetched_data_2);
+
+    // delay_ms(1000);
+    // Wdog_reset();
+
+    for (uint16_t i = 0; i < 1000; i++) { // 10,000 gives 7.5ms (1.3 MHz?)
+      asm("NOP");
+    }
+
+  }
+
 	send_str_to_mboss("INFO: boot complete");
+	
   
 	autoResetTimer = autoReset * 360000;
 
