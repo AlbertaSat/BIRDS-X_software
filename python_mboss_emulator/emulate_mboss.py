@@ -107,6 +107,10 @@ def add_to_command_table(cmd_df: pd.DataFrame) -> pd.DataFrame:
 			[0x11, '255 packets', [0xE0, 0x11, 0x00, 0x00, 0, 0, 0, 255, 0xED]],
 			[0x27, '255 packets', [0xE0, 0x27, 0x00, 0x00, 0, 0, 0, 255, 0xED]],
 
+			# test delay_ms
+			[0xD0, '1000 ms', [0xE0, 0xD0, 0x00, 0x00, 0, 0, 0x03, 0xE8, 0xED]],
+			[0xD0, '5000 ms', [0xE0, 0xD0, 0x00, 0x00, 0, 0, 0x13, 0x88, 0xED]],
+
 		],
 		columns=['cmd_byte_int', 'desc', 'bytes_to_send']
 	)
@@ -191,6 +195,47 @@ def fn_view_incoming_once(ser: serial.Serial) -> None:
 
 	read_response(ser)
 
+def fn_test_delay_ms(ser: serial.Serial) -> None:
+	""" Tests the delay_ms() function, by requesting that it waits for n seconds, then checking real resp time. """
+
+	# increase timeout for this function
+	ser.apply_settings({
+		'timeout': 11,
+	})
+
+	# values <50ms fail
+	for ms_val in [50, 60, 70, 80, 90, 100, 250, 1000, 5000, 10000]:
+		byte_6 = ms_val // 256
+		byte_7 = ms_val % 256
+		serial_send_bytes(ser, [0xE0, 0xD0, 0x00, 0x00, 0, 0, byte_6, byte_7, 0xED],  f"0xD0 - delay_ms({ms_val}ms)")
+		
+		time_very_start = time.time()
+		bytes_start = ser.read(5)
+		time_done_start_read = time.time() # TODO: do something with this time
+		bytes_end = ser.read_until(MBOSS_RESPONSE_END_STR)
+		end_time = time.time()
+
+		if bytes_start and bytes_end:
+			logger.info(f"For delay_ms({ms_val}ms), took {end_time - time_very_start:.3f}s to receive: {bytes_to_nice_str(bytes_start)}{bytes_to_nice_str(bytes_end)}, and {time_done_start_read - time_very_start:.3f}s to start reading.")
+		else:
+			logger.warning(f"For delay_ms({ms_val}ms), took {end_time - time_very_start:.3f}s to receive: bytes_start={bytes_start}, bytes_end={bytes_end}")
+
+		if end_time - time_very_start > ms_val / 1000 + 0.1:
+			logger.warning(f"For delay_ms({ms_val}ms), took longer than expected")
+
+		if f"RESP: delay_duration_ms={ms_val}, starting delay...complete" not in (bytes_start + bytes_end).decode('ascii', errors='ignore'):
+			logger.warning(f"For delay_ms({ms_val}ms), did not receive expected response. Maybe a reboot/crash happened?")
+
+	# restore timeout
+	ser.apply_settings({
+		'timeout': 3,
+	})
+
+def fn_restart_emulator(ser: serial.Serial) -> None:
+	""" Restarts this emulator. """
+	logger.info(f"Restarting emulator.")
+	os.execv(sys.executable, ['python'] + sys.argv)
+
 def gui_prompt_for_command_and_execute_it(ser: serial.Serial) -> None:
 	""" Presents a GUI to the user to select a command to send from the MBOSS. """
 
@@ -201,6 +246,8 @@ def gui_prompt_for_command_and_execute_it(ser: serial.Serial) -> None:
 		fn_run_full_test_sequence,
 		fn_just_receive_forever,
 		fn_view_incoming_once,
+		fn_test_delay_ms,
+		fn_restart_emulator,
 	]
 
 	choices_list += [f"--- {f.__name__}() ---" for f in function_options]

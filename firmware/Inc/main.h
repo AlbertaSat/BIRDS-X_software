@@ -56,6 +56,7 @@ extern "C" {
 /* USER CODE BEGIN ET */
 extern I2C_HandleTypeDef hi2c2;
 extern ADC_HandleTypeDef hadc1;
+extern ADC_HandleTypeDef hadc2;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/

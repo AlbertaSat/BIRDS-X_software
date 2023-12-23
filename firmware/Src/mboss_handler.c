@@ -61,7 +61,8 @@ BossCommandEntry boss_command_table[] = {
 	{0xA2, boss_cmd_exp_get_adc_values},
 	{0xA3, boss_cmd_exp_get_adc_values_on_loop},
 
-	{0xC0, boss_cmd_exp_ccd_do_debug_convert}
+	{0xC0, boss_cmd_exp_ccd_do_debug_convert},
+	{0xD0, boss_cmd_test_delay_ms}
 };
 
 RF_APRS_Mode_t current_aprs_mode = RF_APRS_MODE_INACTIVE;
@@ -764,7 +765,7 @@ void boss_cmd_exp_ccd_do_debug_convert(uint8_t *cmd, Terminal_stream src) {
 	delay_ms(40);
 	Wdog_reset();
 
-	for (uint8_t i = 0; i < CCD_DATA_LEN_BYTES; i++) {
+	for (uint8_t i = 0; i < 200; i++) { // NOTE: CCD_DATA_LEN_BYTES is too many, so limit
 		sprintf(
 			msg,
 			"%02X ",
@@ -791,6 +792,31 @@ void boss_cmd_exp_ccd_do_debug_convert(uint8_t *cmd, Terminal_stream src) {
 		MBOSS_RESPONSE_END_STR
 	);
 	term_sendToMode(msg, strlen(msg), MODE_BOSS);
+}
+
+void boss_cmd_test_delay_ms(uint8_t *cmd, Terminal_stream src) {
+	// fetch delay time from command (in ms)
+	uint32_t delay_duration_ms = cmd[6] << 8 | cmd[7];
+	
+	// prep start message
+	char msg_start[100];
+	sprintf(
+		msg_start,
+		"%sRESP: delay_duration_ms=%lu, starting delay...",
+		MBOSS_RESPONSE_START_STR, delay_duration_ms
+	);
+
+	// prep end message
+	char msg_end[100];
+	sprintf(
+		msg_end,
+		"complete%s",
+		MBOSS_RESPONSE_END_STR
+	);
+
+	term_sendToMode(msg_start, strlen(msg_start), MODE_BOSS);
+	if (delay_ms > 0) delay_ms(delay_duration_ms);
+	term_sendToMode(msg_end, strlen(msg_end), MODE_BOSS);
 }
 
 uint8_t check_cmd_password(uint8_t cmd[], uint8_t full_command_with_password[9]) {
