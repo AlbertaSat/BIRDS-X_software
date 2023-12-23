@@ -246,7 +246,12 @@ void uart_config(Uart *port, uint8_t state)
 {
 	if(port->port == USART1)
 	{
-		RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
+		if (state) {
+			RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
+		}
+		else {
+			RCC->APB2ENR &= ~RCC_APB2ENR_USART1EN;
+		}
 		GPIOA->CRH |= GPIO_CRH_MODE9_1;
 		GPIOA->CRH &= ~GPIO_CRH_CNF9_0;
 		GPIOA->CRH |= GPIO_CRH_CNF9_1;
@@ -255,22 +260,26 @@ void uart_config(Uart *port, uint8_t state)
 
 		USART1->BRR = (SystemCoreClock / (port->baudrate));
 
-		if(state)
+		if(state) {
 			USART1->CR1 |= USART_CR1_RXNEIE | USART_CR1_TE | USART_CR1_RE | USART_CR1_UE | USART_CR1_IDLEIE;
-		else
-			USART1->CR1 &= (~USART_CR1_RXNEIE) & (~USART_CR1_TE) & (~USART_CR1_RE) &  (~USART_CR1_UE) & (~USART_CR1_IDLEIE);
-
-		NVIC_SetPriority(USART1_IRQn, 2);
-		if(state)
+			NVIC_SetPriority(USART1_IRQn, 2);
 			NVIC_EnableIRQ(USART1_IRQn);
-		else
+		}
+		else {
+			USART1->CR1 &= (~USART_CR1_RXNEIE) & (~USART_CR1_TE) & (~USART_CR1_RE) &  (~USART_CR1_UE) & (~USART_CR1_IDLEIE);
 			NVIC_DisableIRQ(USART1_IRQn);
+		}
 
 		port->enabled = state > 0;
 	}
 	else if(port->port == USART2)
 	{
-		RCC->APB1ENR |= RCC_APB1ENR_USART2EN;
+		if (state) {
+			RCC->APB1ENR |= RCC_APB1ENR_USART2EN;
+		}
+		else {
+			RCC->APB1ENR &= ~RCC_APB1ENR_USART2EN;
+		}
 		GPIOA->CRL |= GPIO_CRL_MODE2_1;
 		GPIOA->CRL &= ~GPIO_CRL_CNF2_0;
 		GPIOA->CRL |= GPIO_CRL_CNF2_1;
@@ -278,26 +287,23 @@ void uart_config(Uart *port, uint8_t state)
 		GPIOA->CRL &= ~GPIO_CRL_CNF3_1;
 
 		USART2->BRR = (SystemCoreClock / (port->baudrate * 2)); // clk/2, APB1 runs at clk/2 (apb1clk/2)
-		if(state)
+		if(state) {
 			USART2->CR1 |= USART_CR1_RXNEIE | USART_CR1_TE | USART_CR1_RE | USART_CR1_UE | USART_CR1_IDLEIE;
-		else
-			USART2->CR1 &= (~USART_CR1_RXNEIE) & (~USART_CR1_TE) & (~USART_CR1_RE) &  (~USART_CR1_UE) & (~USART_CR1_IDLEIE);
-
-		NVIC_SetPriority(USART2_IRQn, 2);
-		if(state)
+			NVIC_SetPriority(USART2_IRQn, 2);
 			NVIC_EnableIRQ(USART2_IRQn);
-		else
+		}
+		else {
+			USART2->CR1 &= (~USART_CR1_RXNEIE) & (~USART_CR1_TE) & (~USART_CR1_RE) &  (~USART_CR1_UE) & (~USART_CR1_IDLEIE);
 			NVIC_DisableIRQ(USART2_IRQn);
+		}
 
 		port->enabled = state > 0;
 	}
 
 }
 
-
 void uart_clearRx(Uart *port)
 {
 	port->bufrxidx = 0;
 	port->rxflag = 0;
 }
-

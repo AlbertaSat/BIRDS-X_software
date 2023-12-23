@@ -724,10 +724,30 @@ void Afsk_init(void)
 
 }
 
+uint8_t is_tim1_enabled, is_tim2_enabled, is_tim3_enabled, is_tim4_enabled;
+void afsk_disable_timers() {
+	is_tim1_enabled = (TIM1->CR1 & TIM_CR1_CEN) == TIM_CR1_CEN;
+	is_tim2_enabled = (TIM2->CR1 & TIM_CR1_CEN) == TIM_CR1_CEN;
+	is_tim3_enabled = (TIM3->CR1 & TIM_CR1_CEN) == TIM_CR1_CEN;
+	is_tim4_enabled = (TIM4->CR1 & TIM_CR1_CEN) == TIM_CR1_CEN;
+	
+	TIM1->CR1 &= ~TIM_CR1_CEN;
+	TIM2->CR1 &= ~TIM_CR1_CEN;
+	TIM3->CR1 &= ~TIM_CR1_CEN;
+	TIM4->CR1 &= ~TIM_CR1_CEN;
+}
 
-
-
-
-/**
- * @}
- */
+void afsk_restore_disabled_timers() {
+	if (is_tim1_enabled) {
+		TIM1->CR1 |= TIM_CR1_CEN;
+	}
+	if (is_tim2_enabled) {
+		TIM2->CR1 |= TIM_CR1_CEN;
+	}
+	if (is_tim3_enabled) {
+		TIM3->CR1 |= TIM_CR1_CEN;
+	}
+	if (is_tim4_enabled) {
+		TIM4->CR1 |= TIM_CR1_CEN;
+	}
+}

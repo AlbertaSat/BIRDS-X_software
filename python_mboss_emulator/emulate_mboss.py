@@ -22,6 +22,8 @@ global_store = {
 	'last_cmd_selection_str': None,
 }
 
+default_timeout = 1
+
 MBOSS_COMMAND_LENGTH = 9
 MBOSS_COMMAND_START_BYTE = 0xE0
 MBOSS_COMMAND_END_BYTE = 0xED
@@ -106,6 +108,10 @@ def add_to_command_table(cmd_df: pd.DataFrame) -> pd.DataFrame:
 			[0x27, '100 packets', [0xE0, 0x27, 0x00, 0x00, 0, 0, 0, 100, 0xED]],
 			[0x11, '255 packets', [0xE0, 0x11, 0x00, 0x00, 0, 0, 0, 255, 0xED]],
 			[0x27, '255 packets', [0xE0, 0x27, 0x00, 0x00, 0, 0, 0, 255, 0xED]],
+
+			# CCD experiment
+			[0xC0, 'CCD1', [0xE0, 0xC0, 0x00, 0x00, 0, 0, 0, 0x01, 0xED]],
+			[0xC0, 'CCD2', [0xE0, 0xC0, 0x00, 0x00, 0, 0, 0, 0x02, 0xED]],
 
 			# test delay_ms
 			[0xD0, '1000 ms', [0xE0, 0xD0, 0x00, 0x00, 0, 0, 0x03, 0xE8, 0xED]],
@@ -228,7 +234,7 @@ def fn_test_delay_ms(ser: serial.Serial) -> None:
 
 	# restore timeout
 	ser.apply_settings({
-		'timeout': 3,
+		'timeout': default_timeout,
 	})
 
 def fn_restart_emulator(ser: serial.Serial) -> None:
@@ -310,21 +316,27 @@ def bytes_to_nice_str(byte_obj: bytes, include_tstamp: bool = True) -> str:
 def read_response(ser: serial.Serial) -> None:
 	send_finished_time = time.time()
 
-	# read response
-	resp = ser.read_until(MBOSS_RESPONSE_END_STR, size=10000)
-	resp_finished_time = time.time()
-	logger.info(f"Received response: len={len(resp)}, time={resp_finished_time - send_finished_time:.3f}s")
+	resp = b''
+	last_rx_time = time.time()
+	print(f"RX >>", end='', flush=True)
+	while time.time() - send_finished_time < 20: # rarely happens, normally breaks
+		data = ser.read()
+		resp += data
+		
+		if data:
+			print(bytes_to_nice_str(data), end='', flush=True)
+			last_rx_time = time.time()
+
+		if time.time() - last_rx_time > 1.5:
+			# print(f"BREAKING: no data for 1.5s")
+			break
+
+	print(f" [<done @ {time.time():,.3f}s>]")
+
 	if len(resp) > 190:
 		logger.warning(f"Response is nearing the max length from MBOSS. len={len(resp)}")
 	
-	print(f"RX >>{bytes_to_nice_str(resp)}")
-
-	# time.sleep(2) # wait more and read again, in case there's more
-	resp2 = ser.read(10000)
-	if len(resp2) > 0:
-		logger.info(f"More data available: len={len(resp2)}")
-		print(f"RX >>{bytes_to_nice_str(resp2)}")
-
+		
 def main():
 	logger.info(f"Starting main()")
 
@@ -342,7 +354,7 @@ def main():
 	global_store['port'] = gui_select_serial_port()
 	logger.info(f"Selected port: {global_store['port']}")
 
-	with serial.Serial(port=global_store['port'], timeout=3, baudrate=global_store['baud_rate']) as ser:
+	with serial.Serial(port=global_store['port'], timeout=default_timeout, baudrate=global_store['baud_rate']) as ser:
 		logger.info(f"Opened port successfully.")
 		
 		while True:

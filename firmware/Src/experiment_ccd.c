@@ -41,39 +41,79 @@ inline void write_sh_pin(uint8_t val) {
 	}
 }
 
-void experiment_ccd_init(void) {
-	// TODO: implement
 
+void fetch_ccd_measurement_and_log_it(uint8_t ccd_num) {
+	// send_str_to_mboss_no_tail("DEBUG: boss_cmd_exp_ccd_do_debug_convert -> called");
+	// delay_ms(50);
 
-}
-
-void fetch_ccd_measurement_and_log_it() {
-	// TODO: implement
-
-	uint8_t fetched_data_1[CCD_DATA_LEN_BYTES];
-	uint8_t fetched_data_2[CCD_DATA_LEN_BYTES];
-	query_ccd_measurement(fetched_data_1, fetched_data_2);
+	uint8_t fetched_data[CCD_DATA_LEN_BYTES+1];
 	
-	// log the array to debug output (maybe averaging over adjacent bits for earth debugging)
+	// fill all bytes with zeros (for good measure)
 	for (int i = 0; i < CCD_DATA_LEN_BYTES; i++) {
-		// printf("%02X ", fetched_data[i]);
+		fetched_data[i] = 0;
 	}
-	// printf("\n");
+
+	// fill the arrays with data
+	// the sensor works better when it's "warmed up" (or operating continuously)
+	for (uint8_t i = 0; i < 30; i++) {
+		query_ccd_measurement(fetched_data, ccd_num);
+	}
+	Wdog_reset();
+
+	// prep start of message
+	char msg[60];
+	sprintf(
+		msg,
+		"%sRESP: CCD%d data=[",
+		MBOSS_RESPONSE_START_STR,
+		ccd_num
+	);
+	term_sendToMode(msg, strlen(msg), MODE_BOSS);
+	delay_ms(40);
+	Wdog_reset();
+
+	for (uint16_t i = 0; i < CCD_DATA_LEN_BYTES; i++) {
+		if (i % 50 != 0) {
+			// only print every bunch of bytes
+			continue;
+		}
+
+		sprintf(
+			msg,
+			"%02X ",
+			fetched_data[i]
+		);
+
+		// add a newline every 50 bytes
+		// if (i % 50 == 0) {
+		// 	uint16_t msg_len = strlen(msg);
+		// 	msg[msg_len] = '\n';
+		// 	msg[msg_len + 1] = '\0';
+		// }
+
+		// send
+		term_sendToMode(msg, strlen(msg), MODE_BOSS);
+		delay_ms(10); // these will crazy it if you try to remove them
+		Wdog_reset();
+	}
+
+	// prep end of message
+	sprintf(
+		msg,
+		"]%s",
+		MBOSS_RESPONSE_END_STR
+	);
+	term_sendToMode(msg, strlen(msg), MODE_BOSS);
 
 	// TODO: check and log statistics data
 
 }
 
-void query_ccd_measurement(uint8_t *fetched_data_1, uint8_t *fetched_data_2) {
+void query_ccd_measurement(uint8_t *fetched_data, uint8_t ccd_num) {
 	// this is a naive timer-less implementation
 
-
 	uint8_t last_sh_val = 0;
-	const uint8_t pixels_between_sh_toggles = 1000;
-
-	#ifdef ENABLE_CCD_DEBUG_PRINTS
-	send_str_to_mboss_no_tail("query_ccd_measurement -> called");
-	#endif
+	const uint16_t pixels_between_sh_toggles = 1000;
 
 	// delay_ms(120);
 	Wdog_reset();
@@ -82,17 +122,25 @@ void query_ccd_measurement(uint8_t *fetched_data_1, uint8_t *fetched_data_2) {
 	// hadc2.Instance->SQR3 = ADC_CHANNEL_6; // NOW DONE BELOW
 	// Note: PA5 = IC601 = ADC_CHANNEL_5
 	//       PA6 = IC701 = ADC_CHANNEL_6
-	// TODO: un-hardcode this
-	
-	#ifdef ENABLE_CCD_DEBUG_PRINTS
-	send_str_to_mboss_no_tail("query_ccd_measurement -> configured ADC");
-	delay_ms(40);
-	Wdog_reset();
-	#endif
+
+	// disable UART for the duration of this function
+	uart_config(&uart1, 0);
+	uart_config(&uart2, 0);
+	afsk_disable_timers();
+
+	uint32_t adc_channel = ADC_CHANNEL_5; // refers to PA5 or PA6
+
+	if (ccd_num == 1) {
+		adc_channel = ADC_CHANNEL_5;
+		
+	}
+	else if (ccd_num == 2) {
+		adc_channel = ADC_CHANNEL_6;
+	}
+	ADC2->SQR3 = adc_channel;
 
 	// DEBUG: write LED high to see how long this func takes
 	HAL_GPIO_WritePin(PIN_LED_D304_GPIO_Port, PIN_LED_D304_Pin, GPIO_PIN_SET);
-
 
 	#ifdef ENABLE_RANDOM_STARTUP_GARBAGE
 	Wdog_reset();
@@ -119,7 +167,12 @@ void query_ccd_measurement(uint8_t *fetched_data_1, uint8_t *fetched_data_2) {
 		// 2 and 2 give a T=1.5us
 	}
 
-	write_sh_pin(AFTER_INVERTER_IS_LOW);
+	write_sh_pin(AFTER_INVERTER_ISRCE: ChatGPT
+		// // Start the conversion
+		// ADC2->CR2 |= ADC_CR2_SWSTART;
+		// // Wait for the conversion to complete
+		// while (!(ADC2->SR & ADC_SR_EOC));
+		// // END SOURCE_LOW);
 
 	// must give >1us (typ 5us) before starting to read
 	for (uint16_t i = 0; i < 4; i++) {
@@ -142,7 +195,7 @@ void query_ccd_measurement(uint8_t *fetched_data_1, uint8_t *fetched_data_2) {
 	// 	write_icg_pin(AFTER_INVERTER_IS_HIGH);
 	// }
 
-	uint32_t adc_val = 0;
+	uint16_t adc_val = 0;
 
 	for (uint16_t i = 0; i < CCD_DATA_LEN_BYTES; i++) { // CCD_DATA_LEN_BYTES
 		// Wdog_reset();
@@ -160,43 +213,26 @@ void query_ccd_measurement(uint8_t *fetched_data_1, uint8_t *fetched_data_2) {
 		write_phi_m_pin(AFTER_INVERTER_IS_LOW); // no-op equivalent
 		// asm("NOP");
 		// asm("NOP");
-		//delay_ms(20);
 
-		// if (i < 3) { // FIXME
-		// 	send_str_to_mboss_no_tail("query_ccd_measurement -> right before ADC");
-		// 	delay_ms(40);
-		// }
 
-		// configure the ADC for reading
-		// hadc2.Instance->SQR3 = ADC_CHANNEL_6; // 5 (PA5, IC601) or 6 (PA6, IC701)
+		#if 1
+		ADC2->SQR3 = adc_channel;
 		
-		// read the ADC, and convert the 12-bit ADC value to an 8-bit value
-		//adc_val = HAL_ADC_GetValue(&hadc2);
+		// SOURCE: ChatGPT
+		// Start the conversion
+		ADC2->CR2 |= ADC_CR2_SWSTART;
+		// Wait for the conversion to complete
+		while (!(ADC2->SR & ADC_SR_EOC));
+		// END SOURCE
 
-		#if 0
-		// if (HAL_ADC_PollForConversion(&hadc2, 1) == HAL_OK) {
-		// 	// Read ADC value
-		// 	adc_val = HAL_ADC_GetValue(&hadc2);
-		// }
-		// else {
-		// 	adc_val = 0;
-		// }
-
-		// adc_val = HAL_ADC_GetValue(&hadc2);
-		adc_val = ADC2->DR;
+		adc_val = (uint16_t) (ADC2->DR & 0x0FFF);
 
 		#else
-		//adc_val = 1;
+		adc_val = 1;
 		#endif
 
-		//fetched_data_1[i] = (uint8_t)(adc_val >> 4);
+		fetched_data[i] = (uint8_t)(adc_val >> 4);
 
-		// if (i < 3) { // FIXME
-		// 	send_str_to_mboss_no_tail("query_ccd_measurement -> right after ADC");
-		// 	delay_ms(40);
-		// }
-
-		//HAL_GPIO_WritePin(PIN_CCD_PHI_M_GPIO_Port, PIN_CCD_PHI_M_Pin, GPIO_PIN_RESET);
 		write_phi_m_pin(AFTER_INVERTER_IS_HIGH);
 		write_phi_m_pin(AFTER_INVERTER_IS_HIGH);
 		// asm("NOP"); // write_0 + NOP -> high for 250ns
@@ -205,7 +241,6 @@ void query_ccd_measurement(uint8_t *fetched_data_1, uint8_t *fetched_data_2) {
 		//HAL_GPIO_WritePin(PIN_CCD_PHI_M_GPIO_Port, PIN_CCD_PHI_M_Pin, GPIO_PIN_SET);
 		write_phi_m_pin(AFTER_INVERTER_IS_LOW);
 		write_phi_m_pin(AFTER_INVERTER_IS_LOW);
-		// delay_ms(20);
 
 		if (i % pixels_between_sh_toggles == 0 && i != 0) {
 			// toggle SH
@@ -221,11 +256,6 @@ void query_ccd_measurement(uint8_t *fetched_data_1, uint8_t *fetched_data_2) {
 
 	}
 
-	#ifdef ENABLE_CCD_DEBUG_PRINTS
-	send_str_to_mboss_no_tail("query_ccd_measurement -> after recording"); // FIXME
-	delay_ms(40);
-	#endif
-
 	// stop recording
 	write_icg_pin(AFTER_INVERTER_IS_LOW);
 	write_sh_pin(AFTER_INVERTER_IS_HIGH);
@@ -234,6 +264,13 @@ void query_ccd_measurement(uint8_t *fetched_data_1, uint8_t *fetched_data_2) {
 	HAL_GPIO_WritePin(PIN_LED_D304_GPIO_Port, PIN_LED_D304_Pin, GPIO_PIN_RESET);
 
 	set_resting_ccd_state();
+
+	// re-enable timers
+	afsk_restore_disabled_timers();
+
+	// re-enable uarts
+	uart_config(&uart1, 1);
+	uart_config(&uart2, 1);
 }
 
 void set_resting_ccd_state(void) {
@@ -257,12 +294,14 @@ void init_ccd_adc(void)
 	RCC->APB2ENR |= RCC_APB2ENR_ADC2EN | RCC_APB2ENR_IOPAEN;
 
     /* Configure PA5 and PA6 in analog input mode */
-    // GPIOA->CRL &= ~(GPIO_CRL_CNF5 | GPIO_CRL_MODE0); // FIXME: enable maybe
-	GPIOA->CRL &= ~(GPIO_CRL_CNF6 | GPIO_CRL_MODE0);
+    // GPIOA->CRL &= ~(GPIO_CRL_CNF5 | GPIO_CRL_MODE0);
+	GPIOA->CRL &= ~(GPIO_CRL_CNF5 | GPIO_CRL_MODE0);
+    GPIOA->CRL &= ~(GPIO_CRL_CNF6 | GPIO_CRL_MODE0);
 
     /* Set sampling time = 28.5 cycles*/
     // orig: // ADC2->SMPR2 |= (ADC_SMPR2_SMP0_1 | ADC_SMPR2_SMP0_0);
-	ADC2->SMPR2 = ADC_SAMPLE_TIME6(SAMPLE_TIME_1_5);
+	// other orig: ADC2->SMPR2 = ADC_SAMPLE_TIME6(SAMPLE_TIME_1_5);
+    ADC2->SMPR2 = ADC_SAMPLE_TIME5(SAMPLE_TIME_1_5) | ADC_SAMPLE_TIME6(SAMPLE_TIME_1_5);
 
     /* Put adc in Continuous mode and wake up from power down mode*/
     ADC2->CR2 |= (ADC_CR2_CONT | ADC_CR2_ADON);

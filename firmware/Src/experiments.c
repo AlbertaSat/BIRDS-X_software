@@ -9,9 +9,6 @@ uint8_t config_enable_pin_experiment = 0;
 #define RADFET_ADC_SAMPLE_TIME_CLOCK_CYCLES (SAMPLE_TIME_239_5)
 
 uint16_t ADC_Read_Channel(uint32_t channel) {
-
-    uint16_t adcValue = 0;
-
     // Configure the channel to be converted
     ADC2->SQR3 = channel;
 
@@ -25,8 +22,6 @@ uint16_t ADC_Read_Channel(uint32_t channel) {
     // delay_ms(20); // try waiting for conversion
 
     return (uint16_t) (ADC2->DR & 0x0FFF);
-
-    return adcValue;
 }
 
 

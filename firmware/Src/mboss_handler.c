@@ -725,62 +725,14 @@ void boss_cmd_exp_get_adc_values_on_loop(uint8_t *cmd, Terminal_stream src) {
 }
 
 void boss_cmd_exp_ccd_do_debug_convert(uint8_t *cmd, Terminal_stream src) {
-	send_str_to_mboss_no_tail("DEBUG: boss_cmd_exp_ccd_do_debug_convert -> called");
-	delay_ms(120);
-
-	uint8_t fetched_data_1[CCD_DATA_LEN_BYTES+1];
-	uint8_t fetched_data_2[CCD_DATA_LEN_BYTES+1];
+	uint8_t ccd_num = cmd[7];
+	if (ccd_num != 1 && ccd_num != 2) {
+		send_str_to_mboss_no_tail("ERROR: ccd_num must be 1 or 2");
+		delay_ms(50);
+		return;
+	}
 	
-	// fill all bytes with zeros (for good measure)
-	for (int i = 0; i < CCD_DATA_LEN_BYTES; i++) {
-		fetched_data_1[i] = 0;
-		fetched_data_2[i] = 0;
-	}
-	send_str_to_mboss_no_tail("DEBUG: array init complete");
-	delay_ms(120);
-
-	// fill the arrays with data, if possible
-	query_ccd_measurement(fetched_data_1, fetched_data_2);
-	Wdog_reset();
-
-	// prep start of message
-	char msg[255];
-	sprintf(
-		msg,
-		"%sRESP: CCD fetched_data_1=[",
-		MBOSS_RESPONSE_START_STR
-	);
-	term_sendToMode(msg, strlen(msg), MODE_BOSS);
-	delay_ms(40);
-	Wdog_reset();
-
-	for (uint8_t i = 0; i < 200; i++) { // NOTE: CCD_DATA_LEN_BYTES is too many, so limit
-		sprintf(
-			msg,
-			"%02X ",
-			fetched_data_1[i]
-		);
-
-		// add a newline every 50 bytes
-		// if (i % 50 == 0) {
-		// 	uint16_t msg_len = strlen(msg);
-		// 	msg[msg_len] = '\n';
-		// 	msg[msg_len + 1] = '\0';
-		// }
-
-		// send
-		term_sendToMode(msg, strlen(msg), MODE_BOSS);
-		delay_ms(20);
-		Wdog_reset();
-	}
-
-	// prep end of message
-	sprintf(
-		msg,
-		"]%s",
-		MBOSS_RESPONSE_END_STR
-	);
-	term_sendToMode(msg, strlen(msg), MODE_BOSS);
+	fetch_ccd_measurement_and_log_it(ccd_num);
 }
 
 void boss_cmd_test_delay_ms(uint8_t *cmd, Terminal_stream src) {

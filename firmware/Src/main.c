@@ -134,7 +134,6 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
 
-
 	Wdog_init(); //initialize watchdog
 
   // flash code on-off-on-off for "boot complete"
@@ -145,7 +144,6 @@ int main(void)
   HAL_GPIO_WritePin(PIN_LED_D304_GPIO_Port, PIN_LED_D304_Pin, GPIO_PIN_SET);
   delay_ms(250);
   HAL_GPIO_WritePin(PIN_LED_D304_GPIO_Port, PIN_LED_D304_Pin, GPIO_PIN_RESET);
-
 
 
 	//set some initial values in case there is no configuration saved in memory
@@ -160,7 +158,6 @@ int main(void)
 
 	Config_read();
 
-  #if 1 // FIXME
 	Ax25_init();
 
 	uart_init(&uart1, USART1, uart1.baudrate);
@@ -171,7 +168,6 @@ int main(void)
 
 	Afsk_init();
 	Beacon_init();
-  #endif
 
 	// store reset reason at boot, because it can only be fetched once via `reset_cause_get()`
 	this_boot_reset_cause = reset_cause_get();
@@ -196,15 +192,16 @@ int main(void)
 //    send_str_to_mboss("ERROR: HAL_ADC_Start() failed for ADC2_RADFET");
 //  }
 
-  #if 0
+  #if 0 // FIXME: just for testing
   init_ccd_adc();
 
   delay_ms(1000);
 
-  uint8_t fetched_data_1[CCD_DATA_LEN_BYTES];
-  uint8_t fetched_data_2[CCD_DATA_LEN_BYTES];
+  //uint8_t fetched_data[CCD_DATA_LEN_BYTES];
   while (1) {
-    query_ccd_measurement(fetched_data_1, fetched_data_2);
+    //query_ccd_measurement(fetched_data, 1);
+
+    fetch_ccd_measurement_and_log_it(2);
 
     // delay_ms(1000);
     // Wdog_reset();
@@ -216,6 +213,7 @@ int main(void)
 
   #endif
 
+  init_ccd_adc();
   init_adc_radfets();
 
 	send_str_to_mboss("INFO: boot complete");
