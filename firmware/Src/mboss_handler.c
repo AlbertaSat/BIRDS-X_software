@@ -227,7 +227,9 @@ void boss_cmd_set_active_aprs_mode(uint8_t *cmd, Terminal_stream src) {
 	}
 
 	current_aprs_mode = (RF_APRS_Mode_t)new_mode;
-	uint8_t dra_init_error_val = 0;
+
+	char dra_error_msg[50];
+	dra_error_msg[0] = 0;
 
 	if (new_mode == RF_APRS_MODE_INACTIVE) {
 		// turn off the DRA enable pin
@@ -238,16 +240,38 @@ void boss_cmd_set_active_aprs_mode(uint8_t *cmd, Terminal_stream src) {
 		execute_vp_digi_config_cmd((uint8_t*)"beacon 0 off");
 		execute_vp_digi_config_cmd((uint8_t*)"digi 0 off");
 		execute_vp_digi_config_cmd((uint8_t*)"digi off");
+
+		strcpy(dra_error_msg, "N/A");
 	}
 
 	if (new_mode == RF_APRS_MODE_DIGIPEAT || new_mode == RF_APRS_MODE_STORE_AND_FORWARD) {
+
 		// turn on the DRA enable pin
 		set_dra_awake_mode(1);
-		delay_ms(600); // datasheet says 300-500ms
 
-		// run the DRA init commands
-		dra_init_error_val = send_dra_init_commands();
+		uint8_t dra_init_error_val = 0;
+		for (uint8_t i = 0; i <= 4; i++) {
+			// allow up to 4 retries
+			delay_ms(600); // datasheet says 300-500ms
 
+			// purge any incoming commands from the previous try
+			Loop_process_incoming_uart_commands(0, 1);
+
+			// run the DRA init commands
+			dra_init_error_val = send_dra_init_commands();
+
+			sprintf(
+				&dra_error_msg[strlen(dra_error_msg)],
+				"%s(%d)",
+				((dra_init_error_val == 0) ? "OK" : "ERROR"), // error level comment
+				dra_init_error_val
+			);
+
+			if (dra_init_error_val == 0) {
+				break;
+			}
+		}
+		
 		// run all the vp-digi config commands (beacons)
 		execute_vp_digi_config_cmd((uint8_t*)"beacon 0 on");
 		
@@ -271,11 +295,10 @@ void boss_cmd_set_active_aprs_mode(uint8_t *cmd, Terminal_stream src) {
 	char msg[100];
 	sprintf(
 		msg,
-		"%sRESP: set new_mode=%d, dra_init_error_val=%d%s%s",
+		"%sRESP: set new_mode=%d, dra_init_errors=%s%s",
 		MBOSS_RESPONSE_START_STR,
 		new_mode,
-		dra_init_error_val,
-		((dra_init_error_val == 0) ? "(OK)" : "(ERROR)"), // error level comment
+		dra_error_msg,
 		MBOSS_RESPONSE_END_STR
 	);
 	term_sendToMode((uint8_t*)msg, strlen(msg), MODE_BOSS);

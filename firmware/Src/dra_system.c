@@ -17,7 +17,7 @@ const uint8_t debug_enable_dra_response_logs_to_boss = 0;
 uint8_t latest_dra_response_buf[DRA_RESPONSE_BUF_SIZE]; // extern
 
 void receive_incoming_dra_message(uint8_t *msg, uint16_t len) {
-	// gets called from Loop_process_incoming_uart_commands -> term_parse
+	// gets called from Loop_process_incoming_uart_commands -> term_parse; do not use in here
 
 	if (debug_enable_dra_response_logs_to_boss) {
 		const char boss_pre_message[] = "DEBUG: From DRA >>";
