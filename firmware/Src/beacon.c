@@ -136,7 +136,7 @@ void Beacon_send(uint8_t no)
 /**
  * @brief Check if any beacon should be transmitted and transmit if neccessary
  */
-void Beacon_check(void)
+void check_and_transmit_beacons(void)
 {
 	for(uint8_t i = 0; i < 8; i++)
 	{

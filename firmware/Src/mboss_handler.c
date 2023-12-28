@@ -591,7 +591,7 @@ void boss_cmd_exit_mission_boss_mode(uint8_t *cmd, Terminal_stream src) {
 			MBOSS_RESPONSE_START_STR, MBOSS_RESPONSE_END_STR
 		);
 		term_sendToMode(msg, strlen(msg), MODE_BOSS);
-		switchPortToMonitorMode(src);
+		switchPortToMonitorMode(TERM_UART1); // FIXME: arg should be Terminal_stream, but it's getting mangled
 	}
 	else {
 		char msg[255];
