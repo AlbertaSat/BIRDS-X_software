@@ -23,6 +23,8 @@ const uint8_t debug_enable_echo_command_back = 0;
 
 uint32_t timestamp_sec_at_boot = 0;
 
+uint32_t uptime_at_last_success_failure_led_on = 0; // extern
+
 BossCommandEntry boss_command_table[] = {
 	// required commands from ICD v1.5 (random command IDs)
 	{0xFF, boss_cmd_turn_off_payload},
@@ -183,6 +185,7 @@ void boss_cmd_turn_off_payload(uint8_t *cmd, Terminal_stream src) {
 	// also do shutdown tasks, like storing any info to flash we want, then stall for up to an hour
 
 	send_str_to_mboss("RESP: safe to power off");
+	set_led_success();
 }
 
 void boss_cmd_set_active_aprs_mode(uint8_t *cmd, Terminal_stream src) {
@@ -193,6 +196,7 @@ void boss_cmd_set_active_aprs_mode(uint8_t *cmd, Terminal_stream src) {
 
 	uint8_t new_mode = cmd[7];
 	if (new_mode > 2) {
+		set_led_failure();
 		char msg[255];
 		sprintf(
 			msg,
@@ -212,6 +216,7 @@ void boss_cmd_set_active_aprs_mode(uint8_t *cmd, Terminal_stream src) {
 		MBOSS_RESPONSE_START_STR, new_mode, MBOSS_RESPONSE_END_STR
 	);
 	term_sendToMode((uint8_t*)msg, strlen(msg), MODE_BOSS);
+	set_led_success();
 
 	if (new_mode == RF_APRS_MODE_INACTIVE) {
 		// turn off the DRA enable pin
@@ -274,12 +279,14 @@ void boss_cmd_transfer_aprs_data_packets(uint8_t *cmd, Terminal_stream src) {
 	uint8_t target_frame_fetch_count = cmd[7]; // number of frames to catch
 
 	if (target_frame_fetch_count == 0) {
+		set_led_failure();
 		send_str_to_mboss("ERROR: can't fetch 0 frames");
 		return;
 	}
 
 	uint16_t cur_frame_count = get_stored_frame_count();
 	if (cur_frame_count == 0) {
+		set_led_failure();
 		send_str_to_mboss("ERROR: no frames stored yet");
 		return;
 	}
@@ -289,6 +296,8 @@ void boss_cmd_transfer_aprs_data_packets(uint8_t *cmd, Terminal_stream src) {
 	}
 
 	for (uint8_t frame_num = 0; frame_num < target_frame_fetch_count; frame_num++) {
+		set_led_success();
+
 		uint8_t frame[FRAMELEN+10];
 		memset(frame, 0, FRAMELEN+9);
 
@@ -297,6 +306,8 @@ void boss_cmd_transfer_aprs_data_packets(uint8_t *cmd, Terminal_stream src) {
 
 		// do error check
 		if (fetch_result > 0) {
+			set_led_failure();
+
 			char err_msg[255];
 			sprintf(
 				err_msg,
@@ -321,6 +332,7 @@ void boss_cmd_transfer_aprs_data_packets(uint8_t *cmd, Terminal_stream src) {
 
 void boss_cmd_echo_command(uint8_t *cmd, Terminal_stream src) {
 	// FINAL
+	set_led_success();
 
 	char received_msg_as_hex[100] = "";
 	for (int i = 0; i < MBOSS_COMMAND_LENGTH; i++) {
@@ -355,6 +367,8 @@ void boss_cmd_set_unix_timestamp(uint8_t *cmd, Terminal_stream src) {
 
 	// do check that timestamp is between 2023-01-01 and 2028-01-01
 	if (timestamp_sec < 1672531200 || timestamp_sec > 1830301200) {
+		set_led_failure();
+
 		char msg[255];
 		sprintf(
 			msg,
@@ -366,6 +380,8 @@ void boss_cmd_set_unix_timestamp(uint8_t *cmd, Terminal_stream src) {
 	}
 
 	else {
+		set_led_success();
+
 		// set into extern
 		timestamp_sec_at_boot = timestamp_sec - uptime_sec_at_timestamp_set;
 
@@ -389,6 +405,7 @@ void boss_cmd_run_power_on_self_test(uint8_t *cmd, Terminal_stream src) {
 	// FINAL
 
 	set_dra_awake_mode(1);
+	set_led_success();
 	delay_ms(600); // datasheet says 300-500ms
 
 	// TEST 1: check that the DRA is responding to UART commands
@@ -440,6 +457,9 @@ void boss_cmd_force_reboot_system(uint8_t *cmd, Terminal_stream src) {
 	uint8_t cmd_password[9] = { 0xE0, 0x23, 0x35, 0xA6, 0x32, 0x18, 0xD3, 0xFF, 0xED };
 	
 	if (check_cmd_password(cmd, cmd_password)) {
+		set_led_success();
+		delay_ms(500);
+
 		char msg[255];
 		sprintf(
 			msg,
@@ -451,6 +471,8 @@ void boss_cmd_force_reboot_system(uint8_t *cmd, Terminal_stream src) {
 		NVIC_SystemReset();
 	}
 	else {
+		set_led_failure();
+
 		char msg[255];
 		sprintf(
 			msg,
@@ -467,6 +489,8 @@ void boss_cmd_set_beacon_period(uint8_t *cmd, Terminal_stream src) {
 	uint8_t beacon_period_minutes = cmd[7];
 
 	if (beacon_period_minutes == 0) {
+		set_led_failure();
+
 		sprintf(
 			msg,
 			"%sERROR: beacon_period_minutes=%d is invalid, must be >0%s",
@@ -487,6 +511,7 @@ void boss_cmd_set_beacon_period(uint8_t *cmd, Terminal_stream src) {
 		ran_vp_digi_update = 1;
 	}
 
+	set_led_success();
 	sprintf(
 		msg,
 		"%sRESP: set period_minutes=%d, ran_vp_digi_update=%d%s",
@@ -501,6 +526,8 @@ void boss_cmd_set_beacon_period(uint8_t *cmd, Terminal_stream src) {
 void boss_cmd_clear_aprs_packet_store(uint8_t *cmd, Terminal_stream src) {
 	// FINAL
 	clear_frame_store();
+
+	set_led_success();
 	
 	char msg[255];
 	sprintf(
@@ -516,6 +543,8 @@ void boss_cmd_exit_mission_boss_mode(uint8_t *cmd, Terminal_stream src) {
 	uint8_t cmd_password[9] = { 0xE0, 0x92, 0x38, 0x00, 0x00, 0x00, 0x00, 0xAA, 0xED };
 	
 	if (check_cmd_password(cmd, cmd_password)) {
+		set_led_failure();
+
 		char msg[255];
 		sprintf(
 			msg,
@@ -526,6 +555,8 @@ void boss_cmd_exit_mission_boss_mode(uint8_t *cmd, Terminal_stream src) {
 		switchPortToMonitorMode(src);
 	}
 	else {
+		set_led_success();
+
 		char msg[255];
 		sprintf(
 			msg,
@@ -538,6 +569,7 @@ void boss_cmd_exit_mission_boss_mode(uint8_t *cmd, Terminal_stream src) {
 
 void boss_cmd_get_uptime_and_status(uint8_t *cmd, Terminal_stream src) {
 	// FINAL
+	set_led_success();
 	uint32_t system_uptime_ms = get_system_uptime_ms();
 
 	reset_cause_t reset_cause = this_boot_reset_cause; // formerly: reset_cause_get();
@@ -545,7 +577,7 @@ void boss_cmd_get_uptime_and_status(uint8_t *cmd, Terminal_stream src) {
 	char msg[200];
 	sprintf(
 		msg,
-		"%sRESP: uptime_ms=%lu, uptime_sec=%lu, timestamp_sec_at_boot=%lu, timestamp_sec_now=%lu, reset_cause_str=%s, reset_cause_enum_int=%d, mode=%d, temp_k=%d,%d,%d,%d,%d%s",
+		"%sRESP: ut_ms=%lu, ut_sec=%lu, ts_sec_at_boot=%lu, ts_sec_now=%lu, reset_cause=%s(%d), aprs_mode=%d, temp_k=%d,%d,%d,%d,%d%s",
 		MBOSS_RESPONSE_START_STR,
 		system_uptime_ms, get_system_uptime_sec(),
 		timestamp_sec_at_boot, get_unix_timestamp_sec_now(),
@@ -559,6 +591,7 @@ void boss_cmd_get_uptime_and_status(uint8_t *cmd, Terminal_stream src) {
 
 void boss_cmd_get_stored_aprs_packets_stats(uint8_t *cmd, Terminal_stream src) {
 	// FINAL
+	set_led_success();
 
 	char msg[255];
 	sprintf(
@@ -575,9 +608,11 @@ void boss_cmd_beacon_right_now(uint8_t *cmd, Terminal_stream src) {
 	// FINAL
 
 	if (current_aprs_mode == RF_APRS_MODE_INACTIVE) {
+		set_led_failure();
 		send_str_to_mboss("ERROR: can't beacon when APRS mode is inactive");
 	}
 	else if (current_aprs_mode == RF_APRS_MODE_DIGIPEAT || current_aprs_mode == RF_APRS_MODE_STORE_AND_FORWARD) {
+		set_led_success();
 		execute_vp_digi_monitor_cmd((uint8_t*)"beacon 0");
 		send_str_to_mboss("RESP: beacon 0 sent");
 	}
@@ -609,4 +644,16 @@ RF_APRS_Mode_t get_current_aprs_mode(void) {
 
 uint32_t get_unix_timestamp_sec_now() {
 	return timestamp_sec_at_boot + get_system_uptime_sec();
+}
+
+void set_led_success() {
+	HAL_GPIO_WritePin(PIN_LED_SUCCESS_GPIO_Port, PIN_LED_SUCCESS_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(PIN_LED_FAILURE_GPIO_Port, PIN_LED_FAILURE_Pin, GPIO_PIN_RESET);
+	uptime_at_last_success_failure_led_on = get_system_uptime_ms();
+}
+
+void set_led_failure() {
+	HAL_GPIO_WritePin(PIN_LED_FAILURE_GPIO_Port, PIN_LED_FAILURE_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(PIN_LED_SUCCESS_GPIO_Port, PIN_LED_SUCCESS_Pin, GPIO_PIN_RESET);
+	uptime_at_last_success_failure_led_on = get_system_uptime_ms();
 }

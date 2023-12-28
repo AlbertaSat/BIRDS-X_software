@@ -1875,7 +1875,7 @@ void switchPortToMonitorMode(Terminal_stream src) {
 
 void execute_vp_digi_config_cmd(uint8_t cmd_input[]) {
 	uint8_t cmd[500];
-	strcpy((char*)cmd, cmd_input);
+	strcpy((char*)cmd, (char*)cmd_input);
 
 	// if last char of cmd is not newline, add a newline
 	uint8_t len = strlen((char*)cmd);

@@ -198,6 +198,12 @@ int main(void)
 
 	Beacon_check(); //check beacons
 
+  // turn off success/failure LED, if it's been long enough
+  if (get_system_uptime_ms() - uptime_at_last_success_failure_led_on > LED_SUCCESS_FAILURE_MIN_TIME_ON_MS) {
+    HAL_GPIO_WritePin(PIN_LED_FAILURE_GPIO_Port, PIN_LED_FAILURE_Pin, GPIO_PIN_RESET);
+	  HAL_GPIO_WritePin(PIN_LED_SUCCESS_GPIO_Port, PIN_LED_SUCCESS_Pin, GPIO_PIN_RESET);
+  }
+
 
 	if(((autoResetTimer != 0) && (ticks > autoResetTimer)) || (ticks > 4294960000)) {
 		// auto-reset timer expired, or ticks overflowed

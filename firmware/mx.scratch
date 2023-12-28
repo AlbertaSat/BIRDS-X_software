@@ -85,7 +85,7 @@
                   
           <board>custom</board>
               
-          <debugprobe/>
+          <debugprobe>swd</debugprobe>
               
           <optimization/>
               

@@ -8,6 +8,8 @@
 
 // #include <stdint.h>
 
+#define LED_SUCCESS_FAILURE_MIN_TIME_ON_MS 800
+extern uint32_t uptime_at_last_success_failure_led_on;
 
 typedef struct {
 	uint8_t cmd_byte;
@@ -61,6 +63,9 @@ void send_str_to_mboss(char input_msg[]);
 RF_APRS_Mode_t get_current_aprs_mode(void);
 
 uint32_t get_unix_timestamp_sec_now();
+
+void set_led_success();
+void set_led_failure();
 
 // end include guard
 #endif    // __MBOSS_HANDLER_H__
