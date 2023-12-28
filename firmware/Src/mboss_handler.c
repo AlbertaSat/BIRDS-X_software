@@ -646,23 +646,18 @@ void boss_cmd_exp_get_adc_values(uint8_t *cmd, Terminal_stream src) {
 	// FINAL
 	set_led_success();
 
-	write_radfet_enable(1);
-    delay_ms(250);
+	uint32_t unix_time = get_unix_timestamp_sec_now();
 
-	// read ADC values
-	uint16_t adc_val_radfet_1 = get_radfet_measurement(1);
-	uint16_t adc_val_radfet_2 = get_radfet_measurement(2);
-	uint16_t adc_val_radfet_3 = get_radfet_measurement(3);
-	uint16_t adc_val_radfet_4 = get_radfet_measurement(4);
-
-	write_radfet_enable(0);
+	uint16_t adc_val_radfet_1, adc_val_radfet_2, adc_val_radfet_3, adc_val_radfet_4;
+	do_radfet_measurements(&adc_val_radfet_1, &adc_val_radfet_2, &adc_val_radfet_3, &adc_val_radfet_4);
 
 	// prep message
 	char msg[100];
 	sprintf(
 		msg,
-		"%sRESP: %d,%d,%d,%d%s",
+		"%sRESP: %lu,%d,%d,%d,%d%s",
 		MBOSS_RESPONSE_START_STR,
+		unix_time,
 		adc_val_radfet_1,
 		adc_val_radfet_2,
 		adc_val_radfet_3,

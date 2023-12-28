@@ -193,8 +193,9 @@ int main(void)
 
   #endif
 
+  // These ADC inits are called directly when they're neede to save power on boot
   //init_ccd_adc();
-  init_adc_radfets();
+  //init_adc_radfets();
 
 	send_str_to_mboss("INFO: boot complete");
 

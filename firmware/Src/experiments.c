@@ -2,10 +2,6 @@
 #include "experiments.h"
 #include "antilib_adc.h"
 
-// extern config settings
-uint8_t config_enable_radfet_experiment = 0;
-uint8_t config_enable_pin_experiment = 0;
-
 #define RADFET_ADC_SAMPLE_TIME_CLOCK_CYCLES (SAMPLE_TIME_239_5)
 
 uint16_t ADC_Read_Channel(uint32_t channel) {
@@ -24,8 +20,22 @@ uint16_t ADC_Read_Channel(uint32_t channel) {
     return (uint16_t) (ADC2->DR & 0x0FFF);
 }
 
+void do_radfet_measurements(uint16_t* adc_val_radfet_1, uint16_t* adc_val_radfet_2, uint16_t* adc_val_radfet_3, uint16_t* adc_val_radfet_4) {
+    init_adc_radfets();
+    delay_ms(100); // probably not needed
 
-// TODO: create start/stop ADC functions, and call them from the RADFET enable place
+	write_radfet_enable(1);
+    delay_ms(400); // wait for voltage to stablize after turning on current source basically
+
+	// read ADC values
+	*adc_val_radfet_1 = get_radfet_measurement(1);
+	*adc_val_radfet_2 = get_radfet_measurement(2);
+	*adc_val_radfet_3 = get_radfet_measurement(3);
+	*adc_val_radfet_4 = get_radfet_measurement(4);
+
+	write_radfet_enable(0);
+    deinit_adc_radfets(); // save power
+}
 
 uint16_t get_radfet_measurement(uint8_t radfet_num) {
 
@@ -98,6 +108,17 @@ void init_adc_radfets(void)
 
     /* Start conversion */
     ADC2->CR2 |= ADC_CR2_ADON;
+}
+
+void deinit_adc_radfets(void) {
+    GPIOA->CRL &= ~(GPIO_CRL_CNF1 | GPIO_CRL_MODE1);// PA1
+    GPIOB->CRL &= ~(GPIO_CRL_CNF0 | GPIO_CRL_MODE0); // PB0
+    GPIOB->CRL &= ~(GPIO_CRL_CNF1 | GPIO_CRL_MODE1); // PB1
+    GPIOA->CRL &= ~(GPIO_CRL_CNF4 | GPIO_CRL_MODE4); // PA4
+
+    ADC2->CR2 &= ~ADC_CR2_ADON;
+    ADC2->CR2 &= ~ADC_CR2_CONT;
+    ADC2->SMPR2 = 0;
 }
 
 void write_radfet_enable(uint8_t enable) {
