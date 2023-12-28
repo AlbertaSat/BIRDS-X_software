@@ -2,6 +2,7 @@
 #include "dra_system.h"
 #include "terminal.h"
 #include "common.h"
+#include "main.h" // for HAL_GPIO
 
 #include <stdlib.h>
 #include <string.h>
@@ -15,7 +16,7 @@ const uint8_t debug_enable_dra_response_logs_to_boss = 0;
 
 uint8_t latest_dra_response_buf[1000]; // extern
 
-void receive_incoming_dra_message(uint8_t *msg, uint16_t len, Terminal_stream src) {
+void receive_incoming_dra_message(uint8_t *msg, uint16_t len) {
 
 	if (debug_enable_dra_response_logs_to_boss) {
 		const char boss_pre_message[] = "DEBUG: From DRA >>";
@@ -73,9 +74,10 @@ void set_dra_awake_mode(uint8_t new_state) {
 	// TODO: implement this and remove bodge wire, if there's time
 	if (new_state == 0) {
 		// turn off PA11 (LOW)
+		HAL_GPIO_WritePin(PIN_DRA_ENABLE_GPIO_Port, PIN_DRA_ENABLE_Pin, GPIO_PIN_RESET);
 	}
 	else {
 		// turn on PA11 (HIGH)
+		HAL_GPIO_WritePin(PIN_DRA_ENABLE_GPIO_Port, PIN_DRA_ENABLE_Pin, GPIO_PIN_SET);
 	}
 }
-

@@ -217,6 +217,7 @@ void boss_cmd_set_active_aprs_mode(uint8_t *cmd, Terminal_stream src) {
 	if (new_mode == RF_APRS_MODE_INACTIVE) {
 		// turn off the DRA enable pin
 		set_dra_awake_mode(0);
+		delay_ms(100);
 
 		// disable the vp-digi beacon
 		execute_vp_digi_config_cmd("beacon 0 off");
@@ -229,7 +230,8 @@ void boss_cmd_set_active_aprs_mode(uint8_t *cmd, Terminal_stream src) {
 	if (new_mode == RF_APRS_MODE_DIGIPEAT || new_mode == RF_APRS_MODE_STORE_AND_FORWARD) {
 		// turn on the DRA enable pin
 		set_dra_awake_mode(1);
-		
+		delay_ms(100);
+
 		// run the DRA init commands
 		send_dra_init_commands();
 
@@ -484,6 +486,9 @@ void boss_cmd_set_unix_timestamp_shutdown(uint8_t *cmd, Terminal_stream src) {
 
 void boss_cmd_run_power_on_self_test(uint8_t *cmd, Terminal_stream src) {
 	// POST = power on self test
+
+	set_dra_awake_mode(1);
+	delay_ms(100);
 
 	// TEST 1: check that the DRA is responding to UART commands
 	// TODO: turn on the DRA, if it's not already, and then set it back to its previous state (via the PD sleep pin/function)

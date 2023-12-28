@@ -75,6 +75,8 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define PIN_DRA_ENABLE_Pin GPIO_PIN_11
+#define PIN_DRA_ENABLE_GPIO_Port GPIOA
 
 /* USER CODE BEGIN Private defines */
 

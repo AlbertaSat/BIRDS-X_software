@@ -274,7 +274,7 @@ void term_parse(uint8_t *cmd, uint16_t len, Terminal_stream src, Uart_data_type 
 
 	if ((mode == MODE_DRA) && (type == DATA_TERM)) {
 		// note that "cmd" is a message in this case, and not really a command
-		receive_incoming_dra_message(cmd, len, src);
+		receive_incoming_dra_message(cmd, len);
 		return;
 	}
 
