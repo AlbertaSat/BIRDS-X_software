@@ -246,6 +246,24 @@ def fn_set_timeout_to_5_sec(ser: serial.Serial) -> None:
 	""" Sets the timeout to 5 seconds. """
 	global_store['timeout_sec_stop_listening_normal'] = 5.0
 
+def fn_dump_built_in_config(ser: serial.Serial) -> None:
+	# send the bytes
+	serial_send_bytes(ser, [0xE0, 0x92, 0x38, 0x00, 0x00, 0x00, 0x00, 0xAA, 0xED],  '0x92 - exit boss mode')
+	read_response(ser)
+	time.sleep(1)
+
+	# send "config"
+	serial_send_bytes(ser, b"config\n",  'Literal "config\\n"')
+	read_response(ser)
+	time.sleep(1)
+	
+	# send "print"
+	serial_send_bytes(ser, b"print\n",  'Literal "print\\n"')
+	read_response(ser)
+	time.sleep(1)
+
+	logger.info(f"You should probably reset the board with the reset button now.")
+
 def gui_prompt_for_command_and_execute_it(ser: serial.Serial) -> None:
 	""" Presents a GUI to the user to select a command to send from the MBOSS. """
 
@@ -259,6 +277,7 @@ def gui_prompt_for_command_and_execute_it(ser: serial.Serial) -> None:
 		fn_test_delay_ms,
 		fn_restart_emulator,
 		fn_set_timeout_to_5_sec,
+		fn_dump_built_in_config,
 	]
 
 	choices_list += [f"--- {f.__name__}() ---" for f in function_options]
@@ -297,7 +316,7 @@ def gui_prompt_for_command_and_execute_it(ser: serial.Serial) -> None:
 
 	# time.sleep(0.3)
 
-def bytes_to_nice_str(byte_obj: bytes, include_tstamp: bool = True) -> str:
+def bytes_to_nice_str(byte_obj: bytes, include_tstamp: bool = True, newlines_as_hex: bool = True) -> str:
 	""" Prints a byte object as hex or ASCII, whichever is better.
 	Example print: [0xDA][0xBE]INFO: boot complete[0xDA][0xED]
 	"""
@@ -305,10 +324,15 @@ def bytes_to_nice_str(byte_obj: bytes, include_tstamp: bool = True) -> str:
 	# byte_obj = byte_obj.replace(MBOSS_RESPONSE_END_STR, MBOSS_RESPONSE_END_STR+b'\n')
 	for b in byte_obj:
 		# if it's a printable ASCII character
-		if 0x20 <= b <= 0x7E:
+		if not newlines_as_hex and b == 0x0A:
+			out += '[0x0A]\n'
+		elif 0x20 <= b <= 0x7E:
 			out += bytes([b]).decode('ascii')
 		else:
-			out += f"[{hex(b).upper().replace('0X', '0x')}]"
+			hex_repr = hex(b) # like '0XA'
+			hex_repr = hex_repr.upper().replace('0X', '').zfill(2)
+			hex_repr = f"0x{hex_repr}"
+			out += f"[{hex_repr}]"
 
 		if b == MBOSS_RESPONSE_END_STR[-1]:
 			if include_tstamp:
@@ -318,7 +342,7 @@ def bytes_to_nice_str(byte_obj: bytes, include_tstamp: bool = True) -> str:
 
 	return out
 
-def read_response(ser: serial.Serial) -> None:
+def read_response(ser: serial.Serial, newlines_as_hex: bool = True) -> None:
 	send_finished_time = time.time()
 
 	resp = b''
@@ -329,7 +353,7 @@ def read_response(ser: serial.Serial) -> None:
 		resp += data
 		
 		if data:
-			print(bytes_to_nice_str(data), end='', flush=True)
+			print(bytes_to_nice_str(data, newlines_as_hex = False), end='', flush=True)
 			last_rx_time = time.time()
 
 		if time.time() - last_rx_time > global_store['timeout_sec_stop_listening_normal']:

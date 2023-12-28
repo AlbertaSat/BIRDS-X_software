@@ -167,7 +167,7 @@ int main(void)
 	Beacon_init();
 
   write_radfet_enable(0);
-  // set_resting_ccd_state(); // lowest power state
+  set_resting_ccd_state(); // lowest power state
 
 	// store reset reason at boot, because it can only be fetched once via `reset_cause_get()`
 	this_boot_reset_cause = reset_cause_get();

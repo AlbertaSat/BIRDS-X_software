@@ -271,16 +271,18 @@ void boss_cmd_set_active_aprs_mode(uint8_t *cmd, Terminal_stream src) {
 	char msg[100];
 	sprintf(
 		msg,
-		"%sRESP: set new_mode=%d, dra_init_error_val=%d%s",
+		"%sRESP: set new_mode=%d, dra_init_error_val=%d%s%s",
 		MBOSS_RESPONSE_START_STR,
 		new_mode,
 		dra_init_error_val,
+		((dra_init_error_val == 0) ? "(OK)" : "(ERROR)"), // error level comment
 		MBOSS_RESPONSE_END_STR
 	);
 	term_sendToMode((uint8_t*)msg, strlen(msg), MODE_BOSS);
 	set_led_success();
 }
 
+uint32_t frame_count_returned_since_boot = 0;
 void boss_cmd_transfer_aprs_data_packets(uint8_t *cmd, Terminal_stream src) {
 	// FINAL
 	
@@ -341,12 +343,13 @@ void boss_cmd_transfer_aprs_data_packets(uint8_t *cmd, Terminal_stream src) {
 		char msg[255];
 		sprintf(
 			msg,
-			"%sRESP: len=%d, frame=%s%s",
-			MBOSS_RESPONSE_START_STR, frame_length, frame, MBOSS_RESPONSE_END_STR
+			"%sRESP: idx=%lu, len=%d, frame=%s%s",
+			MBOSS_RESPONSE_START_STR,
+			frame_count_returned_since_boot++,
+			frame_length, frame, MBOSS_RESPONSE_END_STR
 		);
 		term_sendToMode((uint8_t*)msg, strlen(msg), MODE_BOSS);
 	}
-	
 }
 
 void boss_cmd_echo_command(uint8_t *cmd, Terminal_stream src) {
