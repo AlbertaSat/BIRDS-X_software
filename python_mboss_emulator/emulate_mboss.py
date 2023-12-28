@@ -22,6 +22,8 @@ global_store = {
 	'last_cmd_selection_str': None,
 }
 
+default_timeout = 1
+
 MBOSS_COMMAND_LENGTH = 9
 MBOSS_COMMAND_START_BYTE = 0xE0
 MBOSS_COMMAND_END_BYTE = 0xED
@@ -87,7 +89,6 @@ def add_to_command_table(cmd_df: pd.DataFrame) -> pd.DataFrame:
 			# datetime.datetime(2023, 9, 10, 21, 12, 29)
 			# '0x64fe313d'
 			[0x16, '2023-09-10 T21:12:29Z', [0xE0, 0x16, 0x00, 0x00, 0x64, 0xfe, 0x31, 0x3d, 0xED]],
-			[0x17, '2023-09-10 T21:12:29Z', [0xE0, 0x16, 0x00, 0x00, 0x64, 0xfe, 0x31, 0x3d, 0xED]],
 
 			# request APRS frames
 			[0x02, '1 frame', [0xE0, 0x02, 0x00, 0x00, 0, 0, 0, 1, 0xED]],
@@ -107,6 +108,14 @@ def add_to_command_table(cmd_df: pd.DataFrame) -> pd.DataFrame:
 			[0x27, '100 packets', [0xE0, 0x27, 0x00, 0x00, 0, 0, 0, 100, 0xED]],
 			[0x11, '255 packets', [0xE0, 0x11, 0x00, 0x00, 0, 0, 0, 255, 0xED]],
 			[0x27, '255 packets', [0xE0, 0x27, 0x00, 0x00, 0, 0, 0, 255, 0xED]],
+
+			# CCD experiment
+			[0xC0, 'CCD1', [0xE0, 0xC0, 0x00, 0x00, 0, 0, 0, 0x01, 0xED]],
+			[0xC0, 'CCD2', [0xE0, 0xC0, 0x00, 0x00, 0, 0, 0, 0x02, 0xED]],
+
+			# test delay_ms
+			[0xD0, '1000 ms', [0xE0, 0xD0, 0x00, 0x00, 0, 0, 0x03, 0xE8, 0xED]],
+			[0xD0, '5000 ms', [0xE0, 0xD0, 0x00, 0x00, 0, 0, 0x13, 0x88, 0xED]],
 
 		],
 		columns=['cmd_byte_int', 'desc', 'bytes_to_send']
@@ -166,19 +175,93 @@ def fn_run_full_test_sequence(ser: serial.Serial) -> None:
 		time.sleep(0.3)
 		read_response(ser)
 
+def fn_just_receive_forever(ser: serial.Serial) -> None:
+	""" Receives bytes over UART and prints them as ASCII. Loops forever. """
+	print(f"Press Ctrl+C to exit the receive loop.")
+
+	while True:
+		try:
+			data = ser.read()
+			if data:
+				print(bytes_to_nice_str(data), end='', flush=True)
+			
+			# TODO: add timestamps between long pauses
+		except KeyboardInterrupt:
+			print(f"\nKeyboardInterrupt: going back to menu.")
+			break
+
+def fn_view_incoming_once(ser: serial.Serial) -> None:
+	""" Receives bytes over UART and prints them as ASCII. Runs once."""
+
+	# data = ser.read_all()
+	# if data:
+	# 	print(bytes_to_nice_str(data), end='', flush=True)
+	# else:
+	# 	print("No data.")
+
+	read_response(ser)
+
+def fn_test_delay_ms(ser: serial.Serial) -> None:
+	""" Tests the delay_ms() function, by requesting that it waits for n seconds, then checking real resp time. """
+
+	# increase timeout for this function
+	ser.apply_settings({
+		'timeout': 11,
+	})
+
+	# values <50ms fail
+	for ms_val in [50, 60, 70, 80, 90, 100, 250, 1000, 5000, 10000]:
+		byte_6 = ms_val // 256
+		byte_7 = ms_val % 256
+		serial_send_bytes(ser, [0xE0, 0xD0, 0x00, 0x00, 0, 0, byte_6, byte_7, 0xED],  f"0xD0 - delay_ms({ms_val}ms)")
+		
+		time_very_start = time.time()
+		bytes_start = ser.read(5)
+		time_done_start_read = time.time() # TODO: do something with this time
+		bytes_end = ser.read_until(MBOSS_RESPONSE_END_STR)
+		end_time = time.time()
+
+		if bytes_start and bytes_end:
+			logger.info(f"For delay_ms({ms_val}ms), took {end_time - time_very_start:.3f}s to receive: {bytes_to_nice_str(bytes_start)}{bytes_to_nice_str(bytes_end)}, and {time_done_start_read - time_very_start:.3f}s to start reading.")
+		else:
+			logger.warning(f"For delay_ms({ms_val}ms), took {end_time - time_very_start:.3f}s to receive: bytes_start={bytes_start}, bytes_end={bytes_end}")
+
+		if end_time - time_very_start > ms_val / 1000 + 0.1:
+			logger.warning(f"For delay_ms({ms_val}ms), took longer than expected")
+
+		if f"RESP: delay_duration_ms={ms_val}, starting delay...complete" not in (bytes_start + bytes_end).decode('ascii', errors='ignore'):
+			logger.warning(f"For delay_ms({ms_val}ms), did not receive expected response. Maybe a reboot/crash happened?")
+
+	# restore timeout
+	ser.apply_settings({
+		'timeout': default_timeout,
+	})
+
+def fn_restart_emulator(ser: serial.Serial) -> None:
+	""" Restarts this emulator. """
+	logger.info(f"Restarting emulator.")
+	os.execv(sys.executable, ['python'] + sys.argv)
+
 def gui_prompt_for_command_and_execute_it(ser: serial.Serial) -> None:
 	""" Presents a GUI to the user to select a command to send from the MBOSS. """
 
 	cmd_df = global_store['cmd_df']
 	choices_list: list = cmd_df['display_name'].tolist()
+	
+	function_options = [
+		fn_run_full_test_sequence,
+		fn_just_receive_forever,
+		fn_view_incoming_once,
+		fn_test_delay_ms,
+		fn_restart_emulator,
+	]
+
+	choices_list += [f"--- {f.__name__}() ---" for f in function_options]
 
 	preselect_int = 0
 	if global_store['last_cmd_selection_str']:
 		preselect_int = choices_list.index(global_store['last_cmd_selection_str'])
 
-	function_options = [fn_run_full_test_sequence]
-
-	choices_list += [f"--- {f.__name__}() ---" for f in function_options]
 	
 	selected_cmd: str = easygui.choicebox(
 		msg="Select a command to issue",
@@ -190,16 +273,16 @@ def gui_prompt_for_command_and_execute_it(ser: serial.Serial) -> None:
 		logger.info(f"User canceled command selection")
 		sys.exit(0)
 
+	global_store['last_cmd_selection_str'] = selected_cmd
+
 	if selected_cmd.startswith('---'):
 		func_name = selected_cmd.replace('-', '').replace('()', '').strip()
 		logger.info(f"Running function: {func_name}()")
 		selected_fn = globals()[func_name]
 		selected_fn(ser)
-		logger.info(f"Running function: {func_name}()")
+		logger.info(f"Done running function: {func_name}()")
 
 	else:
-		global_store['last_cmd_selection_str'] = selected_cmd
-
 		# lookup that row in the cmd_df
 		cmd_info = cmd_df[cmd_df['display_name'] == selected_cmd].iloc[0]
 
@@ -209,24 +292,51 @@ def gui_prompt_for_command_and_execute_it(ser: serial.Serial) -> None:
 
 	# time.sleep(0.3)
 
+def bytes_to_nice_str(byte_obj: bytes, include_tstamp: bool = True) -> str:
+	""" Prints a byte object as hex or ASCII, whichever is better.
+	Example print: [0xDA][0xBE]INFO: boot complete[0xDA][0xED]
+	"""
+	out: str = ''
+	# byte_obj = byte_obj.replace(MBOSS_RESPONSE_END_STR, MBOSS_RESPONSE_END_STR+b'\n')
+	for b in byte_obj:
+		# if it's a printable ASCII character
+		if 0x20 <= b <= 0x7E:
+			out += bytes([b]).decode('ascii')
+		else:
+			out += f"[{hex(b).upper().replace('0X', '0x')}]"
+
+		if b == MBOSS_RESPONSE_END_STR[-1]:
+			if include_tstamp:
+				out += f" [<{time.time():,.3f}s>]"
+
+			out += '\n'
+
+	return out
+
 def read_response(ser: serial.Serial) -> None:
 	send_finished_time = time.time()
 
-	# read response
-	resp = ser.read_until(MBOSS_RESPONSE_END_STR, size=10000)
-	resp_finished_time = time.time()
-	logger.info(f"Received response: len={len(resp)}, time={resp_finished_time - send_finished_time:.3f}s")
+	resp = b''
+	last_rx_time = time.time()
+	print(f"RX >>", end='', flush=True)
+	while time.time() - send_finished_time < 20: # rarely happens, normally breaks
+		data = ser.read()
+		resp += data
+		
+		if data:
+			print(bytes_to_nice_str(data), end='', flush=True)
+			last_rx_time = time.time()
+
+		if time.time() - last_rx_time > 1.5:
+			# print(f"BREAKING: no data for 1.5s")
+			break
+
+	print(f" [<done @ {time.time():,.3f}s>]")
+
 	if len(resp) > 190:
 		logger.warning(f"Response is nearing the max length from MBOSS. len={len(resp)}")
-	print(f"RX >>{resp}")
-
-	# time.sleep(2) # wait more and read again, in case there's more
-	resp2 = ser.read(10000)
-	if len(resp2) > 0:
-		logger.info(f"More data available: len={len(resp2)}")
-		print(f"RX >>{resp2}")
-
-
+	
+		
 def main():
 	logger.info(f"Starting main()")
 
@@ -244,7 +354,7 @@ def main():
 	global_store['port'] = gui_select_serial_port()
 	logger.info(f"Selected port: {global_store['port']}")
 
-	with serial.Serial(port=global_store['port'], timeout=3, baudrate=global_store['baud_rate']) as ser:
+	with serial.Serial(port=global_store['port'], timeout=default_timeout, baudrate=global_store['baud_rate']) as ser:
 		logger.info(f"Opened port successfully.")
 		
 		while True:

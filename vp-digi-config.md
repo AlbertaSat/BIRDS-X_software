@@ -15,7 +15,7 @@ UART1 baudrate: 9600
 UART2 baudrate: 9600
 DAC type: PWM
 Flat audio input: yes
-Beacon 0: On, Iv: 100, Dl: 1, WIDE1-1, >Hello from JASPER satellite
+Beacon 0: On, Iv: 100, Dl: 1, WIDE1-1, >HIJASPER
 Beacon 1: Off, Iv: 0, Dl: 0, no path, 
 Beacon 2: Off, Iv: 0, Dl: 0, no path, 
 Beacon 3: Off, Iv: 0, Dl: 0, no path, 
@@ -45,6 +45,10 @@ Allow non-APRS frames: Off
 ## Configuration Script
 Run this config script in RealTerm or similar to set the configuration above.
 
+Send each line one-by-one. Use LF line endings.
+
+Use `224, 34, 56, 0, 0, 0, 0, 170, 237` to get out of mission boss mode.
+
 ```
 config
 call VA6XXX
@@ -53,7 +57,7 @@ quiet 300
 txdelay 1000
 beacon 0 on
 beacon 0 iv 1
-beacon 0 dl 15
+beacon 0 dl 1
 beacon 0 path WIDE1-1
 beacon 0 data >HIJASPER
 pwm on

@@ -1,3 +1,5 @@
 __pycache__/
+venv/
 **/*command_list.*
+*command_list.*
 
