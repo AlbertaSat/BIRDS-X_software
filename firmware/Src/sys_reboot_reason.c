@@ -101,19 +101,23 @@ const char * reset_cause_get_name(reset_cause_t reset_cause)
 			reset_cause_name = "WINDOW_WATCHDOG_RESET";
 			break;
 		case RESET_CAUSE_INDEPENDENT_WATCHDOG_RESET:
-			reset_cause_name = "INDEPENDENT_WATCHDOG_RESET";
+			// reset_cause_name = "INDEPENDENT_WATCHDOG_RESET";
+			reset_cause_name = "INDEPENDENT_WATCHDOG";
 			break;
 		case RESET_CAUSE_SOFTWARE_RESET:
 			reset_cause_name = "SOFTWARE_RESET";
 			break;
 		case RESET_CAUSE_POWER_ON_POWER_DOWN_RESET:
-			reset_cause_name = "POWER-ON_RESET (POR) / POWER-DOWN_RESET (PDR)";
+			//reset_cause_name = "POWER-ON_RESET (POR) / POWER-DOWN_RESET (PDR)";
+			reset_cause_name = "POWER_CYCLE";
 			break;
 		case RESET_CAUSE_EXTERNAL_RESET_PIN_RESET:
-			reset_cause_name = "EXTERNAL_RESET_PIN_RESET";
+			// reset_cause_name = "EXTERNAL_RESET_PIN_RESET";
+			reset_cause_name = "EXTERNAL_RESET_PIN";
 			break;
 		case RESET_CAUSE_BROWNOUT_RESET:
-			reset_cause_name = "BROWNOUT_RESET (BOR)";
+			// reset_cause_name = "BROWNOUT_RESET (BOR)";
+			reset_cause_name = "BROWNOUT_RESET";
 			break;
 	}
 
