@@ -301,3 +301,25 @@ void uart_clearRx(Uart *port)
 	port->rxflag = 0;
 }
 
+void Loop_process_incoming_uart_commands(uint8_t do_uart1, uint8_t do_uart2)
+{
+	if (do_uart1) {
+		if(uart1.rxflag != DATA_NOTHING)
+		{
+			term_parse(uart1.bufrx, uart1.bufrxidx, TERM_UART1, uart1.rxflag, uart1.mode);
+			uart1.rxflag = DATA_NOTHING;
+			uart1.bufrxidx = 0;
+			memset(uart1.bufrx, 0, UARTBUFLEN);
+		}
+	}
+
+	if (do_uart2) {
+		if(uart2.rxflag != DATA_NOTHING)
+		{
+			term_parse(uart2.bufrx, uart2.bufrxidx, TERM_UART2, uart2.rxflag, uart2.mode);
+			uart2.rxflag = DATA_NOTHING;
+			uart2.bufrxidx = 0;
+			memset(uart2.bufrx, 0, UARTBUFLEN);
+		}	
+	}
+}

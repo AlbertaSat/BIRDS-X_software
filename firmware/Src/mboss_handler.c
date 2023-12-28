@@ -24,36 +24,33 @@ const uint8_t debug_enable_echo_command_back = 0;
 uint32_t timestamp_sec_at_boot = 0;
 
 BossCommandEntry boss_command_table[] = {
-	{0x00, boss_cmd_turn_off_payload},
-	{0x01, boss_cmd_set_active_aprs_mode},
-	{0x02, boss_cmd_transfer_aprs_data_packets},
-	{0x03, boss_cmd_send_temperature},
-	{0x04, boss_cmd_enable_pin_diode_experiment},
-	{0x05, boss_cmd_disable_pin_diode_experiment},
-	{0x06, boss_cmd_enable_radfet_experiment},
-	{0x07, boss_cmd_disable_radfet_experiment},
-	{0x08, boss_cmd_enable_both_experiments},
-	{0x09, boss_cmd_disable_both_experiments},
-	{0x10, boss_cmd_echo_command},
-	{0x11, boss_cmd_transfer_n_raw_experiment_packets},
-	{0x12, boss_cmd_get_experiment_polling_times},
-	{0x13, boss_cmd_set_pin_diode_polling_time},
-	{0x14, boss_cmd_set_radfet_polling_time},
-	{0x15, boss_cmd_set_both_polling_time},
-	{0x16, boss_cmd_set_unix_timestamp},
-	{0x17, boss_cmd_set_unix_timestamp_shutdown},
-	{0x18, boss_cmd_run_power_on_self_test},
-	{0x19, boss_cmd_force_reboot_system},
-	{0x20, boss_cmd_set_beacon_period},
-	{0x21, boss_cmd_clear_aprs_packet_store},
-	{0x22, boss_cmd_exit_mission_boss_mode},
-	{0x23, boss_cmd_get_sys_uptime_and_reboot_reason},
-	{0x24, boss_cmd_get_unix_timestamp},
-	{0x25, boss_cmd_set_experiment_stat_calc_period},
-	{0x26, boss_cmd_get_experiment_stat_calc_period},
-	{0x27, boss_cmd_transfer_n_statistical_experiment_measurements},
-	{0x28, boss_cmd_get_stored_aprs_packets_stats},
-	{0x29, boss_cmd_beacon_right_now},
+	// required commands from ICD v1.5 (random command IDs)
+	{0xFF, boss_cmd_turn_off_payload},
+	{0xEE, boss_cmd_set_active_aprs_mode},
+	{0x0C, boss_cmd_set_active_aprs_mode},
+	{0x11, boss_cmd_transfer_aprs_data_packets},
+
+	// 0x20-0x2F namespace: APRS-related and status-related commands
+	{0x20, boss_cmd_run_power_on_self_test},
+	{0x21, boss_cmd_get_stored_aprs_packets_stats},
+	{0x22, boss_cmd_beacon_right_now},
+	{0x23, boss_cmd_force_reboot_system},
+	{0x24, boss_cmd_set_beacon_period},
+	{0x25, boss_cmd_get_uptime_and_status},
+
+	// 0x30-0x3F namespace: experiment-related production commands
+	{0x31, boss_cmd_set_unix_timestamp},
+	
+	// 0xC0-0xCF namespace: RADFET experiment debugging
+	// TODO
+
+	// 0xD0-0xDF namespace: CCD experiment debugging
+	// TODO
+
+	// 0x90-0x9F namespace: other debugging commands
+	{0x90, boss_cmd_echo_command},
+	{0x91, boss_cmd_clear_aprs_packet_store},
+	{0x92, boss_cmd_exit_mission_boss_mode},
 };
 
 RF_APRS_Mode_t current_aprs_mode = RF_APRS_MODE_INACTIVE;
@@ -181,6 +178,7 @@ uint8_t validate_incoming_boss_cmd(uint8_t *cmd, uint16_t len, Terminal_stream s
 
 
 void boss_cmd_turn_off_payload(uint8_t *cmd, Terminal_stream src) {
+	// FINAL
 	// maybe sorta like NVIC_SystemReset(); ?
 	// also do shutdown tasks, like storing any info to flash we want, then stall for up to an hour
 
@@ -188,6 +186,7 @@ void boss_cmd_turn_off_payload(uint8_t *cmd, Terminal_stream src) {
 }
 
 void boss_cmd_set_active_aprs_mode(uint8_t *cmd, Terminal_stream src) {
+	// FINAL
 	// M = 0: inactive
 	// M = 1: digipeating mode
 	// M = 2: store-and-forward mode
@@ -259,7 +258,7 @@ void boss_cmd_set_active_aprs_mode(uint8_t *cmd, Terminal_stream src) {
 }
 
 void boss_cmd_transfer_aprs_data_packets(uint8_t *cmd, Terminal_stream src) {
-	// FIXME: implement critical function
+	// FINAL
 	
 	// for debugging, transfer the whole store-and-forward buffer
 	/*
@@ -320,57 +319,9 @@ void boss_cmd_transfer_aprs_data_packets(uint8_t *cmd, Terminal_stream src) {
 	
 }
 
-void boss_cmd_send_temperature(uint8_t *cmd, Terminal_stream src) {
-	uint16_t internal_temp_k = get_internal_temperature_k();
-	
-	// NOTE: this function is blocking and takes about 1.5s to run
-	// TODO: make the get_external_temperature_k() part run asynchronously so that all the sensors can be fetched in parallel
-
-	char msg[255];
-	sprintf(
-		msg,
-		"%sRESP: internal_temp_k=%d, ext_temp_0_k=%d, ext_temp_1_k=%d, ext_temp_2_k=%d, ext_temp_3_k=%d, ext_temp_4_k=%d%s",
-		MBOSS_RESPONSE_START_STR,
-		internal_temp_k,
-		get_external_temperature_k(0), get_external_temperature_k(1), get_external_temperature_k(2), get_external_temperature_k(3), get_external_temperature_k(4),
-		MBOSS_RESPONSE_END_STR
-	);
-	term_sendToMode((uint8_t*)msg, strlen(msg), MODE_BOSS);
-}
-
-void boss_cmd_enable_pin_diode_experiment(uint8_t *cmd, Terminal_stream src) {
-	config_enable_pin_experiment = 1;
-	send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
-}
-
-void boss_cmd_disable_pin_diode_experiment(uint8_t *cmd, Terminal_stream src) {
-	config_enable_pin_experiment = 0;
-	send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
-}
-
-void boss_cmd_enable_radfet_experiment(uint8_t *cmd, Terminal_stream src) {
-	config_enable_radfet_experiment = 1;
-	send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
-}
-
-void boss_cmd_disable_radfet_experiment(uint8_t *cmd, Terminal_stream src) {
-	config_enable_radfet_experiment = 0;
-	send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
-}
-
-void boss_cmd_enable_both_experiments(uint8_t *cmd, Terminal_stream src) {
-	config_enable_pin_experiment = 1;
-	config_enable_radfet_experiment = 1;
-	send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
-}
-
-void boss_cmd_disable_both_experiments(uint8_t *cmd, Terminal_stream src) {
-	config_enable_pin_experiment = 0;
-	config_enable_radfet_experiment = 0;
-	send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
-}
-
 void boss_cmd_echo_command(uint8_t *cmd, Terminal_stream src) {
+	// FINAL
+
 	char received_msg_as_hex[100] = "";
 	for (int i = 0; i < MBOSS_COMMAND_LENGTH; i++) {
 		char hex[10];
@@ -388,44 +339,9 @@ void boss_cmd_echo_command(uint8_t *cmd, Terminal_stream src) {
 	term_sendToMode(msg, strlen(msg), MODE_BOSS);
 }
 
-void boss_cmd_transfer_n_raw_experiment_packets(uint8_t *cmd, Terminal_stream src) {
-	uint8_t pkt_count = cmd[7];
-
-	if (pkt_count == 0) {
-		send_str_to_mboss("ERROR: can't fetch 0 packets");
-		return;
-	}
-
-	// TODO: make this return results other than the fake data here
-
-	for (uint8_t i = 0; i < pkt_count; i++) {
-		if (get_system_uptime_ms() % 100 > 50) {
-			send_str_to_mboss("RESP: type=1,ts=1694401503,r1=10,r2=12,r3=99,r4=66");
-		}
-		else {
-			send_str_to_mboss("RESP: type=2,ts=1694401503,p1=100,p2=102,p3=69,p4=420");
-		}
-	}
-}
-
-void boss_cmd_get_experiment_polling_times(uint8_t *cmd, Terminal_stream src) {
-	send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
-}
-
-void boss_cmd_set_pin_diode_polling_time(uint8_t *cmd, Terminal_stream src) {
-	send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
-}
-
-void boss_cmd_set_radfet_polling_time(uint8_t *cmd, Terminal_stream src) {
-	send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
-}
-
-void boss_cmd_set_both_polling_time(uint8_t *cmd, Terminal_stream src) {
-	send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
-}
-
 void boss_cmd_set_unix_timestamp(uint8_t *cmd, Terminal_stream src) {
-	// Example CMD: 0xE0 0x16 X X TS_3 TS_2 TS_1 TS_0 0xED
+	// Example CMD: 0xE0 ____ X X TS_3 TS_2 TS_1 TS_0 0xED
+	// FINAL
 
 	uint32_t uptime_sec_at_timestamp_set = get_system_uptime_sec();
 
@@ -469,46 +385,48 @@ void boss_cmd_set_unix_timestamp(uint8_t *cmd, Terminal_stream src) {
 	}
 }
 
-void boss_cmd_set_unix_timestamp_shutdown(uint8_t *cmd, Terminal_stream src) {
-	// Example CMD: 0xE0 0x17 X X TS_3 TS_2 TS_1 TS_0 0xED
-
-	// Initialize variables to store the extracted bytes
-	uint8_t byte_TS_3 = cmd[4];
-	uint8_t byte_TS_2 = cmd[5];
-	uint8_t byte_TS_1 = cmd[6];
-	uint8_t byte_TS_0 = cmd[7];
-
-	uint32_t timestamp_sec = (byte_TS_3 << 24) | (byte_TS_2 << 16) | (byte_TS_1 << 8) | byte_TS_0;
-
-	// TODO: store timestamp as an extern, if it needs to be used anywhere
-	send_str_to_mboss("RESP: shutdown timestamp set");
-}
-
 void boss_cmd_run_power_on_self_test(uint8_t *cmd, Terminal_stream src) {
-	// POST = power on self test
+	// FINAL
 
 	set_dra_awake_mode(1);
-	delay_ms(100);
+	delay_ms(600); // datasheet says 300-500ms
 
 	// TEST 1: check that the DRA is responding to UART commands
 	// TODO: turn on the DRA, if it's not already, and then set it back to its previous state (via the PD sleep pin/function)
 	send_str_to_dra("AT+DMOCONNECT\r\n");
-	delay_ms(800); // await response
+	delay_ms(250); // await response
+	Loop_process_incoming_uart_commands(0, 1);
 
-	uint8_t dra_connect_check_passed = (strstr(latest_dra_response_buf, "+DMO") != NULL); // ideally contains "+DMOCONNECT:0", but "+DMOERROR" means it's at least responding
+	uint8_t dra_connect_check_passed = (strstr((char *)latest_dra_response_buf, "+DMO") != NULL); // ideally contains "+DMOCONNECT:0", but "+DMOERROR" means it's at least responding
+
+	// char dra_response_if_failed[102];
+	// if (dra_connect_check_passed) {
+	// 	strcpy(dra_response_if_failed, "PASS");
+	// }
+	// else if (latest_dra_response_buf[0] == '\0') {
+	// 	strcpy(dra_response_if_failed, "<EMPTY>");
+	// }
+	// else {
+	// 	for (uint16_t i = 0; i < 100; i++) {
+	// 		dra_response_if_failed[i] = latest_dra_response_buf[i];
+	// 	}
+	// 	dra_response_if_failed[100] = '\0';
+	// }
 
 	char msg[255];
 	sprintf(
 		msg,
-		"%sRESP: dra_connect_check=%s, is_pwm_mode_on=%s%s",
+		"%sRESP: is_pwm_mode_on=%s, dra_connect_check=%s, dra_response=%s%s",
 		MBOSS_RESPONSE_START_STR,
-
-		// dra_connect_check=XXXX
-		dra_connect_check_passed ? "PASS" : "FAIL",
-		// latest_dra_response_buf, // dra_response=XXXX (for debugging)
 
 		// is_pwm_mode_on=XXXX
 		(afskCfg.usePWM == 1) ? "PASS" : "FAIL",
+
+		// dra_connect_check=XXXX
+		dra_connect_check_passed ? "PASS" : "FAIL",
+
+		// dra_response=XXXX
+		latest_dra_response_buf,
 		
 		MBOSS_RESPONSE_END_STR
 	);
@@ -518,7 +436,8 @@ void boss_cmd_run_power_on_self_test(uint8_t *cmd, Terminal_stream src) {
 }
 
 void boss_cmd_force_reboot_system(uint8_t *cmd, Terminal_stream src) {
-	uint8_t cmd_password[9] = { 0xE0, 0x19, 0x35, 0xA6, 0x32, 0x18, 0xD3, 0xFF, 0xED };
+	// FINAL
+	uint8_t cmd_password[9] = { 0xE0, 0x23, 0x35, 0xA6, 0x32, 0x18, 0xD3, 0xFF, 0xED };
 	
 	if (check_cmd_password(cmd, cmd_password)) {
 		char msg[255];
@@ -543,7 +462,8 @@ void boss_cmd_force_reboot_system(uint8_t *cmd, Terminal_stream src) {
 }
 
 void boss_cmd_set_beacon_period(uint8_t *cmd, Terminal_stream src) {
-	char msg[255]; 
+	// FINAL
+	char msg[255];
 	uint8_t beacon_period_minutes = cmd[7];
 
 	if (beacon_period_minutes == 0) {
@@ -579,7 +499,7 @@ void boss_cmd_set_beacon_period(uint8_t *cmd, Terminal_stream src) {
 }
 
 void boss_cmd_clear_aprs_packet_store(uint8_t *cmd, Terminal_stream src) {
-	
+	// FINAL
 	clear_frame_store();
 	
 	char msg[255];
@@ -592,7 +512,8 @@ void boss_cmd_clear_aprs_packet_store(uint8_t *cmd, Terminal_stream src) {
 }
 
 void boss_cmd_exit_mission_boss_mode(uint8_t *cmd, Terminal_stream src) {
-	uint8_t cmd_password[9] = { 0xE0, 0x22, 0x38, 0x00, 0x00, 0x00, 0x00, 0xAA, 0xED };
+	// FINAL
+	uint8_t cmd_password[9] = { 0xE0, 0x92, 0x38, 0x00, 0x00, 0x00, 0x00, 0xAA, 0xED };
 	
 	if (check_cmd_password(cmd, cmd_password)) {
 		char msg[255];
@@ -615,58 +536,30 @@ void boss_cmd_exit_mission_boss_mode(uint8_t *cmd, Terminal_stream src) {
 	}
 }
 
-void boss_cmd_get_sys_uptime_and_reboot_reason(uint8_t *cmd, Terminal_stream src) {
+void boss_cmd_get_uptime_and_status(uint8_t *cmd, Terminal_stream src) {
+	// FINAL
 	uint32_t system_uptime_ms = get_system_uptime_ms();
 
 	reset_cause_t reset_cause = this_boot_reset_cause; // formerly: reset_cause_get();
-	
+
 	char msg[200];
 	sprintf(
 		msg,
-		"%sRESP: uptime_ms=%lu, uptime_sec=%lu, timestamp_sec_at_boot=%lu, timestamp_sec_now=%lu, reset_cause_str=%s, reset_cause_enum_int=%d, mode=%d%s",
+		"%sRESP: uptime_ms=%lu, uptime_sec=%lu, timestamp_sec_at_boot=%lu, timestamp_sec_now=%lu, reset_cause_str=%s, reset_cause_enum_int=%d, mode=%d, temp_k=%d,%d,%d,%d,%d%s",
 		MBOSS_RESPONSE_START_STR,
 		system_uptime_ms, get_system_uptime_sec(),
 		timestamp_sec_at_boot, get_unix_timestamp_sec_now(),
 		reset_cause_get_name(reset_cause), (uint8_t)reset_cause,
 		(uint8_t) current_aprs_mode,
+		get_external_temperature_k(0), get_external_temperature_k(1), get_external_temperature_k(2), get_external_temperature_k(3), get_external_temperature_k(4),
 		MBOSS_RESPONSE_END_STR
 	);
 	term_sendToMode(msg, strlen(msg), MODE_BOSS);
 }
 
-void boss_cmd_get_unix_timestamp(uint8_t *cmd, Terminal_stream src) {
-	// alias for get_sys_uptime_and_reboot_reason
-	boss_cmd_get_sys_uptime_and_reboot_reason(cmd, src);
-}
-
-
-void boss_cmd_set_experiment_stat_calc_period(uint8_t *cmd, Terminal_stream src) {
-	send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
-}
-void boss_cmd_get_experiment_stat_calc_period(uint8_t *cmd, Terminal_stream src) {
-	send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions
-}
-void boss_cmd_transfer_n_statistical_experiment_measurements(uint8_t *cmd, Terminal_stream src) {
-	// TODO: implement experiment functions
-
-	uint8_t pkt_count = cmd[7];
-
-	if (pkt_count == 0) {
-		send_str_to_mboss("ERROR: can't fetch 0 packets");
-		return;
-	}
-
-	for (uint8_t i = 0; i < pkt_count; i++) {
-		if (get_system_uptime_ms() % 100 > 50) {
-			send_str_to_mboss("RESP: type=1,ts=1694401503,avg_c=22,r1lo=10,r2lo=12,r3lo=99,r4lo=66,r1hi=110,r2hi=112,r3hi=99,r4hi=66");
-		}
-		else {
-			send_str_to_mboss("RESP: type=2,ts=1694401503,avg_c=22,p1lo=10,p2lo=12,p3lo=99,p4lo=66,p1hi=110,p2hi=112,p3hi=99,p4hi=66");
-		}
-	}
-}
-
 void boss_cmd_get_stored_aprs_packets_stats(uint8_t *cmd, Terminal_stream src) {
+	// FINAL
+
 	char msg[255];
 	sprintf(
 		msg,
@@ -679,6 +572,8 @@ void boss_cmd_get_stored_aprs_packets_stats(uint8_t *cmd, Terminal_stream src) {
 }
 
 void boss_cmd_beacon_right_now(uint8_t *cmd, Terminal_stream src) {
+	// FINAL
+
 	if (current_aprs_mode == RF_APRS_MODE_INACTIVE) {
 		send_str_to_mboss("ERROR: can't beacon when APRS mode is inactive");
 	}

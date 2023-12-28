@@ -5,7 +5,9 @@
 
 #include "terminal.h"
 
-extern uint8_t latest_dra_response_buf[1000];
+#define DRA_RESPONSE_BUF_SIZE 100
+
+extern uint8_t latest_dra_response_buf[DRA_RESPONSE_BUF_SIZE];
 
 void receive_incoming_dra_message(uint8_t *msg, uint16_t len);
 

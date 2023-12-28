@@ -119,4 +119,6 @@ void uart_config(Uart *port, uint8_t state);
  */
 void uart_clearRx(Uart *port);
 
+void Loop_process_incoming_uart_commands(uint8_t do_uart1, uint8_t do_uart2);
+
 #endif

@@ -188,20 +188,7 @@ int main(void)
 
 	Ax25_transmitCheck(); //check for pending transmission request
 
-	if(uart1.rxflag != DATA_NOTHING)
-	{
-		term_parse(uart1.bufrx, uart1.bufrxidx, TERM_UART1, uart1.rxflag, uart1.mode);
-		uart1.rxflag = DATA_NOTHING;
-		uart1.bufrxidx = 0;
-		memset(uart1.bufrx, 0, UARTBUFLEN);
-	}
-	if(uart2.rxflag != DATA_NOTHING)
-	{
-		term_parse(uart2.bufrx, uart2.bufrxidx, TERM_UART2, uart2.rxflag, uart2.mode);
-		uart2.rxflag = DATA_NOTHING;
-		uart2.bufrxidx = 0;
-		memset(uart2.bufrx, 0, UARTBUFLEN);
-	}
+	Loop_process_incoming_uart_commands(1, 1);
 
 	Beacon_check(); //check beacons
 

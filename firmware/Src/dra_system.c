@@ -14,9 +14,10 @@ const uint8_t debug_enable_dra_echo_to_boss = 0;
 // whether to enable echoing DRA responses to the BOSS
 const uint8_t debug_enable_dra_response_logs_to_boss = 0;
 
-uint8_t latest_dra_response_buf[1000]; // extern
+uint8_t latest_dra_response_buf[DRA_RESPONSE_BUF_SIZE]; // extern
 
 void receive_incoming_dra_message(uint8_t *msg, uint16_t len) {
+	// gets called from Loop_process_incoming_uart_commands -> term_parse
 
 	if (debug_enable_dra_response_logs_to_boss) {
 		const char boss_pre_message[] = "DEBUG: From DRA >>";
@@ -25,11 +26,11 @@ void receive_incoming_dra_message(uint8_t *msg, uint16_t len) {
 		term_sendToMode(msg, len, MODE_BOSS); // null termination not guaranteed (don't use strlen)
 	}
 
-	for (uint16_t i = 0; i < len; i++) {
+	uint16_t i;
+	for (i = 0; (i < len) && (i < DRA_RESPONSE_BUF_SIZE-1); i++) {
 		latest_dra_response_buf[i] = msg[i];
 	}
-	latest_dra_response_buf[len] = '\0';
-
+	latest_dra_response_buf[i+1] = '\0';
 }
 
 
