@@ -1875,26 +1875,26 @@ void switchPortToMonitorMode(Terminal_stream src) {
 
 void execute_vp_digi_config_cmd(uint8_t cmd_input[]) {
 	uint8_t cmd[500];
-	strcpy(cmd, cmd_input);
+	strcpy((char*)cmd, cmd_input);
 
 	// if last char of cmd is not newline, add a newline
-	uint8_t len = strlen(cmd);
+	uint8_t len = strlen((char*)cmd);
 	if(cmd[len - 1] != '\n') {
 		cmd[len] = '\n';
 		cmd[len + 1] = '\0';
 	}
-	term_doIncomingTerminalCommand(cmd, strlen(cmd), TERM_INTERNAL_BUFFER);
+	term_doIncomingTerminalCommand(cmd, strlen((char*)cmd), TERM_INTERNAL_BUFFER);
 }
 
 void execute_vp_digi_monitor_cmd(uint8_t cmd_input[]) {
 	uint8_t cmd[500];
-	strcpy(cmd, cmd_input);
+	strcpy((char*)cmd, (char*)cmd_input);
 	
 	// if last char of cmd is not newline, add a newline
-	uint8_t len = strlen(cmd);
+	uint8_t len = strlen((char*)cmd);
 	if(cmd[len - 1] != '\n') {
 		cmd[len] = '\n';
 		cmd[len + 1] = '\0';
 	}
-	term_doIncomingMonitorCommand(cmd, strlen(cmd), TERM_INTERNAL_BUFFER);
+	term_doIncomingMonitorCommand(cmd, strlen((char*)cmd), TERM_INTERNAL_BUFFER);
 }

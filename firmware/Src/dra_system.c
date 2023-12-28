@@ -21,9 +21,9 @@ void receive_incoming_dra_message(uint8_t *msg, uint16_t len) {
 
 	if (debug_enable_dra_response_logs_to_boss) {
 		const char boss_pre_message[] = "DEBUG: From DRA >>";
-		term_sendToMode(boss_pre_message, strlen(boss_pre_message), MODE_BOSS);
+		term_sendToMode((uint8_t*)boss_pre_message, strlen(boss_pre_message), MODE_BOSS);
 		
-		term_sendToMode(msg, len, MODE_BOSS); // null termination not guaranteed (don't use strlen)
+		term_sendToMode((uint8_t*)msg, len, MODE_BOSS); // null termination not guaranteed (don't use strlen)
 	}
 
 	uint16_t i;
@@ -35,13 +35,13 @@ void receive_incoming_dra_message(uint8_t *msg, uint16_t len) {
 
 
 void send_str_to_dra(uint8_t *str) {
-	term_sendToMode(str, strlen(str), MODE_DRA);
+	term_sendToMode(str, strlen((char*)str), MODE_DRA);
 
 	if (debug_enable_dra_echo_to_boss) {
 		const char boss_pre_message[] = "DEBUG: To DRA >>";
-		term_sendToMode(boss_pre_message, strlen(boss_pre_message), MODE_BOSS);
+		term_sendToMode((uint8_t*)boss_pre_message, strlen(boss_pre_message), MODE_BOSS);
 		
-		term_sendToMode(str, strlen(str), MODE_BOSS);
+		term_sendToMode(str, strlen((char*)str), MODE_BOSS);
 	}
 }
 
@@ -49,24 +49,24 @@ void send_dra_init_commands() {
 	const uint16_t delay_ms_between_commands = 200;
 	
 	// Init connection
-	send_str_to_dra("AT+DMOCONNECT\r\n");
+	send_str_to_dra((uint8_t*)"AT+DMOCONNECT\r\n");
 	delay_ms(delay_ms_between_commands);
 
 	// Send channel configuration
 	// 1 = 25k channel (no other options, says it works well enough at 12.5k)
 	// 145.8250,145.8250 = TX freq, RX freq
 	// 0000,0,0000 = CTCSS TX, Carrier squelch level, CTCSS RX
-	send_str_to_dra("AT+DMOSETGROUP=1,145.8250,145.8250,0000,0,0000\r\n");
+	send_str_to_dra((uint8_t*)"AT+DMOSETGROUP=1,145.8250,145.8250,0000,0,0000\r\n");
 	delay_ms(delay_ms_between_commands);
 
 	// Adjust volume 1-8
-	send_str_to_dra("AT+DMOSETVOLUME=8\r\n");
+	send_str_to_dra((uint8_t*)"AT+DMOSETVOLUME=8\r\n");
 	delay_ms(delay_ms_between_commands);
 
 	// Turn off pre/de-emphasis, filters
 	// Format: pre/de (inverted),highpass,lowpass
 	// With this, need to set config: "flat on"
-	send_str_to_dra("AT+SETFILTER=1,0,0\r\n");
+	send_str_to_dra((uint8_t*)"AT+SETFILTER=1,0,0\r\n");
 	delay_ms(delay_ms_between_commands);
 
 }
