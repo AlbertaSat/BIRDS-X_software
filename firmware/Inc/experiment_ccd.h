@@ -16,9 +16,10 @@ typedef enum {
 
 void query_ccd_measurement(uint8_t *fetched_data, uint8_t ccd_num);
 
-void fetch_ccd_measurement_and_log_it(uint8_t ccd_num);
+void fetch_ccd_measurement_and_log_it(uint8_t ccd_num, uint16_t elements_per_group);
 
-void init_ccd_adc(void);
+void init_adc_ccd(uint8_t ccd_num);
+void deinit_adc_ccd(void);
 
 void set_resting_ccd_state(void);
 

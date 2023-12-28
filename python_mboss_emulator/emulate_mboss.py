@@ -110,8 +110,8 @@ def add_to_command_table(cmd_df: pd.DataFrame) -> pd.DataFrame:
 			# [0x27, '255 packets', [0xE0, 0x27, 0x00, 0x00, 0, 0, 0, 255, 0xED]],
 
 			# CCD experiment
-			# [0xC0, 'CCD1', [0xE0, 0xC0, 0x00, 0x00, 0, 0, 0, 0x01, 0xED]],
-			# [0xC0, 'CCD2', [0xE0, 0xC0, 0x00, 0x00, 0, 0, 0, 0x02, 0xED]],
+			[0x96, 'CCD1', [0xE0, 0x96, 0x00, 0x00, 0, 0, 0, 0x01, 0xED]], # CCD1
+			[0x96, 'CCD2', [0xE0, 0x96, 0x00, 0x00, 0, 0, 0, 0x02, 0xED]], # CCD2
 
 			# test delay_ms
 			[0x93, '1000 ms', [0xE0, 0x93, 0x00, 0x00, 0, 0, 0x03, 0xE8, 0xED]],
@@ -264,6 +264,55 @@ def fn_dump_built_in_config(ser: serial.Serial) -> None:
 
 	logger.info(f"You should probably reset the board with the reset button now.")
 
+def fn_plot_ccd_data_once(ser: serial.Serial) -> None:
+	how_many_bytes_times_16 = 100 # from 0 (which means 1 group of 16 bytes) to 1546/16=96 (97 groups of 16 bytes)
+	
+	def update_plots(plot_data: dict[int, list[int]]) -> None:
+		# plot
+		import matplotlib.pyplot as plt
+		
+		# Create subplots
+		fig, axs = plt.subplots(1, 2, figsize=(12, 5))
+
+		for ccd_num, values in plot_data.items():
+			# Create bar plots in both subplots
+			axs[ccd_num - 1].bar(range(len(values)), values)
+
+			axs[ccd_num - 1].set_xlabel('Index')
+			axs[ccd_num - 1].set_ylabel('CCD Brightness, out of 255, (0 = bright, 255 = dark)')
+			axs[ccd_num - 1].set_title(f'CCD #{ccd_num} Brightness')
+			axs[ccd_num - 1].set_ylim([0, 255])
+
+		# Adjust layout to prevent clipping of titles
+		plt.tight_layout()
+
+		# Show the plots
+		plt.show()
+	
+	plot_data = {} # keys are ccd_num, values are list of ints for that ccd
+	for ccd_num in [1,2]:
+		logger.info(f"Plotting CCD{ccd_num} data.")
+
+		# send the bytes
+		serial_send_bytes(ser, [0xE0, 0x96, 0, 0, 0, 0, how_many_bytes_times_16, ccd_num, 0xED],  '0x96 - CCD data')
+		resp = read_response(ser)
+		
+		# interpret the bytes
+		resp = resp.decode('ascii', errors='ignore')
+		resp_bytes = re.findall(r"data\s*=\s*\[(.*)\]", resp)[0]
+		resp_bytes = resp_bytes.strip().split(' ')
+		resp_bytes = [int(x.strip(), 16) for x in resp_bytes if (len(x.strip()) > 0)]
+		logger.debug(f"CCD{ccd_num} data: len={len(resp_bytes)} bytes")
+
+		plot_data[ccd_num] = resp_bytes
+
+	update_plots(plot_data)
+
+def fn_plot_ccd_data_looping(ser: serial.Serial) -> None:
+	while 1:
+		fn_plot_ccd_data_once(ser)
+		time.sleep(1)
+
 def gui_prompt_for_command_and_execute_it(ser: serial.Serial) -> None:
 	""" Presents a GUI to the user to select a command to send from the MBOSS. """
 
@@ -278,6 +327,8 @@ def gui_prompt_for_command_and_execute_it(ser: serial.Serial) -> None:
 		fn_restart_emulator,
 		fn_set_timeout_to_5_sec,
 		fn_dump_built_in_config,
+		fn_plot_ccd_data_once,
+		fn_plot_ccd_data_looping,
 	]
 
 	choices_list += [f"--- {f.__name__}() ---" for f in function_options]
@@ -342,7 +393,7 @@ def bytes_to_nice_str(byte_obj: bytes, include_tstamp: bool = True, newlines_as_
 
 	return out
 
-def read_response(ser: serial.Serial, newlines_as_hex: bool = True) -> None:
+def read_response(ser: serial.Serial, newlines_as_hex: bool = True) -> bytes:
 	send_finished_time = time.time()
 
 	resp = b''
@@ -368,6 +419,7 @@ def read_response(ser: serial.Serial, newlines_as_hex: bool = True) -> None:
 	elif len(resp) > 180:
 		logger.warning(f"Response is nearing max len (200 bytes). len={len(resp)}")
 	
+	return resp
 	
 		
 def main():

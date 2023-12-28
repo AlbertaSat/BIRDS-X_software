@@ -709,6 +709,18 @@ void boss_cmd_exp_ccd_do_debug_convert(uint8_t *cmd, Terminal_stream src) {
 	// FINAL
 
 	uint8_t ccd_num = cmd[7];
+	uint8_t resolution_number_of_groups_of_16 = cmd[6];
+
+	if (resolution_number_of_groups_of_16 == 0) {
+		resolution_number_of_groups_of_16 = 1;
+	}
+
+	uint16_t elems_per_group = CCD_DATA_LEN_BYTES / (resolution_number_of_groups_of_16 * 16);
+
+	if (elems_per_group < 1) {
+		elems_per_group = 1;
+	}
+
 	if (ccd_num != 1 && ccd_num != 2) {
 		set_led_failure();
 		send_str_to_mboss_no_tail("ERROR: ccd_num must be 1 or 2");
@@ -717,7 +729,7 @@ void boss_cmd_exp_ccd_do_debug_convert(uint8_t *cmd, Terminal_stream src) {
 	}
 	
 	set_led_success();
-	fetch_ccd_measurement_and_log_it(ccd_num);
+	fetch_ccd_measurement_and_log_it(ccd_num, elems_per_group);
 }
 
 void boss_cmd_test_delay_ms(uint8_t *cmd, Terminal_stream src) {

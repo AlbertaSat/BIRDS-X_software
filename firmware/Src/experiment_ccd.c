@@ -48,7 +48,7 @@ void write_ccd_pins(uint8_t phi_m, uint8_t icg, uint8_t sh) {
 	write_sh_pin(sh);
 }
 
-void fetch_ccd_measurement_and_log_it(uint8_t ccd_num) {
+void fetch_ccd_measurement_and_log_it(uint8_t ccd_num, uint16_t elements_per_group) {
 	// send_str_to_mboss_no_tail("DEBUG: boss_cmd_exp_ccd_do_debug_convert -> called");
 	// delay_ms(50);
 
@@ -67,7 +67,7 @@ void fetch_ccd_measurement_and_log_it(uint8_t ccd_num) {
 	Wdog_reset();
 
 	// prep start of message
-	char msg[60];
+	char msg[50];
 	sprintf(
 		msg,
 		"%sRESP: CCD%d data=[",
@@ -78,29 +78,34 @@ void fetch_ccd_measurement_and_log_it(uint8_t ccd_num) {
 	delay_ms(40);
 	Wdog_reset();
 
+	char msg2[500];
+	msg2[0] = 0;
 	for (uint16_t i = 0; i < CCD_DATA_LEN_BYTES; i++) {
-		if (i % 50 != 0) {
+		if ((i % elements_per_group) != 0) {
+			// TODO: average within the group instead
+
 			// only print every bunch of bytes
 			continue;
 		}
 
 		sprintf(
-			msg,
+			&msg2[strlen(msg2)],
 			"%02X ",
 			fetched_data[i]
 		);
 
-		// add a newline every 50 bytes
-		// if (i % 50 == 0) {
-		// 	uint16_t msg_len = strlen(msg);
-		// 	msg[msg_len] = '\n';
-		// 	msg[msg_len + 1] = '\0';
-		// }
-
-		// send
-		term_sendToMode((uint8_t*)msg, strlen(msg), MODE_BOSS);
-		delay_ms(10); // these will crazy it if you try to remove them
-		Wdog_reset();
+		// send in chuncks
+		if (strlen(msg2) > 490) {
+			term_sendToMode((uint8_t*)msg2, strlen(msg2), MODE_BOSS);
+			delay_ms(10); // these will crazy it if you try to remove them
+			Wdog_reset();
+			msg2[0] = 0;
+		}
+	}
+	
+	// final chunck
+	if (strlen(msg2) > 0) {
+		term_sendToMode((uint8_t*)msg2, strlen(msg2), MODE_BOSS);
 	}
 
 	// prep end of message
@@ -112,14 +117,13 @@ void fetch_ccd_measurement_and_log_it(uint8_t ccd_num) {
 	term_sendToMode((uint8_t*)msg, strlen(msg), MODE_BOSS);
 
 	// TODO: check and log statistics data
-
 }
 
 void query_ccd_measurement(uint8_t *fetched_data, uint8_t ccd_num) {
 	// this is a naive timer-less implementation
 
 	uint8_t last_sh_val = 0;
-	const uint16_t pixels_between_sh_toggles = 1000;
+	const uint16_t pixels_between_sh_toggles = 50;
 
 	// delay_ms(120);
 	Wdog_reset();
@@ -133,6 +137,8 @@ void query_ccd_measurement(uint8_t *fetched_data, uint8_t ccd_num) {
 	uart_config(&uart1, 0);
 	uart_config(&uart2, 0);
 	afsk_disable_timers();
+
+	init_adc_ccd(ccd_num);
 
 	uint32_t adc_channel = ADC_CHANNEL_5; // refers to PA5 or PA6
 
@@ -271,6 +277,8 @@ void query_ccd_measurement(uint8_t *fetched_data, uint8_t ccd_num) {
 
 	set_resting_ccd_state();
 
+	deinit_adc_ccd();
+
 	// re-enable timers
 	afsk_restore_disabled_timers();
 
@@ -290,7 +298,7 @@ void set_resting_ccd_state(void) {
  * @brief
  * Configure ADC in continuous mode
  */
-void init_ccd_adc(void)
+void init_adc_ccd(uint8_t ccd_num)
 {
     /* Set ADC prescalar*/
     // RCC->CFGR |= RCC_CFGR_ADCPRE_DIV6;
@@ -302,13 +310,18 @@ void init_ccd_adc(void)
 
     /* Configure PA5 and PA6 in analog input mode */
     // GPIOA->CRL &= ~(GPIO_CRL_CNF5 | GPIO_CRL_MODE0);
-	GPIOA->CRL &= ~(GPIO_CRL_CNF5 | GPIO_CRL_MODE0);
-    GPIOA->CRL &= ~(GPIO_CRL_CNF6 | GPIO_CRL_MODE0);
+	if (ccd_num == 1)
+		GPIOA->CRL &= ~(GPIO_CRL_CNF5 | GPIO_CRL_MODE0);
+	else if (ccd_num == 2)
+	    GPIOA->CRL &= ~(GPIO_CRL_CNF6 | GPIO_CRL_MODE0);
 
     /* Set sampling time = 28.5 cycles*/
     // orig: // ADC2->SMPR2 |= (ADC_SMPR2_SMP0_1 | ADC_SMPR2_SMP0_0);
 	// other orig: ADC2->SMPR2 = ADC_SAMPLE_TIME6(SAMPLE_TIME_1_5);
-    ADC2->SMPR2 = ADC_SAMPLE_TIME5(SAMPLE_TIME_1_5) | ADC_SAMPLE_TIME6(SAMPLE_TIME_1_5);
+	if (ccd_num == 1)
+    	ADC2->SMPR2 = ADC_SAMPLE_TIME5(SAMPLE_TIME_1_5);
+	else if (ccd_num == 2)
+		ADC2->SMPR2 = ADC_SAMPLE_TIME6(SAMPLE_TIME_1_5);
 
     /* Put adc in Continuous mode and wake up from power down mode*/
     ADC2->CR2 |= (ADC_CR2_CONT | ADC_CR2_ADON);
@@ -330,6 +343,15 @@ void init_ccd_adc(void)
     ADC2->CR2 |= ADC_CR2_ADON;
 
 	set_resting_ccd_state();
+}
+
+void deinit_adc_ccd(void) {
+	GPIOA->CRL &= ~(GPIO_CRL_CNF5 | GPIO_CRL_MODE0); // PA5 (CCD1)
+	GPIOA->CRL &= ~(GPIO_CRL_CNF6 | GPIO_CRL_MODE0); // PA6 (CCD2)
+
+	ADC2->CR2 &= ~ADC_CR2_ADON;
+	ADC2->CR2 &= ~ADC_CR2_CONT;
+	ADC2->SMPR2 = 0;
 }
 
 
