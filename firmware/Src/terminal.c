@@ -1860,20 +1860,10 @@ void term_printHelpMessage(Terminal_stream src) {
 
 void switchPortToMonitorMode(Terminal_stream src) {
 
-	// FIXME: remove this
-	char msg[255];
-	sprintf(
-		msg,
-		"%sDEBUG: HERE!!%s",
-		MBOSS_RESPONSE_START_STR, MBOSS_RESPONSE_END_STR
-	);
-	term_sendToMode((uint8_t*)msg, strlen(msg), MODE_BOSS);
-
 	if(src == TERM_UART1)
 	{
 		term_sendString((uint8_t*)"UART1 switched to monitor mode\r\n", 0);
 		term_sendBuf(TERM_UART1);
-		delay_ms(50);
 		uart1.mode = MODE_MONITOR;
 	}
 	else if(src == TERM_UART2)

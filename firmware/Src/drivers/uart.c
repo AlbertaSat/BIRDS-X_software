@@ -22,6 +22,7 @@ along with VP-Digi.  If not, see <http://www.gnu.org/licenses/>.
 #include "common.h"
 #include "digipeater.h"
 #include "default_settings.h"
+#include "main.h" // FIXME: remove
 
 #include <string.h>
 #include <stdlib.h>
@@ -131,9 +132,9 @@ static volatile void uart_handleInterrupt(Uart *port)
 			port->buftxrd %= UARTBUFLEN;
 		}
 		
-		else //nothing more to be transmitted
+		else // nothing more to be transmitted
 		{
-			port->txflag = 0; //stop transmission
+			port->txflag = 0; // mark as "not transmitting"
 			port->port->CR1 &= ~USART_CR1_TXEIE;
 		}
 	}
@@ -175,6 +176,7 @@ void uart_transmitStart(Uart *port)
 
 void uart_sendByte(Uart *port, uint8_t data)
 {
+	HAL_GPIO_WritePin(PIN_LED_D304_GPIO_Port, PIN_LED_D304_Pin, GPIO_PIN_SET); // FIXME
 	while(port->txflag == 1);;
 	port->buftx[port->buftxwr++] = data;
 	port->buftxwr %= (UARTBUFLEN);
@@ -299,8 +301,8 @@ void uart_config(Uart *port, uint8_t state)
 
 		port->enabled = state > 0;
 	}
-
 }
+
 
 void uart_clearRx(Uart *port)
 {

@@ -591,6 +591,7 @@ void boss_cmd_exit_mission_boss_mode(uint8_t *cmd, Terminal_stream src) {
 			MBOSS_RESPONSE_START_STR, MBOSS_RESPONSE_END_STR
 		);
 		term_sendToMode((uint8_t*)msg, strlen(msg), MODE_BOSS);
+		// HAL_GPIO_WritePin(PIN_LED_D304_GPIO_Port, PIN_LED_D304_Pin, GPIO_PIN_SET);
 		switchPortToMonitorMode(TERM_UART1); // FIXME: arg should be Terminal_stream, but it's getting mangled
 	}
 	else {
