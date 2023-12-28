@@ -16,11 +16,16 @@ uint16_t sf_buffer_wr_idx = 0;
 uint32_t frame_rx_count_since_boot = 0;
 uint32_t beacon_count_since_boot = 0;
 
+uint32_t timestamp_rx_led_turned_on_ms = 0; // extern
+
 /**
  * \brief Handle received frame from RF
  */
 void handleFrame(void)
 {
+	set_packet_received_led(1);
+	timestamp_rx_led_turned_on_ms = get_system_uptime_ms();
+
 	uint8_t modemReceived = ax25.frameReceived; //store states
 	ax25.frameReceived = 0; //clear flag
 
@@ -114,7 +119,6 @@ void handleFrame(void)
 	if(digi.enable) {
 		Digi_digipeat(buf, bufidx);
 	}
-
 }
 
 void store_frame_for_store_and_forward(uint8_t *buf, uint16_t buflen) {

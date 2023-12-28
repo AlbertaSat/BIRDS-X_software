@@ -76,6 +76,8 @@ uint16_t Afsk_getRMS(uint8_t modemNo);
  */
 uint8_t Afsk_dcdState(void);
 
+void set_packet_received_led(uint8_t state);
+
 /**
  * @brief Start or restart TX test mode
  * @param[in] type TX test type: TEST_MARK, TEST_SPACE or TEST_ALTERNATING

@@ -10,6 +10,7 @@ extern uint8_t sf_buffer[STORE_AND_FORWARD_BUFFER_SIZE];
 extern uint16_t sf_buffer_wr_idx;
 extern uint32_t frame_rx_count_since_boot;
 extern uint32_t beacon_count_since_boot;
+extern uint32_t timestamp_rx_led_turned_on_ms;
 
 #define STORED_FRAME_DELIM_BYTE_0 0xFF
 #define STORED_FRAME_DELIM_BYTE_1 0xA0

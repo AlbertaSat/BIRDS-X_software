@@ -55,6 +55,7 @@ along with VP-Digi.  If not, see <http://www.gnu.org/licenses/>.
 #include "mboss_handler.h"
 #include "sys_reboot_reason.h"
 #include "frame_handler.h"
+#include "experiments.h"
 
 #include <stdint.h>
 #include <string.h>
@@ -228,6 +229,10 @@ int main(void)
   if (get_system_uptime_ms() - uptime_at_last_success_failure_led_on > LED_SUCCESS_FAILURE_MIN_TIME_ON_MS) {
     HAL_GPIO_WritePin(PIN_LED_FAILURE_GPIO_Port, PIN_LED_FAILURE_Pin, GPIO_PIN_RESET);
 	  HAL_GPIO_WritePin(PIN_LED_SUCCESS_GPIO_Port, PIN_LED_SUCCESS_Pin, GPIO_PIN_RESET);
+  }
+
+  if (get_system_uptime_ms() - timestamp_rx_led_turned_on_ms > LED_SUCCESS_FAILURE_MIN_TIME_ON_MS) {
+    set_packet_received_led(0);
   }
 
 

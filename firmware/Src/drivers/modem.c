@@ -190,13 +190,24 @@ uint16_t Afsk_getRMS(uint8_t modemNo)
  */
 static void afsk_dcd(uint8_t state)
 {
-	if(state)
-	{
-		// GPIOC->BSRR = GPIO_BSRR_BR13;
+	// if(state)
+	// {
+	// 	// GPIOC->BSRR = GPIO_BSRR_BR13;
+	// 	GPIOB->BSRR = GPIO_BSRR_BS5;
+	// }
+	// else {
+	// 	// GPIOC->BSRR = GPIO_BSRR_BS13;
+	// 	GPIOB->BSRR = GPIO_BSRR_BR5;
+	// }
+
+	// the flickering is kinda gross, so we'll do the receive a different way
+}
+
+void set_packet_received_led(uint8_t state) {
+	if(state) {
 		GPIOB->BSRR = GPIO_BSRR_BS5;
 	}
 	else {
-		// GPIOC->BSRR = GPIO_BSRR_BS13;
 		GPIOB->BSRR = GPIO_BSRR_BR5;
 	}
 }
