@@ -49,7 +49,6 @@ BossCommandEntry boss_command_table[] = {
 	{0x21, boss_cmd_clear_aprs_packet_store},
 	{0x22, boss_cmd_exit_mission_boss_mode},
 	{0x23, boss_cmd_get_sys_uptime_and_reboot_reason},
-	{0x24, boss_cmd_get_unix_timestamp},
 	{0x25, boss_cmd_set_experiment_stat_calc_period},
 	{0x26, boss_cmd_get_experiment_stat_calc_period},
 	{0x27, boss_cmd_transfer_n_statistical_experiment_measurements},
@@ -623,12 +622,6 @@ void boss_cmd_get_sys_uptime_and_reboot_reason(uint8_t *cmd, Terminal_stream src
 	);
 	term_sendToMode(msg, strlen(msg), MODE_BOSS);
 }
-
-void boss_cmd_get_unix_timestamp(uint8_t *cmd, Terminal_stream src) {
-	// alias for get_sys_uptime_and_reboot_reason
-	boss_cmd_get_sys_uptime_and_reboot_reason(cmd, src);
-}
-
 
 void boss_cmd_set_experiment_stat_calc_period(uint8_t *cmd, Terminal_stream src) {
 	//send_str_to_mboss("RESP: experiment functionality not implemented"); // TODO: implement experiment functions

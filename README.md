@@ -30,3 +30,11 @@ Both ports are at 9600 baud, by default.
 ### Mission Boss Commands
 #### Examples
 * Echo: `0xE0 0x10 0 0 0 0 0 0 0xED`
+
+
+## Testing Notes
+
+To listen to the device, use:
+```bash
+./rtl_fm.exe -f 145.825M - | ./direwolf -c sdr.conf -r 24000 -D 1 -
+```
