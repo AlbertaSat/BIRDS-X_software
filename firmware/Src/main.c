@@ -130,10 +130,16 @@ int main(void)
   MX_I2C2_Init();
   /* USER CODE BEGIN 2 */
 
-
-
 	Wdog_init(); //initialize watchdog
 
+  // flash code on-off-on-off for "boot complete"
+  HAL_GPIO_WritePin(PIN_LED_D304_GPIO_Port, PIN_LED_D304_Pin, GPIO_PIN_SET);
+  delay_ms(250);
+  HAL_GPIO_WritePin(PIN_LED_D304_GPIO_Port, PIN_LED_D304_Pin, GPIO_PIN_RESET);
+  delay_ms(250);
+  HAL_GPIO_WritePin(PIN_LED_D304_GPIO_Port, PIN_LED_D304_Pin, GPIO_PIN_SET);
+  delay_ms(250);
+  HAL_GPIO_WritePin(PIN_LED_D304_GPIO_Port, PIN_LED_D304_Pin, GPIO_PIN_RESET);
 
 	//set some initial values in case there is no configuration saved in memory
 	uart1.baudrate = DEFAULT_UART1_BAUD_RATE;
@@ -291,14 +297,27 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOA_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(PIN_DRA_ENABLE_GPIO_Port, PIN_DRA_ENABLE_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, PIN_CCD_PHI_M_Pin|PIN_CCD_ICG_Pin|PIN_CCD_SH_Pin|PIN_LED_SUCCESS_Pin
+                          |PIN_LED_FAILURE_Pin|PIN_LED_DCD_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin : PIN_DRA_ENABLE_Pin */
-  GPIO_InitStruct.Pin = PIN_DRA_ENABLE_Pin;
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOA, PIN_LED_D304_Pin|PIN_DRA_ENABLE_Pin|PIN_RFET_EN_OUT_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pins : PIN_CCD_PHI_M_Pin PIN_CCD_ICG_Pin PIN_CCD_SH_Pin PIN_LED_SUCCESS_Pin
+                           PIN_LED_FAILURE_Pin PIN_LED_DCD_Pin */
+  GPIO_InitStruct.Pin = PIN_CCD_PHI_M_Pin|PIN_CCD_ICG_Pin|PIN_CCD_SH_Pin|PIN_LED_SUCCESS_Pin
+                          |PIN_LED_FAILURE_Pin|PIN_LED_DCD_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(PIN_DRA_ENABLE_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PIN_LED_D304_Pin PIN_DRA_ENABLE_Pin PIN_RFET_EN_OUT_Pin */
+  GPIO_InitStruct.Pin = PIN_LED_D304_Pin|PIN_DRA_ENABLE_Pin|PIN_RFET_EN_OUT_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */

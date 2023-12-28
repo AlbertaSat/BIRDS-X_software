@@ -85,7 +85,7 @@
                   
           <board>custom</board>
               
-          <debugprobe>jtag</debugprobe>
+          <debugprobe/>
               
           <optimization/>
               

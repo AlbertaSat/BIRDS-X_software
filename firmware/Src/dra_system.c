@@ -72,7 +72,6 @@ void send_dra_init_commands() {
 }
 
 void set_dra_awake_mode(uint8_t new_state) {
-	// TODO: implement this and remove bodge wire, if there's time
 	if (new_state == 0) {
 		// turn off PA11 (LOW)
 		HAL_GPIO_WritePin(PIN_DRA_ENABLE_GPIO_Port, PIN_DRA_ENABLE_Pin, GPIO_PIN_RESET);
