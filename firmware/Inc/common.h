@@ -18,6 +18,9 @@ along with VP-Digi.  If not, see <http://www.gnu.org/licenses/>.
 #define COMMON_H_
 
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 // include some un-called HAL stuff
 ////////////////////////////////////////////////////

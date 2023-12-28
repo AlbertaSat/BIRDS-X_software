@@ -4,6 +4,7 @@
 #include "drivers/watchdog.h"
 #include "antilib_adc.h"
 #include <stdint.h>
+#include "drivers/modem.h" // for afsk_disable_timers/afsk_restore_disabled_timers
 
 #define AFTER_INVERTER_IS_LOW 1
 #define AFTER_INVERTER_IS_HIGH 0
@@ -68,7 +69,7 @@ void fetch_ccd_measurement_and_log_it(uint8_t ccd_num) {
 		MBOSS_RESPONSE_START_STR,
 		ccd_num
 	);
-	term_sendToMode(msg, strlen(msg), MODE_BOSS);
+	term_sendToMode((uint8_t*)msg, strlen(msg), MODE_BOSS);
 	delay_ms(40);
 	Wdog_reset();
 
@@ -92,7 +93,7 @@ void fetch_ccd_measurement_and_log_it(uint8_t ccd_num) {
 		// }
 
 		// send
-		term_sendToMode(msg, strlen(msg), MODE_BOSS);
+		term_sendToMode((uint8_t*)msg, strlen(msg), MODE_BOSS);
 		delay_ms(10); // these will crazy it if you try to remove them
 		Wdog_reset();
 	}
@@ -103,7 +104,7 @@ void fetch_ccd_measurement_and_log_it(uint8_t ccd_num) {
 		"]%s",
 		MBOSS_RESPONSE_END_STR
 	);
-	term_sendToMode(msg, strlen(msg), MODE_BOSS);
+	term_sendToMode((uint8_t*)msg, strlen(msg), MODE_BOSS);
 
 	// TODO: check and log statistics data
 

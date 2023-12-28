@@ -99,7 +99,7 @@ void receive_incoming_boss_cmd(uint8_t *cmd, uint16_t len, Terminal_stream src) 
 			"%sERROR: BOSS command failed validation%s",
 			MBOSS_RESPONSE_START_STR, MBOSS_RESPONSE_END_STR
 		);
-		term_sendToMode(err_msg, strlen(err_msg), MODE_BOSS);
+		term_sendToMode((uint8_t*)err_msg, strlen(err_msg), MODE_BOSS);
 		return;
 	}
 	
@@ -122,7 +122,7 @@ uint8_t validate_incoming_boss_cmd(uint8_t *cmd, uint16_t len, Terminal_stream s
 			"%sERROR: BOSS command must be %d bytes, but received %d bytes instead%s",
 			MBOSS_RESPONSE_START_STR, MBOSS_COMMAND_LENGTH, len, MBOSS_RESPONSE_END_STR
 		);
-		term_sendToMode(err_msg, strlen(err_msg), MODE_BOSS);
+		term_sendToMode((uint8_t*)err_msg, strlen(err_msg), MODE_BOSS);
 		return 0;
 	}
 
@@ -134,7 +134,7 @@ uint8_t validate_incoming_boss_cmd(uint8_t *cmd, uint16_t len, Terminal_stream s
 			"%sERROR: BOSS command must start with 0xE0, but received 0x%02X instead%s",
 			MBOSS_RESPONSE_START_STR, cmd[0], MBOSS_RESPONSE_END_STR
 		);
-		term_sendToMode(err_msg, strlen(err_msg), MODE_BOSS);
+		term_sendToMode((uint8_t*)err_msg, strlen(err_msg), MODE_BOSS);
 		return 0;
 	}
 
@@ -146,7 +146,7 @@ uint8_t validate_incoming_boss_cmd(uint8_t *cmd, uint16_t len, Terminal_stream s
 			"%sERROR: BOSS command must end with 0xED, but received 0x%02X instead%s",
 			MBOSS_RESPONSE_START_STR, cmd[8], MBOSS_RESPONSE_END_STR
 		);
-		term_sendToMode(err_msg, strlen(err_msg), MODE_BOSS);
+		term_sendToMode((uint8_t*)err_msg, strlen(err_msg), MODE_BOSS);
 		return 0;
 	}
 
@@ -159,7 +159,7 @@ uint8_t validate_incoming_boss_cmd(uint8_t *cmd, uint16_t len, Terminal_stream s
 				"%sERROR: BOSS command cannot contain 0xE0 or 0xED in the middle, but received 0x%02X at index %d%s",
 				MBOSS_RESPONSE_START_STR, cmd[i], i, MBOSS_RESPONSE_END_STR
 			);
-			term_sendToMode(err_msg, strlen(err_msg), MODE_BOSS);
+			term_sendToMode((uint8_t*)err_msg, strlen(err_msg), MODE_BOSS);
 			return 0;
 		}
 	}
@@ -179,7 +179,7 @@ uint8_t validate_incoming_boss_cmd(uint8_t *cmd, uint16_t len, Terminal_stream s
 			"%sERROR: BOSS command byte (cmd[1]=0x%02X) is not in command table%s",
 			MBOSS_RESPONSE_START_STR, cmd[1], MBOSS_RESPONSE_END_STR
 		);
-		term_sendToMode(err_msg, strlen(err_msg), MODE_BOSS);
+		term_sendToMode((uint8_t*)err_msg, strlen(err_msg), MODE_BOSS);
 		return 0;
 	}
 
@@ -208,7 +208,7 @@ void boss_cmd_set_active_aprs_mode(uint8_t *cmd, Terminal_stream src) {
 			"%sERROR: new_mode=%d is invalid, must be 0, 1, or 2%s",
 			MBOSS_RESPONSE_START_STR, new_mode, MBOSS_RESPONSE_END_STR
 		);
-		term_sendToMode(msg, strlen(msg), MODE_BOSS);
+		term_sendToMode((uint8_t*)msg, strlen(msg), MODE_BOSS);
 		return;
 	}
 
@@ -220,16 +220,16 @@ void boss_cmd_set_active_aprs_mode(uint8_t *cmd, Terminal_stream src) {
 		"%sRESP: set new_mode=%d%s",
 		MBOSS_RESPONSE_START_STR, new_mode, MBOSS_RESPONSE_END_STR
 	);
-	term_sendToMode(msg, strlen(msg), MODE_BOSS);
+	term_sendToMode((uint8_t*)msg, strlen(msg), MODE_BOSS);
 
 	if (new_mode == RF_APRS_MODE_INACTIVE) {
 		// turn off the DRA enable pin
 		set_dra_awake_mode(0);
 
 		// disable the vp-digi beacon
-		execute_vp_digi_config_cmd("beacon 0 off");
-		execute_vp_digi_config_cmd("digi 0 off");
-		execute_vp_digi_config_cmd("digi off");
+		execute_vp_digi_config_cmd((uint8_t*)"beacon 0 off");
+		execute_vp_digi_config_cmd((uint8_t*)"digi 0 off");
+		execute_vp_digi_config_cmd((uint8_t*)"digi off");
 
 
 	}
@@ -242,23 +242,23 @@ void boss_cmd_set_active_aprs_mode(uint8_t *cmd, Terminal_stream src) {
 		send_dra_init_commands();
 
 		// run all the vp-digi config commands (beacons)
-		execute_vp_digi_config_cmd("beacon 0 on");
+		execute_vp_digi_config_cmd((uint8_t*)"beacon 0 on");
 		
 		// run the vp-digi config command to update the beacon freq
 		uint8_t vp_cmd[100];
 		sprintf((char*)vp_cmd, "beacon 0 iv %d", current_config_beacon_period_minutes);
-		execute_vp_digi_config_cmd((char*)vp_cmd); // like "beacon 0 iv 1"
+		execute_vp_digi_config_cmd((uint8_t*)vp_cmd); // like "beacon 0 iv 1"
 
-		execute_vp_digi_config_cmd("beacon 0 dl 1"); // delay at boot
-		execute_vp_digi_config_cmd("beacon 0 path WIDE1-1");
-		execute_vp_digi_config_cmd("beacon 0 data >Hello from JASPER satellite");
+		execute_vp_digi_config_cmd((uint8_t*)"beacon 0 dl 1"); // delay at boot
+		execute_vp_digi_config_cmd((uint8_t*)"beacon 0 path WIDE1-1");
+		execute_vp_digi_config_cmd((uint8_t*)"beacon 0 data >Hello from JASPER satellite");
 
 		// run all the vp-digi config commands (digipeater)
-		execute_vp_digi_config_cmd("digi on");
-		execute_vp_digi_config_cmd("digi 0 on");
-		execute_vp_digi_config_cmd("digi 0 alias WIDE");
-		execute_vp_digi_config_cmd("digi 0 max 2");
-		execute_vp_digi_config_cmd("digi 0 rep 3");
+		execute_vp_digi_config_cmd((uint8_t*)"digi on");
+		execute_vp_digi_config_cmd((uint8_t*)"digi 0 on");
+		execute_vp_digi_config_cmd((uint8_t*)"digi 0 alias WIDE");
+		execute_vp_digi_config_cmd((uint8_t*)"digi 0 max 2");
+		execute_vp_digi_config_cmd((uint8_t*)"digi 0 rep 3");
 
 	}
 
@@ -275,7 +275,7 @@ void boss_cmd_transfer_aprs_data_packets(uint8_t *cmd, Terminal_stream src) {
 		"%sRESP: store-and-forward buffer: len=%d, val=%s<END>%s",
 		MBOSS_RESPONSE_START_STR, sf_buffer_wr_idx, sf_buffer, MBOSS_RESPONSE_END_STR
 	);
-	term_sendToMode(msg, strlen((char*)msg), MODE_BOSS);
+	term_sendToMode((uint8_t*)msg, strlen((char*)msg), MODE_BOSS);
 	*/
 
 	uint8_t target_frame_fetch_count = cmd[7]; // number of frames to catch
@@ -310,7 +310,7 @@ void boss_cmd_transfer_aprs_data_packets(uint8_t *cmd, Terminal_stream src) {
 				"%sERROR: failed to fetch frame %d from store-and-forward buffer, error code %d%s",
 				MBOSS_RESPONSE_START_STR, frame_num, fetch_result, MBOSS_RESPONSE_END_STR
 			);
-			term_sendToMode(err_msg, strlen(err_msg), MODE_BOSS);
+			term_sendToMode((uint8_t*)err_msg, strlen(err_msg), MODE_BOSS);
 			return;
 		}
 
@@ -321,7 +321,7 @@ void boss_cmd_transfer_aprs_data_packets(uint8_t *cmd, Terminal_stream src) {
 			"%sRESP: len=%d, frame=%s%s",
 			MBOSS_RESPONSE_START_STR, frame_length, frame, MBOSS_RESPONSE_END_STR
 		);
-		term_sendToMode(msg, strlen(msg), MODE_BOSS);
+		term_sendToMode((uint8_t*)msg, strlen(msg), MODE_BOSS);
 	}
 	
 }
@@ -391,7 +391,7 @@ void boss_cmd_echo_command(uint8_t *cmd, Terminal_stream src) {
 		"%sRESP: len=%d, hex=%s%s",
 		MBOSS_RESPONSE_START_STR, MBOSS_COMMAND_LENGTH, received_msg_as_hex, MBOSS_RESPONSE_END_STR
 	);
-	term_sendToMode(msg, strlen(msg), MODE_BOSS);
+	term_sendToMode((uint8_t*)msg, strlen(msg), MODE_BOSS);
 }
 
 void boss_cmd_transfer_n_raw_experiment_packets(uint8_t *cmd, Terminal_stream src) {
@@ -452,7 +452,7 @@ void boss_cmd_set_unix_timestamp(uint8_t *cmd, Terminal_stream src) {
 			"%sERROR: timestamp_sec=%lu is invalid, must be between 2023-01-01 and 2028-01-01%s",
 			MBOSS_RESPONSE_START_STR, timestamp_sec, MBOSS_RESPONSE_END_STR
 		);
-		term_sendToMode(msg, strlen(msg), MODE_BOSS);
+		term_sendToMode((uint8_t*)msg, strlen(msg), MODE_BOSS);
 		return;
 	}
 
@@ -471,7 +471,7 @@ void boss_cmd_set_unix_timestamp(uint8_t *cmd, Terminal_stream src) {
 			
 			MBOSS_RESPONSE_END_STR
 		);
-		term_sendToMode(msg, strlen(msg), MODE_BOSS);
+		term_sendToMode((uint8_t*)msg, strlen(msg), MODE_BOSS);
 		return;
 	}
 }
@@ -481,10 +481,10 @@ void boss_cmd_run_power_on_self_test(uint8_t *cmd, Terminal_stream src) {
 
 	// TEST 1: check that the DRA is responding to UART commands
 	// TODO: turn on the DRA, if it's not already, and then set it back to its previous state (via the PD sleep pin/function)
-	send_str_to_dra("AT+DMOCONNECT\r\n");
+	send_str_to_dra((uint8_t*)"AT+DMOCONNECT\r\n");
 	delay_ms(800); // await response
 
-	uint8_t dra_connect_check_passed = (strstr(latest_dra_response_buf, "+DMO") != NULL); // ideally contains "+DMOCONNECT:0", but "+DMOERROR" means it's at least responding
+	uint8_t dra_connect_check_passed = (strstr((char*)latest_dra_response_buf, "+DMO") != NULL); // ideally contains "+DMOCONNECT:0", but "+DMOERROR" means it's at least responding
 
 	char msg[255];
 	sprintf(
@@ -501,7 +501,7 @@ void boss_cmd_run_power_on_self_test(uint8_t *cmd, Terminal_stream src) {
 		
 		MBOSS_RESPONSE_END_STR
 	);
-	term_sendToMode(msg, strlen(msg), MODE_BOSS);
+	term_sendToMode((uint8_t*)msg, strlen(msg), MODE_BOSS);
 
 	// TODO: add more checks
 }
@@ -516,7 +516,7 @@ void boss_cmd_force_reboot_system(uint8_t *cmd, Terminal_stream src) {
 			"%sRESP: Rebooting...%s",
 			MBOSS_RESPONSE_START_STR, MBOSS_RESPONSE_END_STR
 		);
-		term_sendToMode(msg, strlen(msg), MODE_BOSS);
+		term_sendToMode((uint8_t*)msg, strlen(msg), MODE_BOSS);
 		
 		NVIC_SystemReset();
 	}
@@ -527,7 +527,7 @@ void boss_cmd_force_reboot_system(uint8_t *cmd, Terminal_stream src) {
 			"%sERROR: password is incorrect%s",
 			MBOSS_RESPONSE_START_STR, MBOSS_RESPONSE_END_STR
 		);
-		term_sendToMode(msg, strlen(msg), MODE_BOSS);
+		term_sendToMode((uint8_t*)msg, strlen(msg), MODE_BOSS);
 	}
 }
 
@@ -541,7 +541,7 @@ void boss_cmd_set_beacon_period(uint8_t *cmd, Terminal_stream src) {
 			"%sERROR: beacon_period_minutes=%d is invalid, must be >0%s",
 			MBOSS_RESPONSE_START_STR, beacon_period_minutes, MBOSS_RESPONSE_END_STR
 		);
-		term_sendToMode(msg, strlen(msg), MODE_BOSS);
+		term_sendToMode((uint8_t*)msg, strlen(msg), MODE_BOSS);
 		return;
 	}
 
@@ -552,7 +552,7 @@ void boss_cmd_set_beacon_period(uint8_t *cmd, Terminal_stream src) {
 		// run the vp-digi config command to update the beacon freq
 		uint8_t vp_cmd[100];
 		sprintf((char*)vp_cmd, "beacon 0 iv %d", beacon_period_minutes);
-		execute_vp_digi_config_cmd((char*)vp_cmd);
+		execute_vp_digi_config_cmd((uint8_t*)vp_cmd);
 		ran_vp_digi_update = 1;
 	}
 
@@ -563,7 +563,7 @@ void boss_cmd_set_beacon_period(uint8_t *cmd, Terminal_stream src) {
 		beacon_period_minutes, ran_vp_digi_update,
 		MBOSS_RESPONSE_END_STR
 	);
-	term_sendToMode(msg, strlen(msg), MODE_BOSS);
+	term_sendToMode((uint8_t*)msg, strlen(msg), MODE_BOSS);
 	
 }
 
@@ -577,7 +577,7 @@ void boss_cmd_clear_aprs_packet_store(uint8_t *cmd, Terminal_stream src) {
 		"%sRESP: Cleared APRS packet store memory%s",
 		MBOSS_RESPONSE_START_STR, MBOSS_RESPONSE_END_STR
 	);
-	term_sendToMode(msg, strlen(msg), MODE_BOSS);
+	term_sendToMode((uint8_t*)msg, strlen(msg), MODE_BOSS);
 }
 
 void boss_cmd_exit_mission_boss_mode(uint8_t *cmd, Terminal_stream src) {
@@ -590,7 +590,7 @@ void boss_cmd_exit_mission_boss_mode(uint8_t *cmd, Terminal_stream src) {
 			"%sRESP: Exiting mission BOSS mode%s",
 			MBOSS_RESPONSE_START_STR, MBOSS_RESPONSE_END_STR
 		);
-		term_sendToMode(msg, strlen(msg), MODE_BOSS);
+		term_sendToMode((uint8_t*)msg, strlen(msg), MODE_BOSS);
 		switchPortToMonitorMode(TERM_UART1); // FIXME: arg should be Terminal_stream, but it's getting mangled
 	}
 	else {
@@ -600,7 +600,7 @@ void boss_cmd_exit_mission_boss_mode(uint8_t *cmd, Terminal_stream src) {
 			"%sERROR: password is incorrect%s",
 			MBOSS_RESPONSE_START_STR, MBOSS_RESPONSE_END_STR
 		);
-		term_sendToMode(msg, strlen(msg), MODE_BOSS);
+		term_sendToMode((uint8_t*)msg, strlen(msg), MODE_BOSS);
 	}
 }
 
@@ -620,7 +620,7 @@ void boss_cmd_get_sys_uptime_and_reboot_reason(uint8_t *cmd, Terminal_stream src
 		(uint8_t) current_aprs_mode,
 		MBOSS_RESPONSE_END_STR
 	);
-	term_sendToMode(msg, strlen(msg), MODE_BOSS);
+	term_sendToMode((uint8_t*)msg, strlen(msg), MODE_BOSS);
 }
 
 void boss_cmd_set_experiment_stat_calc_period(uint8_t *cmd, Terminal_stream src) {
@@ -658,7 +658,7 @@ void boss_cmd_get_stored_aprs_packets_stats(uint8_t *cmd, Terminal_stream src) {
 		get_stored_frame_count(), sf_buffer_wr_idx, STORE_AND_FORWARD_BUFFER_SIZE, frame_rx_count_since_boot, beacon_count_since_boot,
 		MBOSS_RESPONSE_END_STR
 	);
-	term_sendToMode(msg, strlen(msg), MODE_BOSS);
+	term_sendToMode((uint8_t*)msg, strlen(msg), MODE_BOSS);
 }
 
 void boss_cmd_beacon_right_now(uint8_t *cmd, Terminal_stream src) {
@@ -666,7 +666,7 @@ void boss_cmd_beacon_right_now(uint8_t *cmd, Terminal_stream src) {
 		send_str_to_mboss("ERROR: can't beacon when APRS mode is inactive");
 	}
 	else if (current_aprs_mode == RF_APRS_MODE_DIGIPEAT || current_aprs_mode == RF_APRS_MODE_STORE_AND_FORWARD) {
-		execute_vp_digi_monitor_cmd("beacon 0");
+		execute_vp_digi_monitor_cmd((uint8_t*)"beacon 0");
 		send_str_to_mboss("RESP: beacon 0 sent");
 	}
 	
@@ -702,7 +702,7 @@ void boss_cmd_exp_get_adc_values(uint8_t *cmd, Terminal_stream src) {
 		adc_val_radfet_4,
 		MBOSS_RESPONSE_END_STR
 	);
-	term_sendToMode(msg, strlen(msg), MODE_BOSS);
+	term_sendToMode((uint8_t*)msg, strlen(msg), MODE_BOSS);
 }
 
 void boss_cmd_exp_get_adc_values_on_loop(uint8_t *cmd, Terminal_stream src) {
@@ -748,9 +748,9 @@ void boss_cmd_test_delay_ms(uint8_t *cmd, Terminal_stream src) {
 		MBOSS_RESPONSE_END_STR
 	);
 
-	term_sendToMode(msg_start, strlen(msg_start), MODE_BOSS);
+	term_sendToMode((uint8_t*)msg_start, strlen(msg_start), MODE_BOSS);
 	if (delay_ms > 0) delay_ms(delay_duration_ms);
-	term_sendToMode(msg_end, strlen(msg_end), MODE_BOSS);
+	term_sendToMode((uint8_t*)msg_end, strlen(msg_end), MODE_BOSS);
 }
 
 uint8_t check_cmd_password(uint8_t cmd[], uint8_t full_command_with_password[9]) {
@@ -763,7 +763,7 @@ uint8_t check_cmd_password(uint8_t cmd[], uint8_t full_command_with_password[9])
 }
 
 void send_str_to_mboss_no_tail(char input_msg[]) {
-	term_sendToMode(input_msg, strlen(input_msg), MODE_BOSS);
+	term_sendToMode((uint8_t*)input_msg, strlen(input_msg), MODE_BOSS);
 }
 
 void send_str_to_mboss(char input_msg[]) {
@@ -773,7 +773,7 @@ void send_str_to_mboss(char input_msg[]) {
 		"%s%s%s",
 		MBOSS_RESPONSE_START_STR, input_msg, MBOSS_RESPONSE_END_STR
 	);
-	term_sendToMode(msg, strlen(msg), MODE_BOSS);
+	term_sendToMode((uint8_t*)msg, strlen(msg), MODE_BOSS);
 }
 
 RF_APRS_Mode_t get_current_aprs_mode(void) {
