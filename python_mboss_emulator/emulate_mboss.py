@@ -20,10 +20,10 @@ global_store = {
 	'port': None,
 	'cmd_df': None,
 	'last_cmd_selection_str': None,
+	'timeout_sec_stop_listening_normal': 1.5,
 }
 
 default_timeout = 1
-timeout_sec_stop_listening_normal = 2.5
 
 MBOSS_COMMAND_LENGTH = 9
 MBOSS_COMMAND_START_BYTE = 0xE0
@@ -242,6 +242,10 @@ def fn_restart_emulator(ser: serial.Serial) -> None:
 	logger.info(f"Restarting emulator.")
 	os.execv(sys.executable, ['python'] + sys.argv)
 
+def fn_set_timeout_to_5_sec(ser: serial.Serial) -> None:
+	""" Sets the timeout to 5 seconds. """
+	global_store['timeout_sec_stop_listening_normal'] = 5.0
+
 def gui_prompt_for_command_and_execute_it(ser: serial.Serial) -> None:
 	""" Presents a GUI to the user to select a command to send from the MBOSS. """
 
@@ -254,6 +258,7 @@ def gui_prompt_for_command_and_execute_it(ser: serial.Serial) -> None:
 		fn_view_incoming_once,
 		fn_test_delay_ms,
 		fn_restart_emulator,
+		fn_set_timeout_to_5_sec,
 	]
 
 	choices_list += [f"--- {f.__name__}() ---" for f in function_options]
@@ -319,7 +324,7 @@ def read_response(ser: serial.Serial) -> None:
 	resp = b''
 	last_rx_time = time.time()
 	print(f"RX >>", end='', flush=True)
-	while time.time() - send_finished_time < 20: # rarely happens, normally breaks
+	while time.time() - send_finished_time < 20: # rarely happens, normally breaks (this is for a very very long-running command)
 		data = ser.read()
 		resp += data
 		
@@ -327,8 +332,7 @@ def read_response(ser: serial.Serial) -> None:
 			print(bytes_to_nice_str(data), end='', flush=True)
 			last_rx_time = time.time()
 
-		if time.time() - last_rx_time > timeout_sec_stop_listening_normal:
-			# print(f"BREAKING: no data for 1.5s")
+		if time.time() - last_rx_time > global_store['timeout_sec_stop_listening_normal']:
 			break
 
 	print(f" [<done @ {time.time():,.3f}s>]")
