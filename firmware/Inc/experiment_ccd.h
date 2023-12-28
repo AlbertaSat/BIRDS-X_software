@@ -22,5 +22,7 @@ void init_ccd_adc(void);
 
 void set_resting_ccd_state(void);
 
+void write_ccd_pins(uint8_t phi_m, uint8_t icg, uint8_t sh);
+
 
 #endif  // __EXPERIMENT_CCD_H__

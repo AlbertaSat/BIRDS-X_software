@@ -42,6 +42,11 @@ inline void write_sh_pin(uint8_t val) {
 	}
 }
 
+void write_ccd_pins(uint8_t phi_m, uint8_t icg, uint8_t sh) {
+	write_phi_m_pin(phi_m);
+	write_icg_pin(icg);
+	write_sh_pin(sh);
+}
 
 void fetch_ccd_measurement_and_log_it(uint8_t ccd_num) {
 	// send_str_to_mboss_no_tail("DEBUG: boss_cmd_exp_ccd_do_debug_convert -> called");

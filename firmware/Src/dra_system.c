@@ -45,12 +45,18 @@ void send_str_to_dra(uint8_t *str) {
 	}
 }
 
-void send_dra_init_commands() {
-	const uint16_t delay_ms_between_commands = 200;
+uint8_t send_dra_init_commands() {
+	const uint16_t delay_ms_between_commands = 300;
+
+	uint8_t error_val = 0;
 	
 	// Init connection
 	send_str_to_dra((uint8_t*)"AT+DMOCONNECT\r\n");
 	delay_ms(delay_ms_between_commands);
+	Loop_process_incoming_uart_commands(0, 1);
+	if (strstr((char *)latest_dra_response_buf, "+DMOCONNECT:0") == NULL) {
+		error_val |= 1 << 1; // 2
+	}
 
 	// Send channel configuration
 	// 1 = 25k channel (no other options, says it works well enough at 12.5k)
@@ -58,17 +64,30 @@ void send_dra_init_commands() {
 	// 0000,0,0000 = CTCSS TX, Carrier squelch level, CTCSS RX
 	send_str_to_dra((uint8_t*)"AT+DMOSETGROUP=1,145.8250,145.8250,0000,0,0000\r\n");
 	delay_ms(delay_ms_between_commands);
+	Loop_process_incoming_uart_commands(0, 1);
+	if (strstr((char *)latest_dra_response_buf, "+DMOSETGROUP") == NULL) {
+		error_val |= 1 << 2; // 4
+	}
 
 	// Adjust volume 1-8
 	send_str_to_dra((uint8_t*)"AT+DMOSETVOLUME=8\r\n");
 	delay_ms(delay_ms_between_commands);
+	Loop_process_incoming_uart_commands(0, 1);
+	if (strstr((char *)latest_dra_response_buf, "+DMOSETVOLUME") == NULL) {
+		error_val |= 1 << 3; // 8
+	}
 
 	// Turn off pre/de-emphasis, filters
 	// Format: pre/de (inverted),highpass,lowpass
 	// With this, need to set config: "flat on"
 	send_str_to_dra((uint8_t*)"AT+SETFILTER=1,0,0\r\n");
 	delay_ms(delay_ms_between_commands);
+	Loop_process_incoming_uart_commands(0, 1);
+	if (strstr((char *)latest_dra_response_buf, "+DMOSETFILTER:") == NULL) {
+		error_val |= 1 << 4; // 16
+	}
 
+	return error_val;
 }
 
 void set_dra_awake_mode(uint8_t new_state) {

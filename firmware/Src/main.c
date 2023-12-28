@@ -56,6 +56,7 @@ along with VP-Digi.  If not, see <http://www.gnu.org/licenses/>.
 #include "sys_reboot_reason.h"
 #include "frame_handler.h"
 #include "experiments.h"
+#include "experiment_ccd.h"
 
 #include <stdint.h>
 #include <string.h>
@@ -166,6 +167,7 @@ int main(void)
 	Beacon_init();
 
   write_radfet_enable(0);
+  // set_resting_ccd_state(); // lowest power state
 
 	// store reset reason at boot, because it can only be fetched once via `reset_cause_get()`
 	this_boot_reset_cause = reset_cause_get();

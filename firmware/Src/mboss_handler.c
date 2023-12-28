@@ -60,6 +60,7 @@ BossCommandEntry boss_command_table[] = {
 	{0x95, boss_cmd_exp_get_adc_values_on_loop},
 
 	{0x96, boss_cmd_exp_ccd_do_debug_convert}, // TODO: confirm
+	{0x97, boss_cmd_cycle_ccd_pin_options}, // TODO: confirm
 };
 
 RF_APRS_Mode_t current_aprs_mode = RF_APRS_MODE_INACTIVE;
@@ -91,6 +92,8 @@ void receive_incoming_boss_cmd(uint8_t *cmd, uint16_t len, Terminal_stream src) 
 	}
 
 	if (validate_incoming_boss_cmd(cmd, len, src) == 0) {
+		set_led_failure();
+
 		char err_msg[255];
 		sprintf(
 			err_msg,
@@ -114,6 +117,8 @@ void receive_incoming_boss_cmd(uint8_t *cmd, uint16_t len, Terminal_stream src) 
 uint8_t validate_incoming_boss_cmd(uint8_t *cmd, uint16_t len, Terminal_stream src) {
 	// command should be 9 bytes (MBOSS_COMMAND_LENGTH)
 	if (len != MBOSS_COMMAND_LENGTH) {
+		set_led_failure();
+
 		char err_msg[255];
 		sprintf(
 			err_msg,
@@ -126,6 +131,8 @@ uint8_t validate_incoming_boss_cmd(uint8_t *cmd, uint16_t len, Terminal_stream s
 
 	// command should start with 0xE0 (MBOSS_COMMAND_START_BYTE)
 	if (cmd[0] != MBOSS_COMMAND_START_BYTE) {
+		set_led_failure();
+
 		char err_msg[255];
 		sprintf(
 			err_msg,
@@ -138,6 +145,8 @@ uint8_t validate_incoming_boss_cmd(uint8_t *cmd, uint16_t len, Terminal_stream s
 
 	// command should end with MBOSS_COMMAND_END_BYTE
 	if (cmd[8] != MBOSS_COMMAND_END_BYTE) {
+		set_led_failure();
+
 		char err_msg[255];
 		sprintf(
 			err_msg,
@@ -150,6 +159,8 @@ uint8_t validate_incoming_boss_cmd(uint8_t *cmd, uint16_t len, Terminal_stream s
 
 	// command should not contain any 0xE0 or 0xED bytes in the middle
 	for (uint8_t i = 1; i < MBOSS_COMMAND_LENGTH-1; i++) {
+		set_led_failure();
+
 		if (cmd[i] == MBOSS_COMMAND_START_BYTE || cmd[i] == MBOSS_COMMAND_END_BYTE) {
 			char err_msg[255];
 			sprintf(
@@ -171,6 +182,8 @@ uint8_t validate_incoming_boss_cmd(uint8_t *cmd, uint16_t len, Terminal_stream s
 		}
 	}
 	if (found == 0) {
+		set_led_failure();
+
 		char err_msg[255];
 		sprintf(
 			err_msg,
@@ -182,7 +195,6 @@ uint8_t validate_incoming_boss_cmd(uint8_t *cmd, uint16_t len, Terminal_stream s
 	}
 
 	return 1;
-
 }
 
 
@@ -190,9 +202,9 @@ void boss_cmd_turn_off_payload(uint8_t *cmd, Terminal_stream src) {
 	// FINAL
 	// maybe sorta like NVIC_SystemReset(); ?
 	// also do shutdown tasks, like storing any info to flash we want, then stall for up to an hour
+	set_led_success();
 
 	send_str_to_mboss("RESP: safe to power off");
-	set_led_success();
 }
 
 void boss_cmd_set_active_aprs_mode(uint8_t *cmd, Terminal_stream src) {
@@ -215,15 +227,7 @@ void boss_cmd_set_active_aprs_mode(uint8_t *cmd, Terminal_stream src) {
 	}
 
 	current_aprs_mode = (RF_APRS_Mode_t)new_mode;
-
-	char msg[255];
-	sprintf(
-		msg,
-		"%sRESP: set new_mode=%d%s",
-		MBOSS_RESPONSE_START_STR, new_mode, MBOSS_RESPONSE_END_STR
-	);
-	term_sendToMode((uint8_t*)msg, strlen(msg), MODE_BOSS);
-	set_led_success();
+	uint8_t dra_init_error_val = 0;
 
 	if (new_mode == RF_APRS_MODE_INACTIVE) {
 		// turn off the DRA enable pin
@@ -234,17 +238,15 @@ void boss_cmd_set_active_aprs_mode(uint8_t *cmd, Terminal_stream src) {
 		execute_vp_digi_config_cmd((uint8_t*)"beacon 0 off");
 		execute_vp_digi_config_cmd((uint8_t*)"digi 0 off");
 		execute_vp_digi_config_cmd((uint8_t*)"digi off");
-
-
 	}
 
 	if (new_mode == RF_APRS_MODE_DIGIPEAT || new_mode == RF_APRS_MODE_STORE_AND_FORWARD) {
 		// turn on the DRA enable pin
 		set_dra_awake_mode(1);
-		delay_ms(100);
+		delay_ms(600); // datasheet says 300-500ms
 
 		// run the DRA init commands
-		send_dra_init_commands();
+		dra_init_error_val = send_dra_init_commands();
 
 		// run all the vp-digi config commands (beacons)
 		execute_vp_digi_config_cmd((uint8_t*)"beacon 0 on");
@@ -264,9 +266,19 @@ void boss_cmd_set_active_aprs_mode(uint8_t *cmd, Terminal_stream src) {
 		execute_vp_digi_config_cmd((uint8_t*)"digi 0 alias WIDE");
 		execute_vp_digi_config_cmd((uint8_t*)"digi 0 max 2");
 		execute_vp_digi_config_cmd((uint8_t*)"digi 0 rep 3");
-
 	}
-
+	
+	char msg[100];
+	sprintf(
+		msg,
+		"%sRESP: set new_mode=%d, dra_init_error_val=%d%s",
+		MBOSS_RESPONSE_START_STR,
+		new_mode,
+		dra_init_error_val,
+		MBOSS_RESPONSE_END_STR
+	);
+	term_sendToMode((uint8_t*)msg, strlen(msg), MODE_BOSS);
+	set_led_success();
 }
 
 void boss_cmd_transfer_aprs_data_packets(uint8_t *cmd, Terminal_stream src) {
@@ -714,6 +726,37 @@ void boss_cmd_test_delay_ms(uint8_t *cmd, Terminal_stream src) {
 	term_sendToMode((uint8_t*)msg_start, strlen(msg_start), MODE_BOSS);
 	if (delay_ms > 0) delay_ms(delay_duration_ms);
 	term_sendToMode((uint8_t*)msg_end, strlen(msg_end), MODE_BOSS);
+}
+
+void boss_cmd_cycle_ccd_pin_options(uint8_t *cmd, Terminal_stream src) {
+	// FINAL
+
+	for (uint8_t sh = 0; sh <= 1; sh++) {
+		for (uint8_t icg = 0; icg <= 1; icg++) {
+			for (uint8_t phi_m = 0; phi_m <= 1; phi_m++) {
+				write_ccd_pins(phi_m, icg, sh);
+				
+				char msg[100];
+				sprintf(
+					msg,
+					"%sRESP: sh=%d, icg=%d, phi_m=%d%s",
+					MBOSS_RESPONSE_START_STR,
+					sh,
+					icg,
+					phi_m,
+					MBOSS_RESPONSE_END_STR
+				);
+				term_sendToMode((uint8_t*)msg, strlen(msg), MODE_BOSS);
+
+				delay_ms(4000);
+				Wdog_reset();
+
+				set_led_success();
+				delay_ms(100);
+				HAL_GPIO_WritePin(PIN_LED_SUCCESS_GPIO_Port, PIN_LED_SUCCESS_Pin, GPIO_PIN_RESET);
+			}
+		}
+	}
 }
 
 uint8_t check_cmd_password(uint8_t cmd[], uint8_t full_command_with_password[9]) {
