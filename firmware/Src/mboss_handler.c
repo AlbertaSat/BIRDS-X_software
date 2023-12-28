@@ -3,6 +3,7 @@
 #include "common.h"
 #include "sys_reboot_reason.h"
 #include "experiments.h"
+#include "experiment_ccd.h"
 #include "terminal.h"
 #include "default_settings.h"
 #include "frame_handler.h"
@@ -11,6 +12,7 @@
 
 #include "drivers/temperature_sensors.h"
 #include "drivers/modem.h"
+#include "drivers/watchdog.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -619,6 +621,77 @@ void boss_cmd_beacon_right_now(uint8_t *cmd, Terminal_stream src) {
 	
 }
 
+
+void boss_cmd_exp_get_adc_values(uint8_t *cmd, Terminal_stream src) {
+	// read ADC values
+	uint16_t adc_val_radfet_1 = get_radfet_measurement(1);
+	uint16_t adc_val_radfet_2 = get_radfet_measurement(2);
+	uint16_t adc_val_radfet_3 = get_radfet_measurement(3);
+	uint16_t adc_val_radfet_4 = get_radfet_measurement(4);
+
+	// prep message
+	char msg[100];
+	sprintf(
+		msg,
+		"%sRESP: %d,%d,%d,%d%s",
+		MBOSS_RESPONSE_START_STR,
+		adc_val_radfet_1,
+		adc_val_radfet_2,
+		adc_val_radfet_3,
+		adc_val_radfet_4,
+		MBOSS_RESPONSE_END_STR
+	);
+	term_sendToMode((uint8_t*)msg, strlen(msg), MODE_BOSS);
+}
+
+void boss_cmd_exp_get_adc_values_on_loop(uint8_t *cmd, Terminal_stream src) {
+	while (1) {
+		boss_cmd_exp_get_adc_values(cmd, src);
+
+		// service watchdog
+		Wdog_reset();
+
+		// delay
+		delay_ms(100);
+	}
+}
+
+void boss_cmd_exp_ccd_do_debug_convert(uint8_t *cmd, Terminal_stream src) {
+	uint8_t ccd_num = cmd[7];
+	if (ccd_num != 1 && ccd_num != 2) {
+		send_str_to_mboss_no_tail("ERROR: ccd_num must be 1 or 2");
+		delay_ms(50);
+		return;
+	}
+	
+	fetch_ccd_measurement_and_log_it(ccd_num);
+}
+
+void boss_cmd_test_delay_ms(uint8_t *cmd, Terminal_stream src) {
+	// fetch delay time from command (in ms)
+	uint32_t delay_duration_ms = cmd[6] << 8 | cmd[7];
+	
+	// prep start message
+	char msg_start[100];
+	sprintf(
+		msg_start,
+		"%sRESP: delay_duration_ms=%lu, starting delay...",
+		MBOSS_RESPONSE_START_STR, delay_duration_ms
+	);
+
+	// prep end message
+	char msg_end[100];
+	sprintf(
+		msg_end,
+		"complete%s",
+		MBOSS_RESPONSE_END_STR
+	);
+
+	term_sendToMode((uint8_t*)msg_start, strlen(msg_start), MODE_BOSS);
+	if (delay_ms > 0) delay_ms(delay_duration_ms);
+	term_sendToMode((uint8_t*)msg_end, strlen(msg_end), MODE_BOSS);
+}
+
 uint8_t check_cmd_password(uint8_t cmd[], uint8_t full_command_with_password[9]) {
 	for (uint8_t i = 0; i < MBOSS_COMMAND_LENGTH; i++) {
 		if (cmd[i] != full_command_with_password[i]) {
@@ -626,6 +699,10 @@ uint8_t check_cmd_password(uint8_t cmd[], uint8_t full_command_with_password[9])
 		}
 	}
 	return 1;
+}
+
+void send_str_to_mboss_no_tail(char input_msg[]) {
+	term_sendToMode((uint8_t*)input_msg, strlen(input_msg), MODE_BOSS);
 }
 
 void send_str_to_mboss(char input_msg[]) {

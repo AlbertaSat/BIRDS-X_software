@@ -113,5 +113,7 @@ void DMA1_Channel2_IRQHandler(void) __attribute__ ((interrupt));
 void TIM3_IRQHandler(void) __attribute__ ((interrupt));
 void TIM2_IRQHandler(void) __attribute__ ((interrupt));
 
+void afsk_disable_timers();
+void afsk_restore_disabled_timers();
 
 #endif

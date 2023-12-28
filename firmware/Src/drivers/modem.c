@@ -47,12 +47,6 @@ along with VP-Digi.  If not, see <http://www.gnu.org/licenses/>.
 #define PLLLOCKED 0.74 //PLL adjustment value when locked
 #define PLLNOTLOCKED 0.50 //PLL adjustment value when not locked
 
-
-#define PTT_ON GPIOB->BSRR = GPIO_BSRR_BS7
-#define PTT_OFF GPIOB->BSRR = GPIO_BSRR_BR7
-#define DCD_ON (GPIOC->BSRR = GPIO_BSRR_BR13)
-#define DCD_OFF (GPIOC->BSRR = GPIO_BSRR_BS13)
-
 Afsk_config afskCfg;
 
 struct ModState
@@ -191,21 +185,20 @@ uint16_t Afsk_getRMS(uint8_t modemNo)
 
 
 /**
- * @brief Set DCD LED
+ * @brief Set DCD (Data Carrier Detect) LED (PB5)
  * @param[in] state 0 - OFF, 1 - ON
  */
 static void afsk_dcd(uint8_t state)
 {
-//	if(state)
-//	{
-//		GPIOC->BSRR = GPIO_BSRR_BR13;
-//		GPIOB->BSRR = GPIO_BSRR_BS5;
-//	}
-//	else
-//	{
-//		GPIOC->BSRR = GPIO_BSRR_BS13;
-//		GPIOB->BSRR = GPIO_BSRR_BR5;
-//	}
+	if(state)
+	{
+		// GPIOC->BSRR = GPIO_BSRR_BR13;
+		GPIOB->BSRR = GPIO_BSRR_BS5;
+	}
+	else {
+		// GPIOC->BSRR = GPIO_BSRR_BS13;
+		GPIOB->BSRR = GPIO_BSRR_BR5;
+	}
 }
 
 
@@ -594,11 +587,10 @@ void Afsk_transmitStop(void)
 static void afsk_ptt(uint8_t state)
 {
 	if(state)
-		PTT_ON;
+		GPIOB->BSRR = GPIO_BSRR_BS7;
 	else
-		PTT_OFF;
+		GPIOB->BSRR = GPIO_BSRR_BR7;
 }
-
 
 
 /**
@@ -737,10 +729,30 @@ void Afsk_init(void)
 
 }
 
+uint8_t is_tim1_enabled, is_tim2_enabled, is_tim3_enabled, is_tim4_enabled;
+void afsk_disable_timers() {
+	is_tim1_enabled = (TIM1->CR1 & TIM_CR1_CEN) == TIM_CR1_CEN;
+	is_tim2_enabled = (TIM2->CR1 & TIM_CR1_CEN) == TIM_CR1_CEN;
+	is_tim3_enabled = (TIM3->CR1 & TIM_CR1_CEN) == TIM_CR1_CEN;
+	is_tim4_enabled = (TIM4->CR1 & TIM_CR1_CEN) == TIM_CR1_CEN;
+	
+	TIM1->CR1 &= ~TIM_CR1_CEN;
+	TIM2->CR1 &= ~TIM_CR1_CEN;
+	TIM3->CR1 &= ~TIM_CR1_CEN;
+	TIM4->CR1 &= ~TIM_CR1_CEN;
+}
 
-
-
-
-/**
- * @}
- */
+void afsk_restore_disabled_timers() {
+	if (is_tim1_enabled) {
+		TIM1->CR1 |= TIM_CR1_CEN;
+	}
+	if (is_tim2_enabled) {
+		TIM2->CR1 |= TIM_CR1_CEN;
+	}
+	if (is_tim3_enabled) {
+		TIM3->CR1 |= TIM_CR1_CEN;
+	}
+	if (is_tim4_enabled) {
+		TIM4->CR1 |= TIM_CR1_CEN;
+	}
+}

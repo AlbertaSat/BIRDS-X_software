@@ -167,6 +167,30 @@ int main(void)
 	// store reset reason at boot, because it can only be fetched once via `reset_cause_get()`
 	this_boot_reset_cause = reset_cause_get();
 
+  #if 0 // FIXME: just for testing
+  init_ccd_adc();
+
+  delay_ms(1000);
+
+  //uint8_t fetched_data[CCD_DATA_LEN_BYTES];
+  while (1) {
+    //query_ccd_measurement(fetched_data, 1);
+
+    fetch_ccd_measurement_and_log_it(2);
+
+    // delay_ms(1000);
+    // Wdog_reset();
+
+    for (uint16_t i = 0; i < 1000; i++) { // 10,000 gives 7.5ms (1.3 MHz?)
+      asm("NOP");
+    }
+  }
+
+  #endif
+
+  //init_ccd_adc();
+  //init_adc_radfets();
+
 	send_str_to_mboss("INFO: boot complete");
 
 	autoResetTimer = autoReset * 360000;

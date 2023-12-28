@@ -131,9 +131,9 @@ static volatile void uart_handleInterrupt(Uart *port)
 			port->buftxrd %= UARTBUFLEN;
 		}
 		
-		else //nothing more to be transmitted
+		else // nothing more to be transmitted
 		{
-			port->txflag = 0; //stop transmission
+			port->txflag = 0; // mark as "not transmitting"
 			port->port->CR1 &= ~USART_CR1_TXEIE;
 		}
 	}
