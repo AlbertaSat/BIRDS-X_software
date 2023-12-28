@@ -55,6 +55,11 @@ BossCommandEntry boss_command_table[] = {
 	{0x90, boss_cmd_echo_command},
 	{0x91, boss_cmd_clear_aprs_packet_store},
 	{0x92, boss_cmd_exit_mission_boss_mode},
+	{0x93, boss_cmd_test_delay_ms},
+	{0x94, boss_cmd_exp_get_adc_values},
+	{0x95, boss_cmd_exp_get_adc_values_on_loop},
+
+	{0x96, boss_cmd_exp_ccd_do_debug_convert}, // TODO: confirm
 };
 
 RF_APRS_Mode_t current_aprs_mode = RF_APRS_MODE_INACTIVE;
@@ -623,11 +628,19 @@ void boss_cmd_beacon_right_now(uint8_t *cmd, Terminal_stream src) {
 
 
 void boss_cmd_exp_get_adc_values(uint8_t *cmd, Terminal_stream src) {
+	// FINAL
+	set_led_success();
+
+	write_radfet_enable(1);
+    delay_ms(250);
+
 	// read ADC values
 	uint16_t adc_val_radfet_1 = get_radfet_measurement(1);
 	uint16_t adc_val_radfet_2 = get_radfet_measurement(2);
 	uint16_t adc_val_radfet_3 = get_radfet_measurement(3);
 	uint16_t adc_val_radfet_4 = get_radfet_measurement(4);
+
+	write_radfet_enable(0);
 
 	// prep message
 	char msg[100];
@@ -645,6 +658,9 @@ void boss_cmd_exp_get_adc_values(uint8_t *cmd, Terminal_stream src) {
 }
 
 void boss_cmd_exp_get_adc_values_on_loop(uint8_t *cmd, Terminal_stream src) {
+	// FINAL
+	set_led_success();
+
 	while (1) {
 		boss_cmd_exp_get_adc_values(cmd, src);
 
@@ -657,17 +673,25 @@ void boss_cmd_exp_get_adc_values_on_loop(uint8_t *cmd, Terminal_stream src) {
 }
 
 void boss_cmd_exp_ccd_do_debug_convert(uint8_t *cmd, Terminal_stream src) {
+	// FINAL
+
 	uint8_t ccd_num = cmd[7];
 	if (ccd_num != 1 && ccd_num != 2) {
+		set_led_failure();
 		send_str_to_mboss_no_tail("ERROR: ccd_num must be 1 or 2");
 		delay_ms(50);
 		return;
 	}
 	
+	set_led_success();
 	fetch_ccd_measurement_and_log_it(ccd_num);
 }
 
 void boss_cmd_test_delay_ms(uint8_t *cmd, Terminal_stream src) {
+	// FINAL
+
+	set_led_success();
+
 	// fetch delay time from command (in ms)
 	uint32_t delay_duration_ms = cmd[6] << 8 | cmd[7];
 	

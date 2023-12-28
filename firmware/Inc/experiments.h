@@ -15,4 +15,6 @@ uint16_t get_radfet_measurement(uint8_t radfet_num);
 
 void init_adc_radfets(void);
 
+void write_radfet_enable(uint8_t enable);
+
 #endif  // __EXPERIMENTS_H__

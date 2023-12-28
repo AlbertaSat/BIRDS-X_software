@@ -164,6 +164,8 @@ int main(void)
 	Afsk_init();
 	Beacon_init();
 
+  write_radfet_enable(0);
+
 	// store reset reason at boot, because it can only be fetched once via `reset_cause_get()`
 	this_boot_reset_cause = reset_cause_get();
 
@@ -189,7 +191,7 @@ int main(void)
   #endif
 
   //init_ccd_adc();
-  //init_adc_radfets();
+  init_adc_radfets();
 
 	send_str_to_mboss("INFO: boot complete");
 

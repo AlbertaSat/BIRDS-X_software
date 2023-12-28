@@ -28,8 +28,9 @@ uint16_t ADC_Read_Channel(uint32_t channel) {
 // TODO: create start/stop ADC functions, and call them from the RADFET enable place
 
 uint16_t get_radfet_measurement(uint8_t radfet_num) {
+
     uint32_t sum_value = 0;
-    const uint8_t num_samples = 8;
+    const uint8_t num_samples = 128;
     
     uint32_t radfet_channel = ADC_CHANNEL_1; // default to radfet 1
     if (radfet_num == 1) {
@@ -56,8 +57,9 @@ void init_adc_radfets(void)
 {
     // "Configure ADC in continuous mode"
 
-    /* Set ADC prescalar*/
-    // RCC->CFGR |= RCC_CFGR_ADCPRE_DIV6;
+    /* Set ADC clock prescalar*/
+    // RCC->CFGR |= RCC_CFGR_ADCPRE_DIV6; // 64MHz / 6
+    // Already done in Afsk_init()
 
     /* Enable clock for ADC & PortA */
     // orig: // RCC->APB2ENR |= RCC_APB2ENR_ADC2EN | RCC_APB2ENR_IOPAEN;
@@ -96,4 +98,13 @@ void init_adc_radfets(void)
 
     /* Start conversion */
     ADC2->CR2 |= ADC_CR2_ADON;
+}
+
+void write_radfet_enable(uint8_t enable) {
+    if (enable) {
+        HAL_GPIO_WritePin(PIN_RFET_EN_OUT_GPIO_Port, PIN_RFET_EN_OUT_Pin, GPIO_PIN_SET);
+    }
+    else {
+        HAL_GPIO_WritePin(PIN_RFET_EN_OUT_GPIO_Port, PIN_RFET_EN_OUT_Pin, GPIO_PIN_RESET);
+    }
 }

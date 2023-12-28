@@ -289,6 +289,7 @@ void init_ccd_adc(void)
 {
     /* Set ADC prescalar*/
     // RCC->CFGR |= RCC_CFGR_ADCPRE_DIV6;
+	// Already done in Afsk_init()
 
     /* Enable clock for ADC & PortA */
     // orig: // RCC->APB2ENR |= RCC_APB2ENR_ADC2EN | RCC_APB2ENR_IOPAEN;
