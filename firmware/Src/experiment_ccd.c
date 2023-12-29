@@ -12,19 +12,19 @@
 // a fetch is a a subset of a poll; multiple fetches happen per poll
 
 // period config
-uint16_t ccd_config_poll_period_sec = 10; // [default: 10] configurable via command, extern; 0 to disable
+uint8_t ccd_config_poll_period_sec = 10; // [default: 10] configurable via command, extern; 0 to disable
 uint16_t ccd_config_stat_period_sec = 240; // [default: 240] configurable via command, extern; 0 to disable
 
 // operational/functional config
-uint16_t ccd_config_pixels_per_shutter = 50; // configurable via command, extern
-uint8_t ccd_config_fetches_per_poll = 10; // [must be <10] via command, extern
+uint16_t ccd_config_pixels_per_shutter = 50; // [default: 50] configurable via command, extern
+uint8_t ccd_config_fetches_per_poll = 10; // [must be <10; default 10] via command, extern
 uint8_t ccd_config_alert_threshold_points = 10; // configurable via command, extern
 
 // period tracking
 uint32_t ccd_result_stat_period_start_uptime_sec = 0;
 uint32_t ccd_result_last_poll_period_start_uptime_sec = 0;
 
-// stats since boot
+// stats since boot (not really utlized; could make a command that gets them)
 uint32_t ccd1_result_triggered_pix_count_since_boot = 0;
 uint32_t ccd2_result_triggered_pix_count_since_boot = 0;
 uint32_t ccd_result_total_pix_count_since_boot = 0;
@@ -335,6 +335,18 @@ void loop_service_ccd_experiment() {
 		return;
 	}
 
+	if (ccd_config_poll_period_sec == 0 || ccd_config_stat_period_sec == 0) {
+		// disabled
+		
+		// reset the logged values
+		ccd1_result_triggered_pix_count_in_last_period = 0;
+		ccd2_result_triggered_pix_count_in_last_period = 0;
+		ccd_result_total_pix_count_in_last_period = 0;
+		ccd_result_poll_count_in_last_period = 0;
+		
+		return;
+	}
+
 	if (get_system_uptime_sec() - ccd_result_last_poll_period_start_uptime_sec > ccd_config_poll_period_sec) {
 		ccd_result_last_poll_period_start_uptime_sec = get_system_uptime_sec();
 		//HAL_GPIO_WritePin(PIN_LED_D304_GPIO_Port, PIN_LED_D304_Pin, GPIO_PIN_SET);
@@ -387,19 +399,19 @@ void do_one_fetch_of_ccd_experiment() {
 		uint8_t fetched_data[CCD_DATA_LEN_BYTES];
 		query_ccd_measurement(fetched_data, ccd_num);
 
-		// first find the average, min, and max
+		// first find the average, min, and max (but didn't end up using the min/max)
 		uint32_t sum = 0;
-		uint8_t min_val = 0xFF; // set high so that everything is less
-		uint8_t max_val = 0; // set low so that everything is greater
+		// uint8_t min_val = 0xFF; // set high so that everything is less
+		// uint8_t max_val = 0; // set low so that everything is greater
 		for (uint16_t pix_num = CCD_PIXELS_IGNORE_START; pix_num < CCD_DATA_LEN_BYTES - CCD_PIXELS_IGNORE_END; pix_num++) {
 			sum += fetched_data[pix_num];
 
-			if (fetched_data[pix_num] < min_val) {
-				min_val = fetched_data[pix_num];
-			}
-			if (fetched_data[pix_num] > max_val) {
-				max_val = fetched_data[pix_num];
-			}
+			// if (fetched_data[pix_num] < min_val) {
+			// 	min_val = fetched_data[pix_num];
+			// }
+			// if (fetched_data[pix_num] > max_val) {
+			// 	max_val = fetched_data[pix_num];
+			// }
 		}
 		uint8_t avg = sum / pix_count;
 		// uint8_t spread = max_val - min_val;
@@ -414,7 +426,7 @@ void do_one_fetch_of_ccd_experiment() {
 					ccd1_result_triggered_pix_count_since_boot++;
 					ccd1_result_triggered_pix_count_in_last_period++;
 				}
-				else {
+				else if (ccd_num == 2) {
 					ccd2_result_triggered_pix_count_since_boot++;
 					ccd2_result_triggered_pix_count_in_last_period++;
 				}

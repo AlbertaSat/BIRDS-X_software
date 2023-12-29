@@ -115,6 +115,11 @@ def add_to_command_table(cmd_df: pd.DataFrame) -> pd.DataFrame:
 			[0x96, 'CCD1', [0xE0, 0x96, 0x00, 0x00, 0, 0, 0, 0x01, 0xED]], # CCD1
 			[0x96, 'CCD2', [0xE0, 0x96, 0x00, 0x00, 0, 0, 0, 0x02, 0xED]], # CCD2
 
+			# CCD config
+			[0x32, 'CCD Config - Defaults', [0xE0, 0x32, 10, 0x00, 50, 0x00, 120, 15, 0xED]],
+			[0x32, 'CCD Config - Sensitive', [0xE0, 0x32, 3, 0x00, 50, 0x00, 120, 15, 0xED]],
+			[0x32, 'CCD Config - Fast', [0xE0, 0x32, 10, 0x00, 50, 0x00, 10, 2, 0xED]],
+
 			# test delay_ms
 			[0x93, '1000 ms', [0xE0, 0x93, 0x00, 0x00, 0, 0, 0x03, 0xE8, 0xED]],
 			[0x93, '5000 ms', [0xE0, 0x93, 0x00, 0x00, 0, 0, 0x13, 0x88, 0xED]],
@@ -304,7 +309,7 @@ def fn_plot_ccd_data_once(ser: serial.Serial) -> None:
 		resp_bytes = re.findall(r"data\s*=\s*\[(.*)\]", resp)[0]
 		resp_bytes = resp_bytes.strip().split(' ')
 		resp_bytes = [int(x.strip(), 16) for x in resp_bytes if (len(x.strip()) > 0)]
-		logger.debug(f"CCD{ccd_num} data: len={len(resp_bytes)} datapoints (bytes)")
+		logger.debug(f"CCD{ccd_num} data: len={len(resp_bytes)} pixels (bytes)")
 
 		plot_data[ccd_num] = resp_bytes
 

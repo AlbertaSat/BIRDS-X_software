@@ -32,7 +32,7 @@ BossCommandEntry boss_command_table[] = {
 	{0xFF, boss_cmd_turn_off_payload},
 	{0xEE, boss_cmd_set_active_aprs_mode},
 	{0x0C, boss_cmd_set_active_aprs_mode},
-	{0x11, boss_cmd_transfer_aprs_data_packets},
+	{0x11, boss_cmd_transfer_data_packets},
 
 	// 0x20-0x2F namespace: APRS-related and status-related commands
 	{0x20, boss_cmd_run_power_on_self_test},
@@ -44,6 +44,8 @@ BossCommandEntry boss_command_table[] = {
 
 	// 0x30-0x3F namespace: experiment-related production commands
 	{0x31, boss_cmd_set_unix_timestamp},
+	{0x32, boss_cmd_exp_set_ccd_config},
+	{0x33, boss_cmd_exp_get_radfet_values},
 	
 	// 0xC0-0xCF namespace: RADFET experiment debugging
 	// TODO
@@ -52,17 +54,15 @@ BossCommandEntry boss_command_table[] = {
 	// TODO
 
 	// 0x90-0x9F namespace: other debugging commands
-	{0x90, boss_cmd_echo_command},
+	// {0x90, boss_cmd_echo_command},
 	{0x91, boss_cmd_clear_aprs_packet_store},
-	{0x92, boss_cmd_exit_mission_boss_mode},
+	{0x92, boss_cmd_exit_mission_boss_mode}, // CRITICAL!
 	// {0x93, boss_cmd_test_delay_ms},
-	{0x94, boss_cmd_exp_get_adc_values},
-	// {0x95, boss_cmd_exp_get_adc_values_on_loop},
-
-	{0x96, boss_cmd_exp_ccd_do_debug_convert},
+	// {0x95, boss_cmd_exp_get_radfet_values_on_loop},
+	{0x96, boss_cmd_exp_ccd_do_debug_convert}, // for plotting
 
 	#ifdef ENABLE_boss_cmd_cycle_ccd_pin_options
-	{0x97, boss_cmd_cycle_ccd_pin_options},
+	// {0x97, boss_cmd_cycle_ccd_pin_options},
 	#endif
 
 	// {0x98, boss_cmd_debug_fetch_raw_temperatures},
@@ -312,7 +312,7 @@ void boss_cmd_set_active_aprs_mode(uint8_t *cmd, Terminal_stream src) {
 }
 
 uint32_t frame_count_returned_since_boot = 0;
-void boss_cmd_transfer_aprs_data_packets(uint8_t *cmd, Terminal_stream src) {
+void boss_cmd_transfer_data_packets(uint8_t *cmd, Terminal_stream src) {
 	// FINAL
 	
 	// for debugging, transfer the whole store-and-forward buffer
@@ -378,6 +378,8 @@ void boss_cmd_transfer_aprs_data_packets(uint8_t *cmd, Terminal_stream src) {
 			frame_length, frame, MBOSS_RESPONSE_END_STR
 		);
 		term_sendToMode((uint8_t*)msg, strlen(msg), MODE_BOSS);
+
+		Wdog_reset();
 	}
 }
 
@@ -671,7 +673,7 @@ void boss_cmd_beacon_right_now(uint8_t *cmd, Terminal_stream src) {
 }
 
 
-void boss_cmd_exp_get_adc_values(uint8_t *cmd, Terminal_stream src) {
+void boss_cmd_exp_get_radfet_values(uint8_t *cmd, Terminal_stream src) {
 	// FINAL
 	set_led_success();
 
@@ -696,12 +698,12 @@ void boss_cmd_exp_get_adc_values(uint8_t *cmd, Terminal_stream src) {
 	term_sendToMode((uint8_t*)msg, strlen(msg), MODE_BOSS);
 }
 
-void boss_cmd_exp_get_adc_values_on_loop(uint8_t *cmd, Terminal_stream src) {
+void boss_cmd_exp_get_radfet_values_on_loop(uint8_t *cmd, Terminal_stream src) {
 	// FINAL
 	set_led_success();
 
 	while (1) {
-		boss_cmd_exp_get_adc_values(cmd, src);
+		boss_cmd_exp_get_radfet_values(cmd, src);
 
 		// service watchdog
 		Wdog_reset();
@@ -787,6 +789,45 @@ void boss_cmd_debug_fetch_raw_temperatures(uint8_t *cmd, Terminal_stream src) {
 		read_data[0],
 		read_data[1],
 		actual_temp_k,
+		MBOSS_RESPONSE_END_STR
+	);
+	term_sendToMode((uint8_t*)msg, strlen(msg), MODE_BOSS);
+}
+
+void boss_cmd_exp_set_ccd_config(uint8_t *cmd, Terminal_stream src) {
+	// FINAL
+
+	// periods
+	uint8_t new_ccd_config_poll_period_sec = cmd[7];  // [default: 15] configurable via command, extern; 0 to disable
+	uint16_t new_ccd_config_stat_period_sec = cmd[5] << 8 | cmd[6];  // [default: 120] configurable via command, extern; 0 to disable
+
+	// Operational/functional config
+	uint16_t new_ccd_config_pixels_per_shutter = cmd[3] << 8 | cmd[4];  // [default: 50] configurable via command, extern
+	// uint8_t new_ccd_config_fetches_per_poll = cmd[2]; // not enough bytes, so just not configurable
+	uint8_t new_ccd_config_alert_threshold_points = cmd[2];
+
+	set_led_success();
+
+	ccd_config_poll_period_sec = new_ccd_config_poll_period_sec;
+	ccd_config_stat_period_sec = new_ccd_config_stat_period_sec;
+	ccd_config_pixels_per_shutter = new_ccd_config_pixels_per_shutter;
+	ccd_config_alert_threshold_points = new_ccd_config_alert_threshold_points;
+
+	char msg[250];
+	// sprintf(
+	// 	msg,
+	// 	"%sRESP: ccd_config_poll_period_sec=%d, ccd_config_stat_period_sec=%d, ccd_config_pixels_per_shutter=%d, ccd_config_alert_threshold_points=%d%s",
+	// 	MBOSS_RESPONSE_START_STR,
+	// 	ccd_config_poll_period_sec,
+	// 	ccd_config_stat_period_sec,
+	// 	ccd_config_pixels_per_shutter,
+	// 	ccd_config_alert_threshold_points,
+	// 	MBOSS_RESPONSE_END_STR
+	// );
+	sprintf(
+		msg,
+		"%sRESP: CCD settings updated%s",
+		MBOSS_RESPONSE_START_STR,
 		MBOSS_RESPONSE_END_STR
 	);
 	term_sendToMode((uint8_t*)msg, strlen(msg), MODE_BOSS);

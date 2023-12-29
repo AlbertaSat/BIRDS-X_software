@@ -45,7 +45,7 @@ uint8_t validate_incoming_boss_cmd(uint8_t *cmd, uint16_t len, Terminal_stream s
 
 void boss_cmd_turn_off_payload(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_set_active_aprs_mode(uint8_t *cmd, Terminal_stream src);
-void boss_cmd_transfer_aprs_data_packets(uint8_t *cmd, Terminal_stream src);
+void boss_cmd_transfer_data_packets(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_echo_command(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_set_unix_timestamp(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_run_power_on_self_test(uint8_t *cmd, Terminal_stream src);
@@ -56,8 +56,8 @@ void boss_cmd_exit_mission_boss_mode(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_get_uptime_and_status(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_get_stored_aprs_packets_stats(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_beacon_right_now(uint8_t *cmd, Terminal_stream src);
-void boss_cmd_exp_get_adc_values(uint8_t *cmd, Terminal_stream src);
-void boss_cmd_exp_get_adc_values_on_loop(uint8_t *cmd, Terminal_stream src);
+void boss_cmd_exp_get_radfet_values(uint8_t *cmd, Terminal_stream src);
+void boss_cmd_exp_get_radfet_values_on_loop(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_exp_ccd_do_debug_convert(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_test_delay_ms(uint8_t *cmd, Terminal_stream src);
 
@@ -66,6 +66,7 @@ void boss_cmd_cycle_ccd_pin_options(uint8_t *cmd, Terminal_stream src);
 #endif
 
 void boss_cmd_debug_fetch_raw_temperatures(uint8_t *cmd, Terminal_stream src);
+void boss_cmd_exp_set_ccd_config(uint8_t *cmd, Terminal_stream src);
 
 // returns 1/true if 9 bytes of cmd and full_command_with_password match, 0/false if they don't match
 uint8_t check_cmd_password(uint8_t cmd[], uint8_t full_command_with_password[9]);
