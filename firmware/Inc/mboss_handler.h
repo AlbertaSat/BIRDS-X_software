@@ -40,6 +40,9 @@ void receive_incoming_boss_cmd(uint8_t *cmd, uint16_t len, Terminal_stream src);
 uint8_t validate_incoming_boss_cmd(uint8_t *cmd, uint16_t len, Terminal_stream src);
 
 
+// have to disable a few commands to save space
+// #define ENABLE_boss_cmd_cycle_ccd_pin_options
+
 void boss_cmd_turn_off_payload(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_set_active_aprs_mode(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_transfer_aprs_data_packets(uint8_t *cmd, Terminal_stream src);
@@ -57,7 +60,12 @@ void boss_cmd_exp_get_adc_values(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_exp_get_adc_values_on_loop(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_exp_ccd_do_debug_convert(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_test_delay_ms(uint8_t *cmd, Terminal_stream src);
+
+#ifdef ENABLE_boss_cmd_cycle_ccd_pin_options
 void boss_cmd_cycle_ccd_pin_options(uint8_t *cmd, Terminal_stream src);
+#endif
+
+void boss_cmd_debug_fetch_raw_temperatures(uint8_t *cmd, Terminal_stream src);
 
 // returns 1/true if 9 bytes of cmd and full_command_with_password match, 0/false if they don't match
 uint8_t check_cmd_password(uint8_t cmd[], uint8_t full_command_with_password[9]);

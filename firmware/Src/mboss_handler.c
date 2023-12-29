@@ -60,7 +60,12 @@ BossCommandEntry boss_command_table[] = {
 	{0x95, boss_cmd_exp_get_adc_values_on_loop},
 
 	{0x96, boss_cmd_exp_ccd_do_debug_convert}, // TODO: confirm
-	{0x97, boss_cmd_cycle_ccd_pin_options}, // TODO: confirm
+
+	#ifdef ENABLE_boss_cmd_cycle_ccd_pin_options
+	{0x97, boss_cmd_cycle_ccd_pin_options},
+	#endif
+
+	{0x98, boss_cmd_debug_fetch_raw_temperatures},
 };
 
 RF_APRS_Mode_t current_aprs_mode = RF_APRS_MODE_INACTIVE;
@@ -638,10 +643,10 @@ void boss_cmd_get_stored_aprs_packets_stats(uint8_t *cmd, Terminal_stream src) {
 	// FINAL
 	set_led_success();
 
-	char msg[255];
+	char msg[180];
 	sprintf(
 		msg,
-		"%sRESP: aprs_packets_stored=%d, aprs_packets_stored_bytes_occupied=%d, aprs_packets_total_bytes=%d, frame_rx_count_since_boot=%lu, beacon_count_since_boot=%lu%s",
+		"%sRESP: aprs_packets_stored=%d, aprs_packets_stored_bytes=%d, aprs_packets_total_bytes=%d, frames_rxd_since_boot=%lu, beacons_since_boot=%lu%s",
 		MBOSS_RESPONSE_START_STR,
 		get_stored_frame_count(), sf_buffer_wr_idx, STORE_AND_FORWARD_BUFFER_SIZE, frame_rx_count_since_boot, beacon_count_since_boot,
 		MBOSS_RESPONSE_END_STR
@@ -761,6 +766,32 @@ void boss_cmd_test_delay_ms(uint8_t *cmd, Terminal_stream src) {
 	term_sendToMode((uint8_t*)msg_end, strlen(msg_end), MODE_BOSS);
 }
 
+void boss_cmd_debug_fetch_raw_temperatures(uint8_t *cmd, Terminal_stream src) {
+	// FINAL
+
+	set_led_success();
+
+	// start read
+	uint8_t read_data[2] = {0, 0};
+	get_external_temperature_k_raw(1, read_data); // sensor 1 is fine
+
+	// get actual temperature
+	uint16_t actual_temp_k = get_external_temperature_k(1);
+
+	char msg[100];
+	sprintf(
+		msg,
+		"%sRESP: raw bytes: 0x%02X 0x%02X, temp_k=%d%s",
+		MBOSS_RESPONSE_START_STR,
+		read_data[0],
+		read_data[1],
+		actual_temp_k,
+		MBOSS_RESPONSE_END_STR
+	);
+	term_sendToMode((uint8_t*)msg, strlen(msg), MODE_BOSS);
+}
+
+#ifdef ENABLE_boss_cmd_cycle_ccd_pin_options
 void boss_cmd_cycle_ccd_pin_options(uint8_t *cmd, Terminal_stream src) {
 	// FINAL
 
@@ -791,6 +822,7 @@ void boss_cmd_cycle_ccd_pin_options(uint8_t *cmd, Terminal_stream src) {
 		}
 	}
 }
+#endif
 
 uint8_t check_cmd_password(uint8_t cmd[], uint8_t full_command_with_password[9]) {
 	for (uint8_t i = 0; i < MBOSS_COMMAND_LENGTH; i++) {
