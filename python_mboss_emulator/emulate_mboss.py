@@ -112,8 +112,8 @@ def add_to_command_table(cmd_df: pd.DataFrame) -> pd.DataFrame:
 			# [0x27, '255 packets', [0xE0, 0x27, 0x00, 0x00, 0, 0, 0, 255, 0xED]],
 
 			# CCD experiment
-			[0x96, 'CCD1', [0xE0, 0x96, 0x00, 0x00, 0, 0, 0, 0x01, 0xED]], # CCD1
-			[0x96, 'CCD2', [0xE0, 0x96, 0x00, 0x00, 0, 0, 0, 0x02, 0xED]], # CCD2
+			[0x34, 'CCD1', [0xE0, 0x34, 0x00, 0x00, 0, 0, 0, 0x01, 0xED]], # CCD1
+			[0x34, 'CCD2', [0xE0, 0x34, 0x00, 0x00, 0, 0, 0, 0x02, 0xED]], # CCD2
 
 			# CCD config
 			[0x32, 'CCD Config - Defaults', [0xE0, 0x32, 10, 0x00, 50, 0x00, 120, 15, 0xED]],
@@ -301,7 +301,7 @@ def fn_plot_ccd_data_once(ser: serial.Serial) -> None:
 		logger.info(f"Plotting CCD{ccd_num} data.")
 
 		# send the bytes
-		serial_send_bytes(ser, [0xE0, 0x96, 0, 0, 0, 0, how_many_bytes_times_16, ccd_num, 0xED],  '0x96 - CCD data')
+		serial_send_bytes(ser, [0xE0, 0x34, 0, 0, 0, 0, how_many_bytes_times_16, ccd_num, 0xED],  '0x34 - CCD data')
 		resp = read_response(ser)
 		
 		# interpret the bytes

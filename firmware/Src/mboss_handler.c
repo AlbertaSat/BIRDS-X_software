@@ -9,6 +9,7 @@
 #include "frame_handler.h"
 #include "dra_system.h"
 #include "ax25.h"
+#include "main.h"
 
 #include "drivers/temperature_sensors.h"
 #include "drivers/modem.h"
@@ -36,7 +37,7 @@ BossCommandEntry boss_command_table[] = {
 
 	// 0x20-0x2F namespace: APRS-related and status-related commands
 	{0x20, boss_cmd_run_power_on_self_test},
-	{0x21, boss_cmd_get_stored_aprs_packets_stats},
+	// {0x21, boss_cmd_get_stored_aprs_packets_stats},
 	{0x22, boss_cmd_beacon_right_now},
 	{0x23, boss_cmd_force_reboot_system},
 	{0x24, boss_cmd_set_beacon_period},
@@ -46,20 +47,14 @@ BossCommandEntry boss_command_table[] = {
 	{0x31, boss_cmd_set_unix_timestamp},
 	{0x32, boss_cmd_exp_set_ccd_config},
 	{0x33, boss_cmd_exp_get_radfet_values},
+	{0x34, boss_cmd_exp_ccd_do_debug_convert}, // for plotting
 	
-	// 0xC0-0xCF namespace: RADFET experiment debugging
-	// TODO
-
-	// 0xD0-0xDF namespace: CCD experiment debugging
-	// TODO
-
 	// 0x90-0x9F namespace: other debugging commands
 	// {0x90, boss_cmd_echo_command},
-	{0x91, boss_cmd_clear_aprs_packet_store},
+	// {0x91, boss_cmd_clear_aprs_packet_store},
 	{0x92, boss_cmd_exit_mission_boss_mode}, // CRITICAL!
 	// {0x93, boss_cmd_test_delay_ms},
 	// {0x95, boss_cmd_exp_get_radfet_values_on_loop},
-	{0x96, boss_cmd_exp_ccd_do_debug_convert}, // for plotting
 
 	#ifdef ENABLE_boss_cmd_cycle_ccd_pin_options
 	// {0x97, boss_cmd_cycle_ccd_pin_options},
@@ -369,7 +364,7 @@ void boss_cmd_transfer_data_packets(uint8_t *cmd, Terminal_stream src) {
 		}
 
 		// just send the frame as-is
-		char msg[255];
+		char msg[250];
 		sprintf(
 			msg,
 			"%sRESP: idx=%lu, len=%d, frame=%s%s",
@@ -630,13 +625,16 @@ void boss_cmd_get_uptime_and_status(uint8_t *cmd, Terminal_stream src) {
 	char msg[200];
 	sprintf(
 		msg,
-		"%sRESP: ut_ms=%lu, ut_sec=%lu, ts_sec_at_boot=%lu, ts_sec_now=%lu, reset_cause=%s(%d), aprs_mode=%d, temp_k=%d,%d,%d,%d,%d%s",
+		"%sRESP: ut_ms=%lu, ut_sec=%lu, ts_sec_at_boot=%lu, ts_sec_now=%lu, reset_cause=%s(%d), aprs_mode=%d, temp_k=%d,%d,%d,%d,%d,%d-%d, fullpct=%d, rx%ld, tx%ld%s",
 		MBOSS_RESPONSE_START_STR,
 		system_uptime_ms, get_system_uptime_sec(),
 		timestamp_sec_at_boot, get_unix_timestamp_sec_now(),
 		reset_cause_get_name(reset_cause), (uint8_t)reset_cause,
 		(uint8_t) current_aprs_mode,
 		get_external_temperature_k(0), get_external_temperature_k(1), get_external_temperature_k(2), get_external_temperature_k(3), get_external_temperature_k(4),
+		min_sensor_temp_k, max_sensor_temp_k,
+		(uint8_t)(sf_buffer_wr_idx/STORE_AND_FORWARD_BUFFER_SIZE*100),
+		frame_rx_count_since_boot, beacon_count_since_boot,
 		MBOSS_RESPONSE_END_STR
 	);
 	term_sendToMode((uint8_t*)msg, strlen(msg), MODE_BOSS);

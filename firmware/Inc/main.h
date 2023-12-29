@@ -81,8 +81,6 @@ void Error_Handler(void);
 #define PIN_CCD_ICG_GPIO_Port GPIOB
 #define PIN_CCD_SH_Pin GPIO_PIN_15
 #define PIN_CCD_SH_GPIO_Port GPIOB
-#define PIN_LED_D304_Pin GPIO_PIN_8
-#define PIN_LED_D304_GPIO_Port GPIOA
 #define PIN_DRA_ENABLE_Pin GPIO_PIN_11
 #define PIN_DRA_ENABLE_GPIO_Port GPIOA
 #define PIN_RFET_EN_OUT_Pin GPIO_PIN_12
