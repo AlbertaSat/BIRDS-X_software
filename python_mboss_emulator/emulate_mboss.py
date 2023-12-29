@@ -276,7 +276,7 @@ def fn_plot_ccd_data_once(ser: serial.Serial) -> None:
 
 		for ccd_num, values in plot_data.items():
 			# Create bar plots in both subplots
-			axs[ccd_num - 1].bar(range(len(values)), values)
+			axs[ccd_num - 1].bar(range(len(values)), values, align='edge', width=1.0)
 
 			axs[ccd_num - 1].set_xlabel('Index')
 			axs[ccd_num - 1].set_ylabel('CCD Brightness, out of 255, (0 = bright, 255 = dark)')
@@ -302,7 +302,7 @@ def fn_plot_ccd_data_once(ser: serial.Serial) -> None:
 		resp_bytes = re.findall(r"data\s*=\s*\[(.*)\]", resp)[0]
 		resp_bytes = resp_bytes.strip().split(' ')
 		resp_bytes = [int(x.strip(), 16) for x in resp_bytes if (len(x.strip()) > 0)]
-		logger.debug(f"CCD{ccd_num} data: len={len(resp_bytes)} bytes")
+		logger.debug(f"CCD{ccd_num} data: len={len(resp_bytes)} datapoints (bytes)")
 
 		plot_data[ccd_num] = resp_bytes
 

@@ -70,15 +70,16 @@ void fetch_ccd_measurement_and_log_it(uint8_t ccd_num, uint16_t elements_per_gro
 	char msg[50];
 	sprintf(
 		msg,
-		"%sRESP: CCD%d data=[",
+		"%sRESP: CCD%d elements_per_group=%d, data=[",
 		MBOSS_RESPONSE_START_STR,
-		ccd_num
+		ccd_num,
+		elements_per_group
 	);
 	term_sendToMode((uint8_t*)msg, strlen(msg), MODE_BOSS);
 	delay_ms(40);
 	Wdog_reset();
 
-	char msg2[500];
+	char msg2[250];
 	msg2[0] = 0;
 	for (uint16_t i = 0; i < CCD_DATA_LEN_BYTES; i++) {
 		if ((i % elements_per_group) != 0) {
@@ -95,7 +96,7 @@ void fetch_ccd_measurement_and_log_it(uint8_t ccd_num, uint16_t elements_per_gro
 		);
 
 		// send in chuncks
-		if (strlen(msg2) > 490) {
+		if (strlen(msg2) > 240) {
 			term_sendToMode((uint8_t*)msg2, strlen(msg2), MODE_BOSS);
 			delay_ms(10); // these will crazy it if you try to remove them
 			Wdog_reset();
