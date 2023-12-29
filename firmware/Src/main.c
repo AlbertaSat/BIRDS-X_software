@@ -219,7 +219,6 @@ int main(void)
 
 	Digi_viscousRefresh(); //refresh viscous-delay buffers
 
-
 	Ax25_transmitBuffer(); //transmit buffer (will return if nothing to be transmitted)
 
 	Ax25_transmitCheck(); //check for pending transmission request
@@ -227,6 +226,8 @@ int main(void)
 	Loop_process_incoming_uart_commands(1, 1);
 
 	Beacon_check(); //check beacons
+  
+  loop_service_ccd_experiment();
 
   // turn off success/failure LED, if it's been long enough
   if (get_system_uptime_ms() - uptime_at_last_success_failure_led_on > LED_SUCCESS_FAILURE_MIN_TIME_ON_MS) {
@@ -237,7 +238,6 @@ int main(void)
   if (get_system_uptime_ms() - timestamp_rx_led_turned_on_ms > LED_SUCCESS_FAILURE_MIN_TIME_ON_MS) {
     set_packet_received_led(0);
   }
-
 
 	if(((autoResetTimer != 0) && (ticks > autoResetTimer)) || (ticks > 4294960000)) {
 		// auto-reset timer expired, or ticks overflowed

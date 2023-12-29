@@ -23,7 +23,7 @@
 // is not compliant with the MBOSS protocol, but is useful for debugging
 const uint8_t debug_enable_echo_command_back = 0;
 
-uint32_t timestamp_sec_at_boot = 0;
+uint32_t timestamp_sec_at_boot = 0; // extern
 
 uint32_t uptime_at_last_success_failure_led_on = 0; // extern
 
@@ -55,17 +55,17 @@ BossCommandEntry boss_command_table[] = {
 	{0x90, boss_cmd_echo_command},
 	{0x91, boss_cmd_clear_aprs_packet_store},
 	{0x92, boss_cmd_exit_mission_boss_mode},
-	{0x93, boss_cmd_test_delay_ms},
+	// {0x93, boss_cmd_test_delay_ms},
 	{0x94, boss_cmd_exp_get_adc_values},
-	{0x95, boss_cmd_exp_get_adc_values_on_loop},
+	// {0x95, boss_cmd_exp_get_adc_values_on_loop},
 
-	{0x96, boss_cmd_exp_ccd_do_debug_convert}, // TODO: confirm
+	{0x96, boss_cmd_exp_ccd_do_debug_convert},
 
 	#ifdef ENABLE_boss_cmd_cycle_ccd_pin_options
 	{0x97, boss_cmd_cycle_ccd_pin_options},
 	#endif
 
-	{0x98, boss_cmd_debug_fetch_raw_temperatures},
+	// {0x98, boss_cmd_debug_fetch_raw_temperatures},
 };
 
 RF_APRS_Mode_t current_aprs_mode = RF_APRS_MODE_INACTIVE;
@@ -221,7 +221,7 @@ void boss_cmd_set_active_aprs_mode(uint8_t *cmd, Terminal_stream src) {
 	uint8_t new_mode = cmd[7];
 	if (new_mode > 2) {
 		set_led_failure();
-		char msg[255];
+		char msg[150];
 		sprintf(
 			msg,
 			"%sERROR: new_mode=%d is invalid, must be 0, 1, or 2%s",
@@ -230,6 +230,8 @@ void boss_cmd_set_active_aprs_mode(uint8_t *cmd, Terminal_stream src) {
 		term_sendToMode((uint8_t*)msg, strlen(msg), MODE_BOSS);
 		return;
 	}
+
+	set_led_success();
 
 	current_aprs_mode = (RF_APRS_Mode_t)new_mode;
 
@@ -307,7 +309,6 @@ void boss_cmd_set_active_aprs_mode(uint8_t *cmd, Terminal_stream src) {
 		MBOSS_RESPONSE_END_STR
 	);
 	term_sendToMode((uint8_t*)msg, strlen(msg), MODE_BOSS);
-	set_led_success();
 }
 
 uint32_t frame_count_returned_since_boot = 0;
@@ -593,9 +594,9 @@ void boss_cmd_exit_mission_boss_mode(uint8_t *cmd, Terminal_stream src) {
 	uint8_t cmd_password[9] = { 0xE0, 0x92, 0x38, 0x00, 0x00, 0x00, 0x00, 0xAA, 0xED };
 	
 	if (check_cmd_password(cmd, cmd_password)) {
-		set_led_failure();
+		set_led_success();
 
-		char msg[255];
+		char msg[80];
 		sprintf(
 			msg,
 			"%sRESP: Exiting mission BOSS mode%s",
@@ -605,9 +606,9 @@ void boss_cmd_exit_mission_boss_mode(uint8_t *cmd, Terminal_stream src) {
 		switchPortToMonitorMode(src);
 	}
 	else {
-		set_led_success();
+		set_led_failure();
 
-		char msg[255];
+		char msg[80];
 		sprintf(
 			msg,
 			"%sERROR: password is incorrect%s",

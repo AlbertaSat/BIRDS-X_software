@@ -60,7 +60,7 @@ void handleFrame(void)
 
 	// store for store-and-forward mode
 	if (get_current_aprs_mode() == RF_APRS_MODE_STORE_AND_FORWARD) {
-		store_frame_for_store_and_forward(buf, bufidx);
+		store_frame_for_boss(buf, bufidx);
 	}
 
 	frame_rx_count_since_boot++;
@@ -121,7 +121,7 @@ void handleFrame(void)
 	}
 }
 
-void store_frame_for_store_and_forward(uint8_t *buf, uint16_t buflen) {
+void store_frame_for_boss(uint8_t *buf, uint16_t buflen) {
 	// similar to Send_Kiss();
 
 	if (sf_buffer_wr_idx + buflen + STORED_FRAME_DELIM_LEN + 3 > STORE_AND_FORWARD_BUFFER_SIZE) { // 3 arbitrary for safety

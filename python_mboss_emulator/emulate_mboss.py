@@ -47,6 +47,8 @@ def make_simple_command_table() -> pd.DataFrame:
 		if hit_start_block:
 			if '};' in line:
 				break
+			if line.strip().startswith('//'):
+				continue # skip commented lines, bc we can't trigger them
 			boss_command_table += line.strip() + '\n'
 	logger.info(f"boss_command_table (from .c file):\n{boss_command_table}")
 

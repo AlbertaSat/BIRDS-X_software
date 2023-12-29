@@ -5,6 +5,36 @@
 #include "antilib_adc.h"
 #include <stdint.h>
 #include "drivers/modem.h" // for afsk_disable_timers/afsk_restore_disabled_timers
+#include "frame_handler.h" // cringe, but easy way to store the poll data as a packet (store_frame_for_boss)
+
+// a poll_period is how often the CCD data is fetched and the counts are updated
+// a stat_period is how often the CCD data is logged to the packet store, and the stats are reset
+// a fetch is a a subset of a poll; multiple fetches happen per poll
+
+// period config
+uint16_t ccd_config_poll_period_sec = 10; // [default: 10] configurable via command, extern; 0 to disable
+uint16_t ccd_config_stat_period_sec = 240; // [default: 240] configurable via command, extern; 0 to disable
+
+// operational/functional config
+uint16_t ccd_config_pixels_per_shutter = 50; // configurable via command, extern
+uint8_t ccd_config_fetches_per_poll = 10; // [must be <10] via command, extern
+uint8_t ccd_config_alert_threshold_points = 10; // configurable via command, extern
+
+// period tracking
+uint32_t ccd_result_stat_period_start_uptime_sec = 0;
+uint32_t ccd_result_last_poll_period_start_uptime_sec = 0;
+
+// stats since boot
+uint32_t ccd1_result_triggered_pix_count_since_boot = 0;
+uint32_t ccd2_result_triggered_pix_count_since_boot = 0;
+uint32_t ccd_result_total_pix_count_since_boot = 0;
+uint16_t ccd_result_poll_count_since_boot = 0;
+
+// stats in last stat_period
+uint16_t ccd1_result_triggered_pix_count_in_last_period = 0;
+uint16_t ccd2_result_triggered_pix_count_in_last_period = 0;
+uint32_t ccd_result_total_pix_count_in_last_period = 0;
+uint16_t ccd_result_poll_count_in_last_period = 0;
 
 #define AFTER_INVERTER_IS_LOW 1
 #define AFTER_INVERTER_IS_HIGH 0
@@ -122,9 +152,7 @@ void fetch_ccd_measurement_and_log_it(uint8_t ccd_num, uint16_t elements_per_gro
 
 void query_ccd_measurement(uint8_t *fetched_data, uint8_t ccd_num) {
 	// this is a naive timer-less implementation
-
 	uint8_t last_sh_val = 0;
-	const uint16_t pixels_between_sh_toggles = 50;
 
 	// delay_ms(120);
 	Wdog_reset();
@@ -153,60 +181,12 @@ void query_ccd_measurement(uint8_t *fetched_data, uint8_t ccd_num) {
 	ADC2->SQR3 = adc_channel;
 
 	// DEBUG: write LED high to see how long this func takes
-	HAL_GPIO_WritePin(PIN_LED_D304_GPIO_Port, PIN_LED_D304_Pin, GPIO_PIN_SET);
-
-	#ifdef ENABLE_RANDOM_STARTUP_GARBAGE
-	Wdog_reset();
-
-	// pretend that it's always going
-	for (uint16_t i = 0; i < 10; i++) {
-		write_phi_m_pin(AFTER_INVERTER_IS_HIGH);
-		write_phi_m_pin(AFTER_INVERTER_IS_HIGH);
-		
-		write_phi_m_pin(AFTER_INVERTER_IS_LOW);
-		write_phi_m_pin(AFTER_INVERTER_IS_LOW);
-		// 2 and 2 give a T=1.5us
-	}
-
-	write_icg_pin(AFTER_INVERTER_IS_LOW);
-	write_sh_pin(AFTER_INVERTER_IS_HIGH); // must be 0.1us to 1us after ICG=1
-
-	// must give >1us delay before starting to read
-	for (uint16_t i = 0; i < 5; i++) {
-		write_phi_m_pin(AFTER_INVERTER_IS_HIGH);
-		write_phi_m_pin(AFTER_INVERTER_IS_HIGH);
-		write_phi_m_pin(AFTER_INVERTER_IS_LOW);
-		write_phi_m_pin(AFTER_INVERTER_IS_LOW);
-		// 2 and 2 give a T=1.5us
-	}
-
-	write_sh_pin(AFTER_INVERTER_ISRCE: ChatGPT
-		// // Start the conversion
-		// ADC2->CR2 |= ADC_CR2_SWSTART;
-		// // Wait for the conversion to complete
-		// while (!(ADC2->SR & ADC_SR_EOC));
-		// // END SOURCE_LOW);
-
-	// must give >1us (typ 5us) before starting to read
-	for (uint16_t i = 0; i < 4; i++) {
-		write_phi_m_pin(AFTER_INVERTER_IS_HIGH);
-		write_phi_m_pin(AFTER_INVERTER_IS_HIGH);
-		
-		write_phi_m_pin(AFTER_INVERTER_IS_LOW);
-		write_phi_m_pin(AFTER_INVERTER_IS_LOW);
-		// 2 and 2 give a T=1.5us
-	}
-	#endif
+	// HAL_GPIO_WritePin(PIN_LED_D304_GPIO_Port, PIN_LED_D304_Pin, GPIO_PIN_SET);
 
 	// trigger the CCD reading
 	write_phi_m_pin(AFTER_INVERTER_IS_HIGH); // PHI_M must be HIGH when ICG goes L->H
 	write_icg_pin(AFTER_INVERTER_IS_HIGH); // indicates start of data transfer dump
 	// SH is alread AFTER_INVERTER_IS_LOW
-
-	// awful delay code to test integration
-	// for (uint16_t i = 0; i < 1; i++) { // 350 gives 260us
-	// 	write_icg_pin(AFTER_INVERTER_IS_HIGH);
-	// }
 
 	uint16_t adc_val = 0;
 
@@ -227,8 +207,6 @@ void query_ccd_measurement(uint8_t *fetched_data, uint8_t ccd_num) {
 		// asm("NOP");
 		// asm("NOP");
 
-
-		#if 1
 		ADC2->SQR3 = adc_channel;
 		
 		// SOURCE: ChatGPT
@@ -240,9 +218,7 @@ void query_ccd_measurement(uint8_t *fetched_data, uint8_t ccd_num) {
 
 		adc_val = (uint16_t) (ADC2->DR & 0x0FFF);
 
-		#else
-		adc_val = 1;
-		#endif
+		// adc_val = 1; // for debugging
 
 		fetched_data[i] = (uint8_t)(adc_val >> 4);
 
@@ -255,7 +231,7 @@ void query_ccd_measurement(uint8_t *fetched_data, uint8_t ccd_num) {
 		write_phi_m_pin(AFTER_INVERTER_IS_LOW);
 		write_phi_m_pin(AFTER_INVERTER_IS_LOW);
 
-		if (i % pixels_between_sh_toggles == 0 && i != 0) {
+		if (i % ccd_config_pixels_per_shutter == 0 && i != 0) {
 			// toggle SH
 			if (last_sh_val == 0) {
 				write_sh_pin(AFTER_INVERTER_IS_HIGH);
@@ -266,7 +242,6 @@ void query_ccd_measurement(uint8_t *fetched_data, uint8_t ccd_num) {
 				last_sh_val = 0;
 			}
 		}
-
 	}
 
 	// stop recording
@@ -274,10 +249,9 @@ void query_ccd_measurement(uint8_t *fetched_data, uint8_t ccd_num) {
 	write_sh_pin(AFTER_INVERTER_IS_HIGH);
 
 	// write LED low
-	HAL_GPIO_WritePin(PIN_LED_D304_GPIO_Port, PIN_LED_D304_Pin, GPIO_PIN_RESET);
+	// HAL_GPIO_WritePin(PIN_LED_D304_GPIO_Port, PIN_LED_D304_Pin, GPIO_PIN_RESET);
 
 	set_resting_ccd_state();
-
 	deinit_adc_ccd();
 
 	// re-enable timers
@@ -355,5 +329,99 @@ void deinit_adc_ccd(void) {
 	ADC2->SMPR2 = 0;
 }
 
+void loop_service_ccd_experiment() {
+	if (timestamp_sec_at_boot == 0) {
+		// skip doing anything before a timestamp is set, as it'll make the data kinda nasty
+		return;
+	}
 
-// TODO: create a function to store statistics data
+	if (get_system_uptime_sec() - ccd_result_last_poll_period_start_uptime_sec > ccd_config_poll_period_sec) {
+		ccd_result_last_poll_period_start_uptime_sec = get_system_uptime_sec();
+		//HAL_GPIO_WritePin(PIN_LED_D304_GPIO_Port, PIN_LED_D304_Pin, GPIO_PIN_SET);
+
+		if (get_system_uptime_sec() - ccd_result_stat_period_start_uptime_sec > ccd_config_stat_period_sec) {
+			// log to the CCD results
+			char log_result[100];
+			sprintf(
+				log_result,
+				"CCD_res,ts=%lu_%lu,trig=%d,%d,TOT=%lu,p=%d",
+				ccd_result_stat_period_start_uptime_sec + timestamp_sec_at_boot, // start timestamp (of stats period)
+				get_unix_timestamp_sec_now(), // end timestamp (of stats period)
+				ccd1_result_triggered_pix_count_in_last_period, // triggered count (CCD1)
+				ccd2_result_triggered_pix_count_in_last_period, // triggered count (CCD2)
+				ccd_result_total_pix_count_in_last_period, // total pixels in stats period
+				ccd_result_poll_count_in_last_period // poll count (number of times triggered from the superloop)
+			);
+			store_frame_for_boss((uint8_t*)log_result, strlen(log_result));
+
+			// reset stat period
+			ccd_result_stat_period_start_uptime_sec = get_system_uptime_sec();
+
+			// reset the logged values
+			ccd1_result_triggered_pix_count_in_last_period = 0;
+			ccd2_result_triggered_pix_count_in_last_period = 0;
+			ccd_result_total_pix_count_in_last_period = 0;
+			ccd_result_poll_count_in_last_period = 0;
+		}
+
+		// run the experiment
+		ccd_result_poll_count_since_boot++;
+		ccd_result_poll_count_in_last_period++;
+		for (uint8_t fetch_num = 0; fetch_num < ccd_config_fetches_per_poll; fetch_num++) {
+			do_one_fetch_of_ccd_experiment(); // polls both CCDs
+		}
+	}
+
+	// HAL_GPIO_WritePin(PIN_LED_D304_GPIO_Port, PIN_LED_D304_Pin, GPIO_PIN_RESET);
+}
+
+
+/*
+ * Updates the CCD measurements for both CCDs (e.g., ccd1_result_triggered_pix_count_in_last_period, etc.)
+ *
+*/
+void do_one_fetch_of_ccd_experiment() {
+	uint16_t pix_count = (CCD_DATA_LEN_BYTES - CCD_PIXELS_IGNORE_START - CCD_PIXELS_IGNORE_END);
+
+	for (uint8_t ccd_num = 1; ccd_num <= 2; ccd_num++) {
+		uint8_t fetched_data[CCD_DATA_LEN_BYTES];
+		query_ccd_measurement(fetched_data, ccd_num);
+
+		// first find the average, min, and max
+		uint32_t sum = 0;
+		uint8_t min_val = 0xFF; // set high so that everything is less
+		uint8_t max_val = 0; // set low so that everything is greater
+		for (uint16_t pix_num = CCD_PIXELS_IGNORE_START; pix_num < CCD_DATA_LEN_BYTES - CCD_PIXELS_IGNORE_END; pix_num++) {
+			sum += fetched_data[pix_num];
+
+			if (fetched_data[pix_num] < min_val) {
+				min_val = fetched_data[pix_num];
+			}
+			if (fetched_data[pix_num] > max_val) {
+				max_val = fetched_data[pix_num];
+			}
+		}
+		uint8_t avg = sum / pix_count;
+		// uint8_t spread = max_val - min_val;
+		uint8_t threshold_val = avg - ccd_config_alert_threshold_points;
+
+		// now, count the pixels that exceed the threshold
+		for (uint16_t pix_num = CCD_PIXELS_IGNORE_START; pix_num < CCD_DATA_LEN_BYTES - CCD_PIXELS_IGNORE_END; pix_num++) {
+			if (fetched_data[pix_num] < threshold_val) {
+				// this pixel is "brighter" than the threshold, so it is a galactic cosmic ray
+				
+				if (ccd_num == 1) {
+					ccd1_result_triggered_pix_count_since_boot++;
+					ccd1_result_triggered_pix_count_in_last_period++;
+				}
+				else {
+					ccd2_result_triggered_pix_count_since_boot++;
+					ccd2_result_triggered_pix_count_in_last_period++;
+				}
+			}
+		}
+	}
+
+	ccd_result_total_pix_count_since_boot += pix_count;
+	ccd_result_total_pix_count_in_last_period += pix_count;
+}
