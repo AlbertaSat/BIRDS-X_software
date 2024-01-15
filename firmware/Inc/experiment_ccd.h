@@ -8,7 +8,7 @@
 
 // Period config
 extern uint8_t ccd_config_poll_period_sec;  // [default: 15] configurable via command, extern; 0 to disable
-extern uint16_t ccd_config_stat_period_sec;  // [default: 120] configurable via command, extern; 0 to disable
+extern uint16_t ccd_config_stat_period_sec;  // [default: 240] configurable via command, extern; 0 to disable
 
 // Operational/functional config
 extern uint16_t ccd_config_pixels_per_shutter;       // configurable via command, extern

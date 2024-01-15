@@ -48,7 +48,7 @@ void boss_cmd_set_active_aprs_mode(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_transfer_data_packets(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_echo_command(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_set_unix_timestamp(uint8_t *cmd, Terminal_stream src);
-void boss_cmd_run_power_on_self_test(uint8_t *cmd, Terminal_stream src);
+void boss_cmd_run_self_test(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_force_reboot_system(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_set_beacon_period(uint8_t *cmd, Terminal_stream src);
 void boss_cmd_clear_aprs_packet_store(uint8_t *cmd, Terminal_stream src);

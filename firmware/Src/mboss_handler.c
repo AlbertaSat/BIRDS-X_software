@@ -36,7 +36,7 @@ BossCommandEntry boss_command_table[] = {
 	{0x11, boss_cmd_transfer_data_packets},
 
 	// 0x20-0x2F namespace: APRS-related and status-related commands
-	{0x20, boss_cmd_run_power_on_self_test},
+	{0x20, boss_cmd_run_self_test},
 	// {0x21, boss_cmd_get_stored_aprs_packets_stats},
 	{0x22, boss_cmd_beacon_right_now},
 	{0x23, boss_cmd_force_reboot_system},
@@ -199,7 +199,7 @@ uint8_t validate_incoming_boss_cmd(uint8_t *cmd, uint16_t len, Terminal_stream s
 
 
 void boss_cmd_turn_off_payload(uint8_t *cmd, Terminal_stream src) {
-	// FINAL
+	// FINAL: 0xFF
 	// maybe sorta like NVIC_SystemReset(); ?
 	// also do shutdown tasks, like storing any info to flash we want, then stall for up to an hour
 	set_led_success();
@@ -208,7 +208,7 @@ void boss_cmd_turn_off_payload(uint8_t *cmd, Terminal_stream src) {
 }
 
 void boss_cmd_set_active_aprs_mode(uint8_t *cmd, Terminal_stream src) {
-	// FINAL
+	// FINAL: 0xEE and 0x0C
 	// M = 0: inactive
 	// M = 1: digipeating mode
 	// M = 2: store-and-forward mode
@@ -308,10 +308,10 @@ void boss_cmd_set_active_aprs_mode(uint8_t *cmd, Terminal_stream src) {
 
 uint32_t frame_count_returned_since_boot = 0;
 void boss_cmd_transfer_data_packets(uint8_t *cmd, Terminal_stream src) {
-	// FINAL
+	// FINAL: 0x11
 	
 	// for debugging, transfer the whole store-and-forward buffer
-	/*
+	#if 0
 	uint8_t msg[STORE_AND_FORWARD_BUFFER_SIZE+100];
 	sprintf(
 		(char*)msg,
@@ -319,7 +319,7 @@ void boss_cmd_transfer_data_packets(uint8_t *cmd, Terminal_stream src) {
 		MBOSS_RESPONSE_START_STR, sf_buffer_wr_idx, sf_buffer, MBOSS_RESPONSE_END_STR
 	);
 	term_sendToMode((uint8_t*)msg, strlen((char*)msg), MODE_BOSS);
-	*/
+	#endif
 
 	uint8_t target_frame_fetch_count = cmd[7]; // number of frames to catch
 
@@ -400,8 +400,8 @@ void boss_cmd_echo_command(uint8_t *cmd, Terminal_stream src) {
 }
 
 void boss_cmd_set_unix_timestamp(uint8_t *cmd, Terminal_stream src) {
-	// Example CMD: 0xE0 ____ X X TS_3 TS_2 TS_1 TS_0 0xED
-	// FINAL
+	// Example CMD: 0xE0 0x31 X X TS_3 TS_2 TS_1 TS_0 0xED
+	// FINAL: 0x31
 
 	uint32_t uptime_sec_at_timestamp_set = get_system_uptime_sec();
 
@@ -449,8 +449,8 @@ void boss_cmd_set_unix_timestamp(uint8_t *cmd, Terminal_stream src) {
 	}
 }
 
-void boss_cmd_run_power_on_self_test(uint8_t *cmd, Terminal_stream src) {
-	// FINAL
+void boss_cmd_run_self_test(uint8_t *cmd, Terminal_stream src) {
+	// FINAL: 0x20
 
 	set_dra_awake_mode(1);
 	set_led_success();
@@ -501,7 +501,8 @@ void boss_cmd_run_power_on_self_test(uint8_t *cmd, Terminal_stream src) {
 }
 
 void boss_cmd_force_reboot_system(uint8_t *cmd, Terminal_stream src) {
-	// FINAL
+	// FINAL: 0x23
+
 	uint8_t cmd_password[9] = { 0xE0, 0x23, 0x35, 0xA6, 0x32, 0x18, 0xD3, 0xFF, 0xED };
 	
 	if (check_cmd_password(cmd, cmd_password)) {
@@ -532,7 +533,8 @@ void boss_cmd_force_reboot_system(uint8_t *cmd, Terminal_stream src) {
 }
 
 void boss_cmd_set_beacon_period(uint8_t *cmd, Terminal_stream src) {
-	// FINAL
+	// FINAL: 0x24
+
 	char msg[255];
 	uint8_t beacon_period_minutes = cmd[7];
 
@@ -587,7 +589,7 @@ void boss_cmd_clear_aprs_packet_store(uint8_t *cmd, Terminal_stream src) {
 }
 
 void boss_cmd_exit_mission_boss_mode(uint8_t *cmd, Terminal_stream src) {
-	// FINAL
+	// FINAL: 0x92
 	uint8_t cmd_password[9] = { 0xE0, 0x92, 0x38, 0x00, 0x00, 0x00, 0x00, 0xAA, 0xED };
 	
 	if (check_cmd_password(cmd, cmd_password)) {
@@ -616,7 +618,7 @@ void boss_cmd_exit_mission_boss_mode(uint8_t *cmd, Terminal_stream src) {
 }
 
 void boss_cmd_get_uptime_and_status(uint8_t *cmd, Terminal_stream src) {
-	// FINAL
+	// FINAL: 0x25
 	set_led_success();
 	uint32_t system_uptime_ms = get_system_uptime_ms();
 
@@ -641,7 +643,7 @@ void boss_cmd_get_uptime_and_status(uint8_t *cmd, Terminal_stream src) {
 }
 
 void boss_cmd_get_stored_aprs_packets_stats(uint8_t *cmd, Terminal_stream src) {
-	// FINAL
+	// FINAL: unused
 	set_led_success();
 
 	char msg[180];
@@ -656,7 +658,7 @@ void boss_cmd_get_stored_aprs_packets_stats(uint8_t *cmd, Terminal_stream src) {
 }
 
 void boss_cmd_beacon_right_now(uint8_t *cmd, Terminal_stream src) {
-	// FINAL
+	// FINAL: 0x22
 
 	if (current_aprs_mode == RF_APRS_MODE_INACTIVE) {
 		set_led_failure();
@@ -672,7 +674,7 @@ void boss_cmd_beacon_right_now(uint8_t *cmd, Terminal_stream src) {
 
 
 void boss_cmd_exp_get_radfet_values(uint8_t *cmd, Terminal_stream src) {
-	// FINAL
+	// FINAL: 0x33
 	set_led_success();
 
 	uint32_t unix_time = get_unix_timestamp_sec_now();
@@ -694,6 +696,8 @@ void boss_cmd_exp_get_radfet_values(uint8_t *cmd, Terminal_stream src) {
 		MBOSS_RESPONSE_END_STR
 	);
 	term_sendToMode((uint8_t*)msg, strlen(msg), MODE_BOSS);
+
+	// TODO: should have put the temperatures here too
 }
 
 void boss_cmd_exp_get_radfet_values_on_loop(uint8_t *cmd, Terminal_stream src) {
@@ -712,7 +716,7 @@ void boss_cmd_exp_get_radfet_values_on_loop(uint8_t *cmd, Terminal_stream src) {
 }
 
 void boss_cmd_exp_ccd_do_debug_convert(uint8_t *cmd, Terminal_stream src) {
-	// FINAL
+	// FINAL: 0x34
 
 	uint8_t ccd_num = cmd[7];
 	uint8_t resolution_number_of_groups_of_16 = cmd[6];
@@ -793,16 +797,16 @@ void boss_cmd_debug_fetch_raw_temperatures(uint8_t *cmd, Terminal_stream src) {
 }
 
 void boss_cmd_exp_set_ccd_config(uint8_t *cmd, Terminal_stream src) {
-	// FINAL
+	// FINAL: 0x32
 
 	// periods
-	uint8_t new_ccd_config_poll_period_sec = cmd[7];  // [default: 15] configurable via command, extern; 0 to disable
-	uint16_t new_ccd_config_stat_period_sec = cmd[5] << 8 | cmd[6];  // [default: 120] configurable via command, extern; 0 to disable
+	uint8_t new_ccd_config_poll_period_sec = cmd[7];  // [default: 15 = 0x0F] configurable via command, extern; 0 to disable
+	uint16_t new_ccd_config_stat_period_sec = cmd[5] << 8 | cmd[6];  // [default: 240 = 0xF0] configurable via command, extern; 0 to disable
 
 	// Operational/functional config
-	uint16_t new_ccd_config_pixels_per_shutter = cmd[3] << 8 | cmd[4];  // [default: 50] configurable via command, extern
+	uint16_t new_ccd_config_pixels_per_shutter = cmd[3] << 8 | cmd[4];  // [default: 50 = 0x32] configurable via command, extern
 	// uint8_t new_ccd_config_fetches_per_poll = cmd[2]; // not enough bytes, so just not configurable
-	uint8_t new_ccd_config_alert_threshold_points = cmd[2];
+	uint8_t new_ccd_config_alert_threshold_points = cmd[2]; // [default: 10 = 0x0A] configurable via command, extern
 
 	set_led_success();
 

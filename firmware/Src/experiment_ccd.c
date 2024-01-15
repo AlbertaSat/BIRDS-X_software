@@ -12,8 +12,8 @@
 // a fetch is a a subset of a poll; multiple fetches happen per poll
 
 // period config
-uint8_t ccd_config_poll_period_sec = 10; // [default: 10] configurable via command, extern; 0 to disable
-uint16_t ccd_config_stat_period_sec = 240; // [default: 240] configurable via command, extern; 0 to disable
+uint8_t ccd_config_poll_period_sec = 10; // [default: 10 = 0x0A] configurable via command, extern; 0 to disable
+uint16_t ccd_config_stat_period_sec = 240; // [default: 240 = 0xF0] configurable via command, extern; 0 to disable
 
 // operational/functional config
 uint16_t ccd_config_pixels_per_shutter = 50; // [default: 50] configurable via command, extern
