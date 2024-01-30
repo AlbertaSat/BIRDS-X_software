@@ -12,8 +12,9 @@
 // a fetch is a a subset of a poll; multiple fetches happen per poll
 
 // period config
-uint8_t ccd_config_poll_period_sec = 10; // [default: 10 = 0x0A] configurable via command, extern; 0 to disable
-uint16_t ccd_config_stat_period_sec = 240; // [default: 240 = 0xF0] configurable via command, extern; 0 to disable
+uint8_t ccd_config_poll_period_sec = 0; // [default: 10 = 0x0A] configurable via command, extern; 0 to disable
+uint16_t ccd_config_stat_period_sec = 0; // [default: 240 = 0xF0] configurable via command, extern; 0 to disable
+// FIXME: CCD experiment automatic collection disabled for testing (by default)
 
 // operational/functional config
 uint16_t ccd_config_pixels_per_shutter = 50; // [default: 50] configurable via command, extern
@@ -172,7 +173,9 @@ void query_ccd_measurement(uint8_t *fetched_data, uint8_t ccd_num) {
 	// disable UART for the duration of this function
 	uart_config(&uart1, 0);
 	uart_config(&uart2, 0);
-	afsk_disable_timers();
+
+	// disable afsk timers (power saving)
+	// afsk_disable_timers();
 
 	init_adc_ccd(ccd_num);
 
@@ -261,8 +264,8 @@ void query_ccd_measurement(uint8_t *fetched_data, uint8_t ccd_num) {
 	set_resting_ccd_state();
 	deinit_adc_ccd();
 
-	// re-enable timers
-	afsk_restore_disabled_timers();
+	// re-enable timers (power saving)
+	// afsk_restore_disabled_timers();
 
 	// re-enable uarts
 	uart_config(&uart1, 1);
