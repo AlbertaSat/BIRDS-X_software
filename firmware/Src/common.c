@@ -119,8 +119,7 @@ void common_toTNC2(uint8_t *from, uint16_t len, uint8_t *to)
 
     if(!(*(from + 13) & 1)) //no c-bit in source address, there is a digi path
     {
-
-        do //analize all path elements
+        do // analyze all path elements
         {
             *(to++) = ','; //path separator
 
@@ -144,6 +143,8 @@ void common_toTNC2(uint8_t *from, uint16_t len, uint8_t *to)
             	*(to++) = '*'; //add *
 
             nextPathEl += 7; //next path element
+
+			// FIXME: check if this value should be changed
             if(nextPathEl > 56) //too many path elements
             	break;
         }

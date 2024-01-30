@@ -259,6 +259,11 @@ void term_parse(uint8_t *cmd, uint16_t len, Terminal_stream src, Uart_data_type 
 		return;
 	}
 
+	if ((mode == MODE_BOSS)) { // removed && (type == DATA_BOSS)
+		// incoming command from the boss
+		receive_incoming_boss_cmd(cmd, len, src);
+		return;
+	}
 
 	if((mode == MODE_KISS) && (type == DATA_KISS))
 	{
@@ -276,11 +281,6 @@ void term_parse(uint8_t *cmd, uint16_t len, Terminal_stream src, Uart_data_type 
 		// note that "cmd" is a message in this case, and not really a command
 		receive_incoming_dra_message(cmd, len);
 		return;
-	}
-
-	if ((mode == MODE_BOSS)) { // removed && (type == DATA_BOSS)
-		// incoming command from the boss
-		receive_incoming_boss_cmd(cmd, len, src);
 	}
 
 	if((mode != MODE_TERM)) return;

@@ -100,12 +100,13 @@ static volatile void uart_handleInterrupt(Uart *port)
 		if(port->bufrxidx == 0)
 			return; // no data, stop
 
-		if((port->bufrx[0] == 0xc0) && (port->bufrx[port->bufrxidx - 1] == 0xc0))
-		{
-			// data starts with 0xc0 and ends with 0xc0 - this is a KISS frame
-			port->rxflag = DATA_KISS;
-			port->kissTimer = 0;
-		}
+		// Disabled KISS mode for BIRDS-X
+		// if((port->bufrx[0] == 0xc0) && (port->bufrx[port->bufrxidx - 1] == 0xc0))
+		// {
+		// 	// data starts with 0xc0 and ends with 0xc0 - this is a KISS frame
+		// 	port->rxflag = DATA_KISS;
+		// 	port->kissTimer = 0;
+		// }
 
 		if(((port->bufrx[port->bufrxidx - 1] == '\r') || (port->bufrx[port->bufrxidx - 1] == '\n')))
 		{
@@ -291,7 +292,6 @@ void uart_config(Uart *port, uint8_t state)
 
 		port->enabled = state > 0;
 	}
-
 }
 
 

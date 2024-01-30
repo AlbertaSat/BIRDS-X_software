@@ -78,6 +78,9 @@ void write_ccd_pins(uint8_t phi_m, uint8_t icg, uint8_t sh) {
 	write_sh_pin(sh);
 }
 
+/*
+ * Main action for boss_cmd_exp_ccd_do_debug_convert() exclusively.
+*/
 void fetch_ccd_measurement_and_log_it(uint8_t ccd_num, uint16_t elements_per_group) {
 	// send_str_to_mboss_no_tail("DEBUG: boss_cmd_exp_ccd_do_debug_convert -> called");
 	// delay_ms(50);
@@ -150,6 +153,10 @@ void fetch_ccd_measurement_and_log_it(uint8_t ccd_num, uint16_t elements_per_gro
 	// TODO: check and log statistics data
 }
 
+/*
+ * Fetches all pixels for one CCD into a buffer.
+ * Used for both the boss_cmd_exp_ccd_do_debug_convert() command, and the periodic polling.
+ */
 void query_ccd_measurement(uint8_t *fetched_data, uint8_t ccd_num) {
 	// this is a naive timer-less implementation
 	uint8_t last_sh_val = 0;
@@ -390,7 +397,7 @@ void loop_service_ccd_experiment() {
 
 /*
  * Updates the CCD measurements for both CCDs (e.g., ccd1_result_triggered_pix_count_in_last_period, etc.)
- *
+ * Called from within the loop_service_ccd_experiment function only.
 */
 void do_one_fetch_of_ccd_experiment() {
 	uint16_t pix_count = (CCD_DATA_LEN_BYTES - CCD_PIXELS_IGNORE_START - CCD_PIXELS_IGNORE_END);

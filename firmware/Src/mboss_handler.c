@@ -627,7 +627,7 @@ void boss_cmd_get_uptime_and_status(uint8_t *cmd, Terminal_stream src) {
 	char msg[200];
 	sprintf(
 		msg,
-		"%sRESP: ut_ms=%lu, ut_sec=%lu, ts_sec_at_boot=%lu, ts_sec_now=%lu, reset_cause=%s(%d), aprs_mode=%d, temp_k=%d,%d,%d,%d,%d,%d-%d, fullpct=%d, rx%ld, tx%ld%s",
+		"%sRESP: ut_ms=%lu, ut_sec=%lu, ts_sec_at_boot=%lu, ts_sec_now=%lu, reset_cause=%s(%d), aprs_mode=%d, temp_k=%d,%d,%d,%d,%d,%d-%d, fullpct=%d, rx%ld, tx%ld, pkt=%d%s",
 		MBOSS_RESPONSE_START_STR,
 		system_uptime_ms, get_system_uptime_sec(),
 		timestamp_sec_at_boot, get_unix_timestamp_sec_now(),
@@ -637,6 +637,7 @@ void boss_cmd_get_uptime_and_status(uint8_t *cmd, Terminal_stream src) {
 		min_sensor_temp_k, max_sensor_temp_k,
 		(uint8_t)(sf_buffer_wr_idx/STORE_AND_FORWARD_BUFFER_SIZE*100),
 		frame_rx_count_since_boot, beacon_count_since_boot,
+		get_stored_frame_count(),
 		MBOSS_RESPONSE_END_STR
 	);
 	term_sendToMode((uint8_t*)msg, strlen(msg), MODE_BOSS);
